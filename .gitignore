@@ -1,0 +1,19 @@
+# Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+
+# 편집기
+.vscode/
+.idea/
+*.swp
+
+# 비밀 정보 (절대 커밋 금지)
+.env
+.env.*
+*.key
+secrets.json
+credentials.json
