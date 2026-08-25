@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>garlic-soy-butter-pasta.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> or <div class="page"></div> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="마늘-간장-버터-파스타-15분">마늘 간장 버터 파스타 (15분)</h1>
+<p><img src="images/garlic-soy-butter-pasta.jpg" alt="마늘 간장 버터 파스타 - 오후 햇살이 드는 부엌 식탁 위에 놓인 윤기 나는 간장 파스타와 반숙 프라이"></p>
+<p>집에 늘 있는 재료로 만드는 감칠맛 폭탄 파스타. 면 삶는 시간 안에 소스가 완성되기 때문에 실제 조리 시간은 15분을 넘지 않는다.</p>
+<ul>
+<li><strong>소요 시간</strong>: 15분 (준비 5분 + 조리 10분)</li>
+<li><strong>분량</strong>: 1인분</li>
+<li><strong>난이도</strong>: 쉬움</li>
+</ul>
+<h2 id="재료">재료</h2>
+<table>
+<thead>
+<tr>
+<th>재료</th>
+<th>분량</th>
+<th>메모</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>스파게티 면</td>
+<td>100g</td>
+<td>손으로 잡아 500원 동전 굵기</td>
+</tr>
+<tr>
+<td>마늘</td>
+<td>5~6쪽</td>
+<td>편으로 얇게 썬다</td>
+</tr>
+<tr>
+<td>버터</td>
+<td>20g</td>
+<td>무염 버터 권장</td>
+</tr>
+<tr>
+<td>올리브유</td>
+<td>1큰술</td>
+<td></td>
+</tr>
+<tr>
+<td>진간장</td>
+<td>1.5큰술</td>
+<td></td>
+</tr>
+<tr>
+<td>설탕</td>
+<td>1/2작은술</td>
+<td>간장의 짠맛을 잡아준다</td>
+</tr>
+<tr>
+<td>면수</td>
+<td>1국자 (약 100ml)</td>
+<td>버리지 말 것</td>
+</tr>
+<tr>
+<td>후추</td>
+<td>약간</td>
+<td></td>
+</tr>
+<tr>
+<td>대파 또는 쪽파</td>
+<td>1/2대</td>
+<td>송송 썰어 마무리용</td>
+</tr>
+<tr>
+<td>(선택) 페페론치노</td>
+<td>1~2개</td>
+<td>매콤하게 먹고 싶다면</td>
+</tr>
+</tbody>
+</table>
+<h2 id="만드는-법">만드는 법</h2>
+<ol>
+<li><strong>물 올리기 (0분)</strong> — 냄비에 물 1.5L를 붓고 소금 1큰술을 넣어 센 불에 올린다. 물이 끓는 동안 마늘을 편 썰고 대파를 송송 썬다.</li>
+<li><strong>면 삶기 (4분)</strong> — 물이 끓으면 면을 넣고 포장지에 적힌 시간보다 <strong>1분 짧게</strong> 삶는다. 나머지 1분은 소스에서 익힐 것이다.</li>
+<li><strong>마늘 볶기 (6분)</strong> — 면이 삶아지는 동안 팬에 올리브유와 버터 절반을 두르고 <strong>약불</strong>에서 마늘을 볶는다. 가장자리가 연한 갈색이 될 때까지 3분 정도, 절대 센 불로 태우지 않는다.</li>
+<li><strong>소스 만들기 (9분)</strong> — 마늘 향이 올라오면 간장과 설탕을 넣고 10초만 끓인다. 간장이 팬 바닥에 살짝 타면서 나는 불향이 이 요리의 핵심이다. 바로 면수를 부어 자글자글 끓인다.</li>
+<li><strong>면 합치기 (11분)</strong> — 건진 면을 팬에 넣고 중불에서 1분간 볶듯이 섞는다. 소스가 면에 착 감기며 걸쭉해진다.</li>
+<li><strong>마무리 (13분)</strong> — 불을 끄고 남은 버터 절반을 넣어 잔열로 녹이며 빠르게 섞는다. 이때 넣는 버터가 소스에 윤기를 만든다. 후추를 갈아 넣고 대파를 뿌려 완성.</li>
+</ol>
+<h2 id="성공-포인트">성공 포인트</h2>
+<ul>
+<li><strong>면수는 반드시 남긴다.</strong> 면수의 전분이 기름과 간장을 하나로 묶어주는 유화제 역할을 한다. 면수 없이 만들면 소스가 겉돌고 기름지다.</li>
+<li><strong>마늘은 약불에서 천천히.</strong> 센 불에 볶으면 겉만 타고 속은 매운맛이 남는다.</li>
+<li><strong>버터는 두 번에 나눠 넣는다.</strong> 처음 것은 향, 마지막 것은 광택과 부드러움을 담당한다.</li>
+<li><strong>간장은 팬에 직접 닿게.</strong> 면수에 섞어 넣으면 그냥 짠 국물이 되고, 팬 바닥에 지져야 불향이 난다.</li>
+</ul>
+<h2 id="응용">응용</h2>
+<ul>
+<li><strong>참치 버전</strong> — 4번 단계에서 기름 뺀 참치캔 1/2개를 넣는다.</li>
+<li><strong>베이컨 버전</strong> — 1번 단계에서 베이컨을 먼저 바삭하게 굽고, 그 기름에 마늘을 볶는다. 올리브유는 생략.</li>
+<li><strong>달걀 얹기</strong> — 반숙 프라이를 올리면 노른자가 소스와 섞여 훨씬 부드러워진다.</li>
+<li><strong>우동면 버전</strong> — 스파게티 대신 냉동 우동면을 쓰면 삶는 시간이 2분으로 줄어 전체 10분에 완성된다.</li>
+</ul>
+
+</body>
+</html>

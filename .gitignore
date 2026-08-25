@@ -17,3 +17,6 @@ $RECYCLE.BIN/
 *.key
 secrets.json
 credentials.json
+
+# Claude Code 로컬 툴링
+.claude/
