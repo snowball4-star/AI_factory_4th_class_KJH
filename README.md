@@ -1,4 +1,4 @@
-# AI Factory 4기 — 강정훈
+# AI Factory 4기 — 강자헌
 
 AI Factory 4기 과정에서 진행한 주차별 과제(quest) 모음입니다.
 
