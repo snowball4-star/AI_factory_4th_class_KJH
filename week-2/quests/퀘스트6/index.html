@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>밈 메이커 — 그림 · 동영상 · 텍스트로 짤 만들기</title>
+
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <!-- ⚠️ 모든 CDN 버전 고정. Babel 은 반드시 7.x (8.x 는 인라인 text/babel 미지원) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.25.9/babel.min.js"></script>
+  <!-- GIF 인코더 (동영상 → 움짤) -->
+  <script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Do+Hyeon&family=Jua&family=Nanum+Pen+Script&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            grape:  { 300:'#C4B5FD', 400:'#A78BFA', 500:'#8B5CF6', 600:'#7C3AED', 900:'#2E1065' },
+            mint:   { 300:'#6EE7B7', 400:'#34D399', 500:'#10B981' },
+            sky2:   { 300:'#7DD3FC', 400:'#38BDF8', 500:'#0EA5E9' },
+            peach:  { 300:'#FDBA74', 400:'#FB923C' },
+          },
+          fontFamily: {
+            sans: ['Noto Sans KR','Malgun Gothic','맑은 고딕','Apple SD Gothic Neo','sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    /* Tailwind 유틸리티로 표현할 수 없는 부분만 */
+    :root { --hdr: 54px; }
+    html, body { height: 100%; }
+    body {
+      -webkit-font-smoothing: antialiased;
+      color: #E9E9F5;
+      background:
+        radial-gradient(900px 620px at 8% -8%,  rgba(139,92,246,.38), transparent 60%),
+        radial-gradient(760px 560px at 96% 4%,  rgba(14,165,233,.32), transparent 60%),
+        radial-gradient(820px 640px at 52% 116%, rgba(236,72,153,.26), transparent 62%),
+        linear-gradient(160deg, #0A0A18 0%, #111028 48%, #0B1220 100%);
+      background-attachment: fixed;
+    }
+    /* 데스크톱: 한 화면 고정. 좁은 화면에서는 자연스럽게 스크롤 */
+    @media (min-width: 1024px) { body { overflow: hidden; } }
+
+    .glass { backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+
+    .thin-scroll { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.16) transparent; }
+    .thin-scroll::-webkit-scrollbar { width: 8px; }
+    .thin-scroll::-webkit-scrollbar-track { background: transparent; }
+    .thin-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.14); border-radius: 9999px; }
+    .thin-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.26); }
+
+    .checkerboard {
+      background-color: rgba(6,8,20,.55);
+      background-image:
+        linear-gradient(45deg,  rgba(255,255,255,.045) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(255,255,255,.045) 25%, transparent 25%),
+        linear-gradient(45deg,  transparent 75%, rgba(255,255,255,.045) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(255,255,255,.045) 75%);
+      background-size: 18px 18px;
+      background-position: 0 0, 0 9px, 9px -9px, -9px 0px;
+    }
+
+    input[type="range"] { -webkit-appearance: none; appearance: none; background: transparent; }
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 5px; border-radius: 9999px; background: rgba(255,255,255,.16);
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none; margin-top: -5px;
+      width: 15px; height: 15px; border-radius: 9999px;
+      background: linear-gradient(140deg, #C4B5FD, #8B5CF6);
+      border: 2px solid rgba(10,10,24,.9); cursor: pointer;
+      box-shadow: 0 0 10px rgba(139,92,246,.55);
+    }
+    input[type="color"] { padding: 0; border: none; background: none; cursor: pointer; }
+    input[type="color"]::-webkit-color-swatch-wrapper { padding: 2px; }
+    input[type="color"]::-webkit-color-swatch { border: 1px solid rgba(255,255,255,.18); border-radius: 6px; }
+
+    @keyframes pulseBar { 0%,100% { opacity: .62 } 50% { opacity: 1 } }
+    .animate-pulse-bar { animation: pulseBar 1.2s ease-in-out infinite; }
+    @keyframes floatGlow { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-6px) } }
+    .float-glow { animation: floatGlow 4.5s ease-in-out infinite; }
+  </style>
+</head>
+<body class="font-sans">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    // ========================================
+    // ⚛️ React Hooks
+    // ========================================
+    const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+    // ========================================
+    // 🎨 Design System Components
+    // ========================================
+    function Button({ variant = 'primary', size = 'md', className = '', children, ...props }) {
+      const variants = {
+        primary: 'text-white border-white/10 bg-gradient-to-br from-grape-400 to-grape-600 hover:from-grape-300 hover:to-grape-500 shadow-lg shadow-grape-900/40',
+        accent:  'text-[#04121A] border-white/10 bg-gradient-to-br from-mint-300 to-sky2-400 hover:from-mint-300 hover:to-sky2-300 shadow-lg shadow-sky2-500/25',
+        secondary: 'bg-white/8 hover:bg-white/14 text-white/90 border-white/15',
+        ghost: 'bg-transparent hover:bg-white/10 text-white/70 border-transparent',
+      };
+      const sizes = { xs: 'px-2 py-1 text-[11px]', sm: 'px-2.5 py-1 text-xs', md: 'px-3 py-1.5 text-[13px]', lg: 'px-4 py-2 text-sm' };
+      return (
+        <button
+          className={`inline-flex items-center justify-center gap-1.5 rounded-xl border font-bold
+            transition-all duration-150 active:scale-[.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-grape-300
+            disabled:opacity-45 disabled:cursor-not-allowed disabled:active:scale-100
+            ${variants[variant]} ${sizes[size]} ${className}`}
+          {...props}
+        >
+          {children}
+        </button>
+      );
+    }
+
+    /** tone 으로 컬럼마다 다른 배경 틴트를 준다 */
+    function Panel({ tone = 'violet', className = '', children }) {
+      const tones = {
+        violet: 'bg-violet-500/[0.09] border-violet-300/20',
+        cyan:   'bg-sky-500/[0.09] border-sky-300/20',
+        rose:   'bg-rose-500/[0.08] border-rose-300/20',
+        amber:  'bg-amber-400/[0.08] border-amber-200/20',
+        dark:   'bg-black/25 border-white/10',
+      };
+      return (
+        <section className={`glass rounded-2xl border shadow-xl shadow-black/30 ${tones[tone]} ${className}`}>
+          {children}
+        </section>
+      );
+    }
+
+    function PanelTitle({ icon, children, right }) {
+      return (
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <h2 className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.14em] text-white/55">
+            <span aria-hidden="true">{icon}</span>{children}
+          </h2>
+          {right}
+        </div>
+      );
+    }
+
+    function Badge({ tone = 'neutral', className = '', children }) {
+      const tones = {
+        neutral: 'bg-white/10 text-white/70 border-white/15',
+        violet:  'bg-violet-400/20 text-violet-100 border-violet-300/30',
+        cyan:    'bg-sky-400/20 text-sky-100 border-sky-300/30',
+        warn:    'bg-amber-400/20 text-amber-100 border-amber-300/30',
+      };
+      return (
+        <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold ${tones[tone]} ${className}`}>
+          {children}
+        </span>
+      );
+    }
+
+    function Field({ label, hint, htmlFor, children }) {
+      return (
+        <div className="space-y-1">
+          {label && (
+            <label htmlFor={htmlFor} className="flex items-baseline justify-between text-[10px] font-bold uppercase tracking-wider text-white/45">
+              <span>{label}</span>
+              {hint !== undefined && hint !== null && <span className="font-semibold normal-case tracking-normal text-white/35">{hint}</span>}
+            </label>
+          )}
+          {children}
+        </div>
+      );
+    }
+
+    function TextArea({ value, onChange, rows = 2, placeholder, className = '', ...props }) {
+      return (
+        <textarea
+          value={value}
+          onChange={onChange}
+          rows={rows}
+          placeholder={placeholder}
+          className={`w-full resize-none rounded-xl border border-white/12 bg-black/30 px-2.5 py-1.5 text-[13px]
+            text-white placeholder-white/25 focus:border-grape-300/60 focus:outline-none
+            focus:ring-1 focus:ring-grape-300/50 ${className}`}
+          {...props}
+        />
+      );
+    }
+
+    function Select({ value, onChange, options, className = '', ...props }) {
+      return (
+        <select
+          value={value}
+          onChange={onChange}
+          className={`w-full rounded-xl border border-white/12 bg-black/30 px-2.5 py-1.5 text-xs text-white
+            focus:border-grape-300/60 focus:outline-none focus:ring-1 focus:ring-grape-300/50 ${className}`}
+          {...props}
+        >
+          {options.map((o) => (
+            <option key={o.value} value={o.value} className="bg-[#14142a] text-white">{o.label}</option>
+          ))}
+        </select>
+      );
+    }
+
+    function Slider({ label, value, min, max, step = 1, onChange, format }) {
+      const id = useMemo(() => 'sld-' + Math.random().toString(36).slice(2, 8), []);
+      return (
+        <Field label={label} hint={format ? format(value) : value} htmlFor={id}>
+          <input
+            id={id}
+            type="range"
+            min={min}
+            max={max}
+            step={step}
+            value={value}
+            onChange={(e) => onChange(Number(e.target.value))}
+            className="w-full cursor-pointer"
+            aria-label={label}
+          />
+        </Field>
+      );
+    }
+
+    function ColorInput({ label, value, onChange }) {
+      return (
+        <Field label={label}>
+          <div className="flex items-center gap-1.5 rounded-xl border border-white/12 bg-black/30 px-1.5 py-1">
+            <input
+              type="color"
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              className="h-6 w-8 shrink-0"
+              aria-label={label}
+            />
+            <span className="font-mono text-[10px] uppercase text-white/45">{value}</span>
+          </div>
+        </Field>
+      );
+    }
+
+    function Segmented({ options, value, onChange, className = '' }) {
+      return (
+        <div role="tablist" className={`flex gap-1 rounded-xl border border-white/10 bg-black/25 p-1 ${className}`}>
+          {options.map((o) => (
+            <button
+              key={o.value}
+              role="tab"
+              aria-selected={value === o.value}
+              onClick={() => onChange(o.value)}
+              className={`flex-1 rounded-lg px-1.5 py-1 text-[11px] font-bold transition-all ${
+                value === o.value
+                  ? 'bg-gradient-to-br from-grape-400 to-grape-600 text-white shadow-md shadow-grape-900/50'
+                  : 'text-white/50 hover:bg-white/10 hover:text-white/85'
+              }`}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      );
+    }
+
+    function Toggle({ label, checked, onChange }) {
+      return (
+        <button
+          type="button"
+          role="switch"
+          aria-checked={checked}
+          onClick={() => onChange(!checked)}
+          className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-black/25 px-2.5 py-1.5 text-[11px] font-bold text-white/70 hover:border-white/25"
+        >
+          <span>{label}</span>
+          <span className={`relative h-4 w-8 rounded-full transition-colors ${checked ? 'bg-gradient-to-r from-mint-300 to-sky2-400' : 'bg-white/20'}`}>
+            <span className={`absolute top-0.5 h-3 w-3 rounded-full bg-white transition-all ${checked ? 'left-[18px]' : 'left-0.5'}`} />
+          </span>
+        </button>
+      );
+    }
+
+    // ========================================
+    // 🧰 Meme Engine — 상수 · 유틸 · 캔버스 렌더러
+    // ========================================
+    const FONTS = [
+      { value: "'Black Han Sans', Impact, sans-serif", label: '블랙한산스 (굵은 밈체)' },
+      { value: "'Do Hyeon', Impact, sans-serif", label: '도현 (기본 밈체)' },
+      { value: "'Jua', sans-serif", label: '주아 (동글동글)' },
+      { value: "'Nanum Pen Script', cursive", label: '나눔펜 (손글씨)' },
+      { value: "'Noto Sans KR', sans-serif", label: '노토 산스 (깔끔)' },
+      { value: 'Impact, Haettenschweiler, sans-serif', label: 'Impact (영문 정통)' },
+    ];
+
+    const PRESETS = {
+      classic: {
+        label: '정통 밈',
+        frame: { padTop: 0, padBottom: 0, bg: '#FFFFFF' },
+        layer: { font: FONTS[0].value, color: '#FFFFFF', stroke: '#000000', strokeWidth: 10, shadow: true, size: 12 },
+      },
+      whitebar: {
+        label: '흰 여백',
+        frame: { padTop: 0.18, padBottom: 0, bg: '#FFFFFF' },
+        layer: { font: FONTS[1].value, color: '#111111', stroke: '#FFFFFF', strokeWidth: 0, shadow: false, size: 8 },
+      },
+      subtitle: {
+        label: '자막',
+        frame: { padTop: 0, padBottom: 0, bg: '#000000' },
+        layer: { font: FONTS[4].value, color: '#FFE55C', stroke: '#000000', strokeWidth: 7, shadow: true, size: 7 },
+      },
+    };
+
+    let layerSeq = 0;
+    function makeLayer(text, y, base) {
+      layerSeq += 1;
+      return {
+        id: 'L' + layerSeq,
+        text,
+        x: 0.5,
+        y,
+        size: 12,
+        font: FONTS[0].value,
+        color: '#FFFFFF',
+        stroke: '#000000',
+        strokeWidth: 10,
+        shadow: true,
+        align: 'center',
+        ...(base || {}),
+      };
+    }
+
+    /** 캔버스 폭에 맞춰 줄바꿈 (한글처럼 공백 없이 이어지는 긴 덩어리는 글자 단위로 분해) */
+    function wrapLines(ctx, text, maxWidth) {
+      const out = [];
+      text.split('\n').forEach((para) => {
+        if (!para.trim()) { out.push(''); return; }
+        let line = '';
+        para.split(' ').forEach((word) => {
+          const candidate = line ? line + ' ' + word : word;
+          if (ctx.measureText(candidate).width <= maxWidth) { line = candidate; return; }
+          if (line) { out.push(line); line = ''; }
+          if (ctx.measureText(word).width <= maxWidth) { line = word; return; }
+          let chunk = '';
+          for (const ch of word) {
+            if (ctx.measureText(chunk + ch).width <= maxWidth) chunk += ch;
+            else { out.push(chunk); chunk = ch; }
+          }
+          line = chunk;
+        });
+        out.push(line);
+      });
+      return out;
+    }
+
+    /** 텍스트 레이어 하나를 그리고 히트 테스트용 박스를 돌려준다 */
+    function drawLayer(ctx, layer, W, H) {
+      const text = (layer.text || '').trim();
+      const fontSize = Math.max(8, (layer.size / 100) * H);
+      ctx.save();
+      ctx.font = `900 ${fontSize}px ${layer.font}`;
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = layer.align;
+      ctx.lineJoin = 'round';
+      ctx.miterLimit = 2;
+
+      const lines = text ? wrapLines(ctx, text, W * 0.94) : [];
+      const lineHeight = fontSize * 1.16;
+      const totalH = Math.max(lineHeight, lines.length * lineHeight);
+      const cx = layer.x * W;
+      const cy = layer.y * H;
+      let widest = 0;
+
+      lines.forEach((line, i) => {
+        const y = cy - totalH / 2 + lineHeight * (i + 0.5);
+        widest = Math.max(widest, ctx.measureText(line).width);
+        if (layer.shadow) {
+          ctx.shadowColor = 'rgba(0,0,0,0.55)';
+          ctx.shadowBlur = fontSize * 0.22;
+          ctx.shadowOffsetY = fontSize * 0.05;
+        } else {
+          ctx.shadowColor = 'transparent';
+          ctx.shadowBlur = 0;
+          ctx.shadowOffsetY = 0;
+        }
+        if (layer.strokeWidth > 0) {
+          ctx.strokeStyle = layer.stroke;
+          ctx.lineWidth = (layer.strokeWidth / 100) * fontSize;
+          ctx.strokeText(line, cx, y);
+        }
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = layer.color;
+        ctx.fillText(line, cx, y);
+      });
+      ctx.restore();
+
+      const boxW = Math.max(widest, fontSize) + fontSize * 0.4;
+      const anchorX = layer.align === 'left' ? cx : layer.align === 'right' ? cx - boxW : cx - boxW / 2;
+      return { x: anchorX, y: cy - totalH / 2, w: boxW, h: totalH };
+    }
+
+    /**
+     * 장면 전체를 그린다. 미디어 높이를 1로 봤을 때의 위/아래 여백 비율을 더해 총 높이를 잡는다.
+     * 미리보기와 내보내기(PNG/GIF)가 같은 함수를 쓰므로 해상도가 달라도 결과가 같다.
+     */
+    function drawScene(ctx, mediaEl, W, H, frame, layers) {
+      const ratio = 1 + frame.padTop + frame.padBottom;
+      const mediaH = H / ratio;
+      const padT = (H * frame.padTop) / ratio;
+
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = frame.bg;
+      ctx.fillRect(0, 0, W, H);
+      if (mediaEl) {
+        try { ctx.drawImage(mediaEl, 0, padT, W, mediaH); } catch (e) { /* 아직 그릴 프레임이 없음 */ }
+      }
+      return layers.map((l) => ({ id: l.id, box: drawLayer(ctx, l, W, H) }));
+    }
+
+    /** gif.js 워커를 blob URL 로 우회 로드 (CDN cross-origin 워커 제한 회피) */
+    let workerUrlCache = null;
+    async function getGifWorkerUrl() {
+      if (workerUrlCache) return workerUrlCache;
+      const res = await fetch('https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js');
+      if (!res.ok) throw new Error('GIF 워커를 불러오지 못했습니다.');
+      workerUrlCache = URL.createObjectURL(await res.blob());
+      return workerUrlCache;
+    }
+
+    function seekVideo(video, time) {
+      return new Promise((resolve) => {
+        const onSeeked = () => { video.removeEventListener('seeked', onSeeked); resolve(); };
+        video.addEventListener('seeked', onSeeked);
+        video.currentTime = Math.min(Math.max(time, 0), video.duration || 0);
+      });
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 3000);
+    }
+
+    function fmtTime(s) {
+      if (!isFinite(s)) return '0:00';
+      const m = Math.floor(s / 60);
+      const sec = Math.floor(s % 60);
+      return `${m}:${String(sec).padStart(2, '0')}`;
+    }
+
+    // ========================================
+    // 🧩 Common / Layout Components
+    // ========================================
+    function Header({ media, outSize, onReset, busy }) {
+      return (
+        <header className="glass flex h-[54px] shrink-0 items-center justify-between gap-3 border-b border-white/10 bg-white/[0.04] px-3 sm:px-5">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <div className="float-glow flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-grape-400 via-fuchsia-500 to-sky2-400 text-base shadow-lg shadow-grape-900/50">🖼️</div>
+            <div className="min-w-0">
+              <h1 className="truncate bg-gradient-to-r from-violet-200 via-fuchsia-200 to-sky-200 bg-clip-text text-[15px] font-black tracking-tight text-transparent">밈 메이커</h1>
+              <p className="truncate text-[10px] text-white/40">그림 · 동영상 + 텍스트 → 짤 완성</p>
+            </div>
+          </div>
+
+          <div className="flex min-w-0 items-center gap-2">
+            {media ? (
+              <React.Fragment>
+                <Badge tone={media.kind === 'image' ? 'violet' : 'cyan'}>{media.kind === 'image' ? '이미지' : '동영상'}</Badge>
+                <span className="hidden max-w-[220px] truncate text-[11px] text-white/50 md:inline">{media.name}</span>
+                {outSize && <span className="hidden font-mono text-[10px] text-white/30 lg:inline">{outSize.W}×{outSize.H}</span>}
+                <Button size="xs" variant="secondary" onClick={onReset} disabled={busy}>교체</Button>
+              </React.Fragment>
+            ) : (
+              <Badge tone="warn">미디어를 올려주세요</Badge>
+            )}
+          </div>
+        </header>
+      );
+    }
+
+    function DropZone({ onFiles, compact }) {
+      const [over, setOver] = useState(false);
+      const inputRef = useRef(null);
+
+      return (
+        <div
+          onDragOver={(e) => { e.preventDefault(); setOver(true); }}
+          onDragLeave={() => setOver(false)}
+          onDrop={(e) => { e.preventDefault(); setOver(false); onFiles(e.dataTransfer.files); }}
+          className={`flex flex-col items-center justify-center rounded-2xl border-2 border-dashed text-center transition-all duration-200 ${
+            compact ? 'gap-1 p-4' : 'gap-2 p-8'
+          } ${over ? 'border-mint-300/70 bg-mint-500/10 scale-[1.01]' : 'border-white/20 bg-white/[0.03]'}`}
+        >
+          <div className={compact ? 'text-2xl' : 'text-5xl'} aria-hidden="true">📥</div>
+          <p className={`font-bold text-white/85 ${compact ? 'text-xs' : 'text-base'}`}>이미지 또는 동영상을 올려주세요</p>
+          <p className="text-[10px] text-white/40">드래그&amp;드롭 · Ctrl+V 붙여넣기</p>
+          <Button className="mt-1" size={compact ? 'sm' : 'lg'} onClick={() => inputRef.current.click()}>파일 선택</Button>
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*,video/*"
+            className="hidden"
+            onChange={(e) => { onFiles(e.target.files); e.target.value = ''; }}
+          />
+          {!compact && (
+            <p className="mt-2 text-[10px] text-white/30">JPG · PNG · WebP · GIF · MP4 · WebM — 모든 처리는 브라우저 안에서만</p>
+          )}
+        </div>
+      );
+    }
+
+    function LayerList({ layers, selectedId, onSelect, onRemove, onAdd }) {
+      return (
+        <div className="space-y-1.5">
+          <PanelTitle icon="🔤" right={<Button size="xs" variant="secondary" onClick={onAdd}>+ 추가</Button>}>텍스트 레이어</PanelTitle>
+          {layers.length === 0 && (
+            <p className="rounded-xl border border-dashed border-white/15 px-2 py-3 text-center text-[11px] text-white/40">
+              레이어가 없습니다. + 추가를 눌러보세요.
+            </p>
+          )}
+          <ul className="space-y-1">
+            {layers.map((l, i) => (
+              <li key={l.id}>
+                <div
+                  className={`flex items-center gap-1 rounded-xl border px-2 py-1.5 transition-all ${
+                    selectedId === l.id
+                      ? 'border-grape-300/50 bg-gradient-to-r from-grape-500/25 to-fuchsia-500/15'
+                      : 'border-white/10 bg-black/20 hover:border-white/25'
+                  }`}
+                >
+                  <button
+                    onClick={() => onSelect(l.id)}
+                    className="flex-1 truncate text-left text-[11px] text-white/80"
+                    aria-pressed={selectedId === l.id}
+                  >
+                    <span className="mr-1 text-white/35">{i + 1}.</span>
+                    {l.text.trim() ? l.text.replace(/\n/g, ' ') : <em className="text-white/35">(빈 텍스트)</em>}
+                  </button>
+                  <Button size="xs" variant="ghost" aria-label="레이어 삭제" onClick={() => onRemove(l.id)}>✕</Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    }
+
+    function LayerEditor({ layer, onChange }) {
+      if (!layer) {
+        return (
+          <p className="rounded-xl border border-dashed border-white/15 px-2 py-3 text-center text-[11px] text-white/40">
+            편집할 레이어를 선택하세요.
+          </p>
+        );
+      }
+      const set = (patch) => onChange({ ...layer, ...patch });
+      return (
+        <div className="space-y-2">
+          <Field label="문구" hint="Enter 줄바꿈">
+            <TextArea value={layer.text} onChange={(e) => set({ text: e.target.value })} placeholder="여기에 문구를 입력하세요" rows={2} />
+          </Field>
+          <Field label="글꼴">
+            <Select value={layer.font} onChange={(e) => set({ font: e.target.value })} options={FONTS} />
+          </Field>
+          <div className="grid grid-cols-2 gap-2">
+            <ColorInput label="글자색" value={layer.color} onChange={(v) => set({ color: v })} />
+            <ColorInput label="외곽선" value={layer.stroke} onChange={(v) => set({ stroke: v })} />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Slider label="크기" min={3} max={30} step={0.5} value={layer.size}
+                    onChange={(v) => set({ size: v })} format={(v) => v + '%'} />
+            <Slider label="외곽선 두께" min={0} max={22} step={1} value={layer.strokeWidth}
+                    onChange={(v) => set({ strokeWidth: v })} format={(v) => (v === 0 ? '없음' : v)} />
+          </div>
+          <Field label="정렬">
+            <Segmented
+              value={layer.align}
+              onChange={(v) => set({ align: v })}
+              options={[{ value: 'left', label: '왼쪽' }, { value: 'center', label: '가운데' }, { value: 'right', label: '오른쪽' }]}
+            />
+          </Field>
+          <div className="grid grid-cols-2 gap-2">
+            <Slider label="가로 위치" min={0} max={100} value={Math.round(layer.x * 100)}
+                    onChange={(v) => set({ x: v / 100 })} format={(v) => v + '%'} />
+            <Slider label="세로 위치" min={0} max={100} value={Math.round(layer.y * 100)}
+                    onChange={(v) => set({ y: v / 100 })} format={(v) => v + '%'} />
+          </div>
+          <Toggle label="그림자" checked={layer.shadow} onChange={(v) => set({ shadow: v })} />
+        </div>
+      );
+    }
+
+    function VideoControls({ duration, currentTime, playing, onToggle, onSeek }) {
+      return (
+        <div className="glass flex shrink-0 items-center gap-2 rounded-xl border border-white/10 bg-black/25 px-2 py-1.5">
+          <Button size="xs" variant="secondary" onClick={onToggle} aria-label={playing ? '일시정지' : '재생'}>
+            {playing ? '⏸' : '▶'}
+          </Button>
+          <input
+            type="range"
+            min={0}
+            max={duration || 0}
+            step={0.02}
+            value={currentTime}
+            onChange={(e) => onSeek(Number(e.target.value))}
+            className="flex-1 cursor-pointer"
+            aria-label="재생 위치"
+          />
+          <span className="w-[86px] shrink-0 text-right font-mono text-[10px] text-white/45">
+            {fmtTime(currentTime)} / {fmtTime(duration)}
+          </span>
+        </div>
+      );
+    }
+
+    // ========================================
+    // 📄 Page Component — 밈 메이커 (3분할 한 화면 레이아웃)
+    // ========================================
+    function MemeMaker() {
+      const [media, setMedia] = useState(null);            // { kind, url, width, height, name }
+      const [layers, setLayers] = useState([]);
+      const [selectedId, setSelectedId] = useState(null);
+      const [frame, setFrame] = useState({ padTop: 0, padBottom: 0, bg: '#FFFFFF' });
+      const [preset, setPreset] = useState('classic');
+      const [error, setError] = useState('');
+      const [fontsReady, setFontsReady] = useState(false);
+
+      // 동영상 전용 상태
+      const [duration, setDuration] = useState(0);
+      const [currentTime, setCurrentTime] = useState(0);
+      const [playing, setPlaying] = useState(false);
+      const [clip, setClip] = useState({ start: 0, end: 3 });
+      const [gifOpt, setGifOpt] = useState({ fps: 10, width: 480 });
+      const [job, setJob] = useState(null);                // { phase: 'capture'|'encode', progress }
+
+      const canvasRef = useRef(null);
+      const imgRef = useRef(null);
+      const videoRef = useRef(null);
+      const boxesRef = useRef([]);
+      const dragRef = useRef(null);
+      const mediaRef = useRef(null);
+      const [dragging, setDragging] = useState(false);
+
+      const selected = layers.find((l) => l.id === selectedId) || null;
+      mediaRef.current = media;
+
+      // 웹폰트가 준비된 뒤 다시 그려야 캔버스에 밈체가 제대로 적용된다
+      useEffect(() => {
+        let alive = true;
+        if (document.fonts && document.fonts.ready) {
+          document.fonts.ready.then(() => { if (alive) setFontsReady(true); });
+        } else {
+          setFontsReady(true);
+        }
+        return () => { alive = false; };
+      }, []);
+
+      // ---------- 미디어 로드 ----------
+      const loadFile = useCallback((file) => {
+        if (!file) return;
+        const isImage = file.type.startsWith('image/');
+        const isVideo = file.type.startsWith('video/');
+        if (!isImage && !isVideo) { setError('이미지 또는 동영상 파일만 넣을 수 있습니다.'); return; }
+        setError('');
+        setMedia((prev) => {
+          if (prev) URL.revokeObjectURL(prev.url);
+          return {
+            kind: isImage ? 'image' : 'video',
+            url: URL.createObjectURL(file),
+            width: 0,
+            height: 0,
+            name: file.name,
+          };
+        });
+        setPlaying(false);
+        setCurrentTime(0);
+        setDuration(0);
+        setLayers((prev) => {
+          if (prev.length) return prev;
+          const p = PRESETS.classic.layer;
+          return [makeLayer('위쪽 문구', 0.12, p), makeLayer('아래쪽 문구', 0.88, p)];
+        });
+      }, []);
+
+      const handleFiles = useCallback((files) => {
+        if (files && files.length) loadFile(files[0]);
+      }, [loadFile]);
+
+      // 클립보드 붙여넣기로도 이미지를 받는다
+      useEffect(() => {
+        const onPaste = (e) => {
+          const files = e.clipboardData && e.clipboardData.files;
+          if (files && files.length) handleFiles(files);
+        };
+        window.addEventListener('paste', onPaste);
+        return () => window.removeEventListener('paste', onPaste);
+      }, [handleFiles]);
+
+      // 언마운트 시 마지막 objectURL 회수
+      useEffect(() => () => {
+        if (mediaRef.current) URL.revokeObjectURL(mediaRef.current.url);
+      }, []);
+
+      // 선택된 레이어 동기화
+      useEffect(() => {
+        if (!layers.length) { if (selectedId) setSelectedId(null); return; }
+        if (!selectedId || !layers.some((l) => l.id === selectedId)) setSelectedId(layers[0].id);
+      }, [layers, selectedId]);
+
+      // ---------- 출력 해상도 ----------
+      const outSize = useMemo(() => {
+        if (!media || !media.width || !media.height) return null;
+        const maxW = 1080;
+        const scale = Math.min(1, maxW / media.width);
+        const W = Math.round(media.width * scale);
+        const baseH = Math.round(media.height * scale);
+        const H = Math.round(baseH * (1 + frame.padTop + frame.padBottom));
+        return { W, H };
+      }, [media, frame.padTop, frame.padBottom]);
+
+      // ---------- 미리보기 렌더 ----------
+      const draw = useCallback(() => {
+        const canvas = canvasRef.current;
+        if (!canvas || !outSize || !media) return;
+        const el = media.kind === 'image' ? imgRef.current : videoRef.current;
+        if (canvas.width !== outSize.W || canvas.height !== outSize.H) {
+          canvas.width = outSize.W;
+          canvas.height = outSize.H;
+        }
+        const ctx = canvas.getContext('2d');
+        boxesRef.current = drawScene(ctx, el, outSize.W, outSize.H, frame, layers);
+
+        // 선택 표시는 미리보기에만 그린다 (내보내기는 별도 캔버스라 섞이지 않는다)
+        const hit = boxesRef.current.find((b) => b.id === selectedId);
+        if (hit) {
+          const { x, y, w, h } = hit.box;
+          ctx.save();
+          ctx.strokeStyle = 'rgba(196,181,253,0.95)';
+          ctx.lineWidth = Math.max(2, outSize.W / 400);
+          ctx.setLineDash([outSize.W / 60, outSize.W / 90]);
+          ctx.strokeRect(x, y, w, h);
+          ctx.restore();
+        }
+      }, [media, outSize, frame, layers, selectedId, fontsReady]);
+
+      useEffect(() => { draw(); }, [draw]);
+
+      // 동영상은 매 프레임 다시 그려야 재생·탐색이 미리보기에 반영된다
+      useEffect(() => {
+        if (!media || media.kind !== 'video') return;
+        let raf;
+        const loop = () => { draw(); raf = requestAnimationFrame(loop); };
+        raf = requestAnimationFrame(loop);
+        return () => cancelAnimationFrame(raf);
+      }, [media, draw]);
+
+      // ---------- 캔버스에서 글자 끌기 ----------
+      const toCanvasPoint = (e) => {
+        const canvas = canvasRef.current;
+        const rect = canvas.getBoundingClientRect();
+        return {
+          x: ((e.clientX - rect.left) / rect.width) * canvas.width,
+          y: ((e.clientY - rect.top) / rect.height) * canvas.height,
+        };
+      };
+
+      const onPointerDown = (e) => {
+        if (!outSize) return;
+        const p = toCanvasPoint(e);
+        const hit = [...boxesRef.current].reverse().find(
+          (b) => p.x >= b.box.x && p.x <= b.box.x + b.box.w && p.y >= b.box.y && p.y <= b.box.y + b.box.h
+        );
+        if (!hit) return;
+        const layer = layers.find((l) => l.id === hit.id);
+        if (!layer) return;
+        e.currentTarget.setPointerCapture(e.pointerId);
+        dragRef.current = { id: hit.id, dx: layer.x * outSize.W - p.x, dy: layer.y * outSize.H - p.y };
+        setSelectedId(hit.id);
+        setDragging(true);
+      };
+
+      const onPointerMove = (e) => {
+        if (!dragRef.current || !outSize) return;
+        const p = toCanvasPoint(e);
+        const { id, dx, dy } = dragRef.current;
+        const nx = Math.min(1, Math.max(0, (p.x + dx) / outSize.W));
+        const ny = Math.min(1, Math.max(0, (p.y + dy) / outSize.H));
+        setLayers((prev) => prev.map((l) => (l.id === id ? { ...l, x: nx, y: ny } : l)));
+      };
+
+      const onPointerUp = () => { dragRef.current = null; setDragging(false); };
+
+      // ---------- 레이어 조작 ----------
+      const updateLayer = (next) => setLayers((prev) => prev.map((l) => (l.id === next.id ? next : l)));
+
+      const addLayer = () => {
+        const l = makeLayer('새 문구', 0.5, PRESETS[preset].layer);
+        setLayers((prev) => [...prev, l]);
+        setSelectedId(l.id);
+      };
+
+      const removeLayer = (id) => setLayers((prev) => prev.filter((l) => l.id !== id));
+
+      const applyPreset = (key) => {
+        setPreset(key);
+        const p = PRESETS[key];
+        setFrame({ ...p.frame });
+        setLayers((prev) => prev.map((l) => ({ ...l, ...p.layer })));
+      };
+
+      const resetMedia = () => {
+        if (media) URL.revokeObjectURL(media.url);
+        setMedia(null);
+        setPlaying(false);
+        setDuration(0);
+        setCurrentTime(0);
+      };
+
+      // ---------- 내보내기 ----------
+      const exportPNG = () => {
+        if (!media || !outSize) return;
+        const el = media.kind === 'image' ? imgRef.current : videoRef.current;
+        const c = document.createElement('canvas');
+        c.width = outSize.W;
+        c.height = outSize.H;
+        drawScene(c.getContext('2d'), el, outSize.W, outSize.H, frame, layers);
+        c.toBlob((blob) => downloadBlob(blob, `meme-${Date.now()}.png`), 'image/png');
+      };
+
+      const frameCount = Math.max(1, Math.round((clip.end - clip.start) * gifOpt.fps));
+      const cappedFrames = Math.min(frameCount, 150);
+
+      const exportGIF = async () => {
+        const video = videoRef.current;
+        if (!video || !outSize || job) return;
+        if (clip.end <= clip.start) { setError('GIF 구간의 끝이 시작보다 뒤여야 합니다.'); return; }
+        setError('');
+        const wasPlaying = !video.paused;
+        video.pause();
+        setPlaying(false);
+
+        const W = Math.round(gifOpt.width / 2) * 2;
+        const H = Math.round((outSize.H / outSize.W) * W / 2) * 2;
+        const delay = Math.round(1000 / gifOpt.fps);
+
+        try {
+          setJob({ phase: 'capture', progress: 0 });
+          const workerScript = await getGifWorkerUrl();
+          const gif = new GIF({ workers: 2, quality: 10, width: W, height: H, workerScript, dither: false });
+
+          const scratch = document.createElement('canvas');
+          scratch.width = W;
+          scratch.height = H;
+          const sctx = scratch.getContext('2d');
+
+          for (let i = 0; i < cappedFrames; i += 1) {
+            const t = Math.min(clip.start + i / gifOpt.fps, (video.duration || 0) - 0.02);
+            await seekVideo(video, t);
+            drawScene(sctx, video, W, H, frame, layers);
+            gif.addFrame(sctx, { copy: true, delay });
+            setJob({ phase: 'capture', progress: (i + 1) / cappedFrames });
+          }
+
+          const blob = await new Promise((resolve, reject) => {
+            gif.on('progress', (p) => setJob({ phase: 'encode', progress: p }));
+            gif.on('finished', resolve);
+            gif.on('abort', () => reject(new Error('인코딩이 중단되었습니다.')));
+            gif.render();
+          });
+
+          downloadBlob(blob, `meme-${Date.now()}.gif`);
+        } catch (err) {
+          setError('GIF 만들기에 실패했습니다: ' + err.message);
+        } finally {
+          setJob(null);
+          if (wasPlaying) { video.play(); setPlaying(true); }
+        }
+      };
+
+      // ---------- 동영상 이벤트 ----------
+      const onLoadedMeta = (e) => {
+        const v = e.target;
+        setMedia((prev) => (prev ? { ...prev, width: v.videoWidth, height: v.videoHeight } : prev));
+        const d = v.duration || 0;
+        setDuration(d);
+        setClip({ start: 0, end: Math.min(3, d || 3) });
+        v.currentTime = 0;
+      };
+
+      const togglePlay = () => {
+        const v = videoRef.current;
+        if (!v) return;
+        if (v.paused) { v.play(); setPlaying(true); } else { v.pause(); setPlaying(false); }
+      };
+
+      const seekTo = (t) => {
+        const v = videoRef.current;
+        if (!v) return;
+        v.currentTime = t;
+        setCurrentTime(t);
+      };
+
+      const isVideo = !!media && media.kind === 'video';
+
+      return (
+        <div className="flex h-full min-h-0 flex-col">
+          {/* 숨은 소스 엘리먼트 — 캔버스가 여기서 픽셀을 가져간다 */}
+          {media && media.kind === 'image' && (
+            <img
+              ref={imgRef}
+              src={media.url}
+              alt=""
+              className="hidden"
+              onLoad={(e) => setMedia((prev) => (prev
+                ? { ...prev, width: e.target.naturalWidth, height: e.target.naturalHeight }
+                : prev))}
+              onError={() => setError('이미지를 불러오지 못했습니다.')}
+            />
+          )}
+          {isVideo && (
+            <video
+              ref={videoRef}
+              src={media.url}
+              className="hidden"
+              muted
+              playsInline
+              preload="auto"
+              onLoadedMetadata={onLoadedMeta}
+              onTimeUpdate={(e) => setCurrentTime(e.target.currentTime)}
+              onEnded={() => setPlaying(false)}
+              onError={() => setError('동영상을 불러오지 못했습니다. (브라우저가 지원하지 않는 코덱일 수 있습니다)')}
+            />
+          )}
+
+          <Header media={media} outSize={outSize} onReset={resetMedia} busy={!!job} />
+
+          {error && (
+            <div role="alert" className="mx-3 mt-2 flex shrink-0 items-start justify-between gap-3 rounded-xl border border-rose-300/30 bg-rose-500/15 px-3 py-2 text-[12px] text-rose-100">
+              <span>{error}</span>
+              <button onClick={() => setError('')} aria-label="알림 닫기" className="shrink-0 text-rose-200 hover:text-white">✕</button>
+            </div>
+          )}
+
+          {/* 한 화면 3분할: 소스·스타일 / 캔버스 / 텍스트·내보내기 */}
+          <div className="grid min-h-0 flex-1 gap-3 p-3 lg:grid-cols-[264px_minmax(0,1fr)_288px]">
+
+            {/* ── ① 왼쪽: 미디어 + 프레임 스타일 ── */}
+            <div className="thin-scroll flex min-h-0 flex-col gap-3 lg:overflow-y-auto lg:pr-1">
+              <Panel tone="violet" className="p-3">
+                <PanelTitle icon="📥">소스</PanelTitle>
+                {media ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-black/20 px-2 py-1.5">
+                      <span className="truncate text-[11px] text-white/70">{media.name}</span>
+                      <Badge tone={isVideo ? 'cyan' : 'violet'}>{isVideo ? '동영상' : '이미지'}</Badge>
+                    </div>
+                    <Button size="sm" variant="secondary" className="w-full" onClick={resetMedia} disabled={!!job}>다른 파일로 교체</Button>
+                  </div>
+                ) : (
+                  <DropZone onFiles={handleFiles} compact />
+                )}
+              </Panel>
+
+              <Panel tone="amber" className="p-3">
+                <PanelTitle icon="✨">스타일 프리셋</PanelTitle>
+                <Segmented
+                  value={preset}
+                  onChange={applyPreset}
+                  options={Object.keys(PRESETS).map((k) => ({ value: k, label: PRESETS[k].label }))}
+                />
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <Slider label="위 여백" min={0} max={40} value={Math.round(frame.padTop * 100)}
+                          onChange={(v) => setFrame((f) => ({ ...f, padTop: v / 100 }))} format={(v) => v + '%'} />
+                  <Slider label="아래 여백" min={0} max={40} value={Math.round(frame.padBottom * 100)}
+                          onChange={(v) => setFrame((f) => ({ ...f, padBottom: v / 100 }))} format={(v) => v + '%'} />
+                </div>
+                <div className="mt-2">
+                  <ColorInput label="여백 색" value={frame.bg} onChange={(v) => setFrame((f) => ({ ...f, bg: v }))} />
+                </div>
+              </Panel>
+
+              <Panel tone="dark" className="hidden p-3 lg:block">
+                <PanelTitle icon="💡">쓰는 법</PanelTitle>
+                <ol className="list-decimal space-y-0.5 pl-4 text-[10px] leading-relaxed text-white/45">
+                  <li>그림·동영상 올리기 (Ctrl+V 도 가능)</li>
+                  <li>프리셋 고르고 문구 입력</li>
+                  <li>미리보기에서 글자 끌어 배치</li>
+                  <li>PNG 또는 GIF로 저장</li>
+                </ol>
+              </Panel>
+            </div>
+
+            {/* ── ② 가운데: 미리보기 캔버스 ── */}
+            <Panel tone="dark" className="flex min-h-0 flex-col gap-2 p-3">
+              {!media ? (
+                <div className="flex min-h-0 flex-1 items-center justify-center">
+                  <div className="w-full max-w-md"><DropZone onFiles={handleFiles} /></div>
+                </div>
+              ) : (
+                <React.Fragment>
+                  <div className="checkerboard flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-xl border border-white/10 p-2">
+                    {outSize ? (
+                      <canvas
+                        ref={canvasRef}
+                        onPointerDown={onPointerDown}
+                        onPointerMove={onPointerMove}
+                        onPointerUp={onPointerUp}
+                        onPointerCancel={onPointerUp}
+                        className={`h-auto max-h-full w-auto max-w-full touch-none rounded-lg object-contain shadow-2xl shadow-black/70 ${
+                          dragging ? 'cursor-grabbing' : 'cursor-grab'
+                        }`}
+                        aria-label="밈 미리보기 캔버스"
+                      />
+                    ) : (
+                      <p className="animate-pulse-bar text-xs text-white/45">불러오는 중…</p>
+                    )}
+                  </div>
+
+                  {isVideo && (
+                    <VideoControls
+                      duration={duration}
+                      currentTime={currentTime}
+                      playing={playing}
+                      onToggle={togglePlay}
+                      onSeek={seekTo}
+                    />
+                  )}
+
+                  <p className="shrink-0 text-center text-[10px] text-white/35">
+                    글자를 <strong className="text-white/60">직접 끌어</strong> 위치를 옮기세요 · 점선은 선택 표시라 저장물에는 나오지 않습니다
+                  </p>
+                </React.Fragment>
+              )}
+            </Panel>
+
+            {/* ── ③ 오른쪽: 텍스트 레이어 + 내보내기 ── */}
+            <div className="flex min-h-0 flex-col gap-3">
+              <Panel tone="cyan" className="thin-scroll min-h-0 flex-1 overflow-y-auto p-3">
+                <LayerList
+                  layers={layers}
+                  selectedId={selectedId}
+                  onSelect={setSelectedId}
+                  onRemove={removeLayer}
+                  onAdd={addLayer}
+                />
+                <div className="mt-3 border-t border-white/10 pt-3">
+                  <LayerEditor layer={selected} onChange={updateLayer} />
+                </div>
+              </Panel>
+
+              <Panel tone="rose" className="shrink-0 p-3">
+                <PanelTitle icon="💾">내보내기</PanelTitle>
+
+                <Button className="w-full" size="lg" variant="accent" onClick={exportPNG} disabled={!outSize || !!job}>
+                  🖼️ PNG 저장{isVideo ? ' (현재 프레임)' : ''}
+                </Button>
+
+                {isVideo && (
+                  <div className="mt-3 space-y-2 border-t border-white/10 pt-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      <Slider label="GIF 시작" min={0} max={Math.max(0.2, duration)} step={0.1} value={clip.start}
+                              onChange={(v) => setClip((c) => ({ start: v, end: Math.max(v + 0.2, c.end) }))}
+                              format={(v) => v.toFixed(1) + 's'} />
+                      <Slider label="GIF 끝" min={0.2} max={Math.max(0.2, duration)} step={0.1} value={clip.end}
+                              onChange={(v) => setClip((c) => ({ start: Math.min(c.start, Math.max(0, v - 0.2)), end: v }))}
+                              format={(v) => v.toFixed(1) + 's'} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Field label="FPS">
+                        <Select
+                          value={String(gifOpt.fps)}
+                          onChange={(e) => setGifOpt((g) => ({ ...g, fps: Number(e.target.value) }))}
+                          options={[
+                            { value: '6', label: '6 가벼움' },
+                            { value: '10', label: '10 기본' },
+                            { value: '15', label: '15 부드럽게' },
+                          ]}
+                        />
+                      </Field>
+                      <Field label="가로 크기">
+                        <Select
+                          value={String(gifOpt.width)}
+                          onChange={(e) => setGifOpt((g) => ({ ...g, width: Number(e.target.value) }))}
+                          options={[
+                            { value: '320', label: '320px' },
+                            { value: '480', label: '480px' },
+                            { value: '640', label: '640px' },
+                          ]}
+                        />
+                      </Field>
+                    </div>
+                    <p className="text-[10px] text-white/40">
+                      약 {cappedFrames}프레임 · {(clip.end - clip.start).toFixed(1)}초
+                      {frameCount > 150 && <span className="ml-1 text-amber-200">(150프레임까지)</span>}
+                    </p>
+
+                    <Button className="w-full" size="lg" onClick={exportGIF} disabled={!!job || !outSize}>
+                      {job ? '만드는 중…' : '🎞️ GIF 저장'}
+                    </Button>
+
+                    {job && (
+                      <div className="space-y-1" role="status" aria-live="polite">
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/12">
+                          <div
+                            className="animate-pulse-bar h-full rounded-full bg-gradient-to-r from-mint-300 to-sky2-400 transition-[width] duration-150"
+                            style={{ width: `${Math.round(job.progress * 100)}%` }}
+                          />
+                        </div>
+                        <p className="text-[10px] text-white/50">
+                          {job.phase === 'capture' ? '프레임 캡처 중' : 'GIF 인코딩 중'} · {Math.round(job.progress * 100)}%
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {!media && <p className="mt-2 text-center text-[10px] text-white/35">미디어를 먼저 올려주세요</p>}
+              </Panel>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ========================================
+    // 🚀 App
+    // ========================================
+    function App() {
+      return (
+        <div className="min-h-screen lg:h-screen lg:min-h-0 lg:overflow-hidden">
+          <MemeMaker />
+        </div>
+      );
+    }
+
+    // ========================================
+    // 🖥️ Rendering
+    // ========================================
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>더치페이 계산기</title>
+
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <!-- ⚠️ 모든 CDN 버전 고정. Babel 은 반드시 7.x (8.x 는 인라인 text/babel 미지원) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.25.9/babel.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50:'#ECFDF5', 100:'#D1FAE5', 200:'#A7F3D0', 300:'#6EE7B7', 400:'#34D399',
+                     500:'#10B981', 600:'#059669', 700:'#047857', 800:'#065F46', 900:'#064E3B' }
+          },
+          fontFamily: {
+            sans: ['Malgun Gothic','맑은 고딕','Apple SD Gothic Neo','Noto Sans KR','sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    /* Tailwind 유틸리티로 표현이 어려운 것만 */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    .anim-fade-up { animation: fadeUp .2s ease-out both; }
+    /* 숫자 입력의 브라우저 기본 스피너 제거 — 자체 스테퍼를 쓴다 */
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; }
+    .tnum { font-variant-numeric: tabular-nums; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-900 font-sans">
+  <div id="root"></div>
+
+  <script type="text/babel">
+// ========================================
+// React Hooks
+// ========================================
+const { useState, useEffect, useMemo, useCallback, useRef } = React;
+
+
+// ========================================
+// 🧮 Calculation Utilities (pure)
+// ========================================
+
+const won = (n) => new Intl.NumberFormat('ko-KR').format(Math.round(n));
+
+/** 문자열 입력을 숫자로. 콤마·공백 허용, 빈 값/비정상은 null */
+function parseNum(raw) {
+  if (raw === null || raw === undefined) return null;
+  const s = String(raw).replace(/[,\s]/g, '');
+  if (s === '') return null;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
+}
+
+/** unit 단위로 반올림/올림/내림 */
+function roundTo(value, unit, mode) {
+  const u = unit > 0 ? unit : 1;
+  const q = value / u;
+  const r = mode === 'ceil' ? Math.ceil(q) : mode === 'floor' ? Math.floor(q) : Math.round(q);
+  return r * u;
+}
+
+/**
+ * 정산 계산의 전부.
+ * @returns { ok, error, grandTotal, tipAmount, rows:[{id,name,weight,share,exact,rounded,final}],
+ *            sumRounded, diff, adjusted }
+ */
+function calcSplit({ total, tipPercent, people, mode, unit, roundMode, adjustIndex }) {
+  const t = parseNum(total);
+  const tip = parseNum(tipPercent) ?? 0;
+
+  if (t === null) return { ok: false, error: '총액을 입력한다.' };
+  if (t < 0) return { ok: false, error: '총액은 0원 이상이어야 한다.' };
+  if (tip < 0) return { ok: false, error: '추가 비율은 0% 이상이어야 한다.' };
+  if (people.length === 0) return { ok: false, error: '인원은 1명 이상이어야 한다.' };
+
+  const tipAmount = t * (tip / 100);
+  const grandTotal = t + tipAmount;
+
+  const weights = people.map((p) => {
+    if (mode === 'equal') return 1;
+    const w = parseNum(p.ratio);
+    return w === null || w < 0 ? 0 : w;
+  });
+  const sumW = weights.reduce((a, b) => a + b, 0);
+
+  if (sumW <= 0) {
+    return { ok: false, error: '비율의 합이 0이다. 최소 한 명에게 0보다 큰 비율을 준다.' };
+  }
+
+  const rows = people.map((p, i) => {
+    const share = weights[i] / sumW;
+    const exact = grandTotal * share;
+    const rounded = roundTo(exact, unit, roundMode);
+    return { id: p.id, name: p.name, weight: weights[i], share, exact, rounded, final: rounded };
+  });
+
+  const sumRounded = rows.reduce((a, r) => a + r.rounded, 0);
+  const diff = grandTotal - sumRounded;
+
+  // 차액을 지정한 사람에게 몰아준다 (선택 시)
+  let adjusted = false;
+  if (adjustIndex >= 0 && adjustIndex < rows.length && Math.abs(diff) > 0.0000001) {
+    rows[adjustIndex] = { ...rows[adjustIndex], final: rows[adjustIndex].rounded + diff };
+    adjusted = true;
+  }
+
+  return { ok: true, error: null, grandTotal, tipAmount, rows, sumRounded, diff, adjusted };
+}
+
+let seq = 0;
+const makePerson = () => ({ id: `p${++seq}`, name: '', ratio: '1' });
+
+
+// ========================================
+// 🎨 Design System Components
+// ========================================
+
+function Button({ variant = 'primary', size = 'md', disabled = false, onClick, className = '', children, ...rest }) {
+  const base = 'inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:opacity-40 disabled:cursor-not-allowed';
+  const variants = {
+    primary: 'bg-brand-700 text-white hover:bg-brand-800',
+    secondary: 'bg-brand-100 text-brand-900 hover:bg-brand-200',
+    danger: 'bg-rose-600 text-white hover:bg-rose-700',
+    ghost: 'bg-white text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50',
+  };
+  const sizes = { sm: 'text-xs px-3 py-1.5', md: 'text-sm px-4 py-2.5', lg: 'text-base px-6 py-3' };
+  return (
+    <button type="button" disabled={disabled} onClick={onClick}
+      className={`${base} ${variants[variant]} ${sizes[size]} ${className}`} {...rest}>
+      {children}
+    </button>
+  );
+}
+
+function Card({ className = '', children, ...rest }) {
+  return (
+    <div className={`bg-white rounded-xl shadow-sm ring-1 ring-slate-200 ${className}`} {...rest}>
+      {children}
+    </div>
+  );
+}
+
+function Badge({ tone = 'gray', className = '', children }) {
+  const tones = {
+    gray: 'bg-slate-100 text-slate-700 ring-slate-200',
+    brand: 'bg-brand-50 text-brand-800 ring-brand-200',
+    amber: 'bg-amber-50 text-amber-800 ring-amber-200',
+    red: 'bg-rose-50 text-rose-800 ring-rose-200',
+  };
+  return (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ${tones[tone]} ${className}`}>
+      {children}
+    </span>
+  );
+}
+
+function Input({ type = 'text', label, value, onChange, placeholder, error, disabled = false,
+                 suffix, hint, inputMode, size = 'md', className = '', align = 'left' }) {
+  const id = useRef('in-' + Math.random().toString(36).slice(2, 9)).current;
+  const sizes = { md: 'px-3 py-2.5 text-sm', lg: 'px-4 py-3 text-lg font-bold' };
+  return (
+    <div className={className}>
+      {label && <label htmlFor={id} className="block text-sm font-semibold text-slate-700 mb-1.5">{label}</label>}
+      <div className="relative">
+        <input
+          id={id} type={type} value={value} placeholder={placeholder} disabled={disabled}
+          inputMode={inputMode} aria-invalid={!!error}
+          onChange={(e) => onChange(e.target.value)}
+          className={`tnum w-full rounded-lg border outline-none transition ${sizes[size]}
+            ${align === 'right' ? 'text-right' : ''}
+            ${error ? 'border-rose-400 focus:ring-2 focus:ring-rose-200'
+                    : 'border-slate-300 focus:border-brand-600 focus:ring-2 focus:ring-brand-100'}
+            ${suffix ? 'pr-12' : ''} disabled:bg-slate-100 disabled:text-slate-400`}
+        />
+        {suffix && (
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-400">
+            {suffix}
+          </span>
+        )}
+      </div>
+      {hint && !error && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
+      {error && <p className="mt-1 text-xs text-rose-600">{error}</p>}
+    </div>
+  );
+}
+
+/** -/+ 스테퍼가 달린 숫자 입력 */
+function Stepper({ label, value, onChange, min = 0, max = 999, step = 1, suffix, hint, className = '' }) {
+  const n = parseNum(value);
+  const clamp = (v) => Math.min(max, Math.max(min, v));
+  const bump = (d) => onChange(String(clamp((n ?? 0) + d)));
+  return (
+    <div className={className}>
+      {label && <span className="block text-sm font-semibold text-slate-700 mb-1.5">{label}</span>}
+      <div className="flex items-stretch rounded-lg ring-1 ring-slate-300 focus-within:ring-2 focus-within:ring-brand-500 overflow-hidden bg-white">
+        <button type="button" onClick={() => bump(-step)} aria-label={`${label || '값'} 줄이기`}
+          disabled={n !== null && n <= min}
+          className="px-3.5 text-lg font-bold text-slate-500 hover:bg-slate-100 disabled:opacity-30">−</button>
+        <div className="relative flex-1">
+          <input type="number" value={value} inputMode="numeric"
+            onChange={(e) => onChange(e.target.value)}
+            aria-label={label}
+            className="tnum w-full border-0 bg-transparent py-2.5 text-center text-sm font-bold outline-none" />
+          {suffix && <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400">{suffix}</span>}
+        </div>
+        <button type="button" onClick={() => bump(step)} aria-label={`${label || '값'} 늘리기`}
+          disabled={n !== null && n >= max}
+          className="px-3.5 text-lg font-bold text-slate-500 hover:bg-slate-100 disabled:opacity-30">+</button>
+      </div>
+      {hint && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
+    </div>
+  );
+}
+
+function Segmented({ label, value, onChange, options, className = '' }) {
+  return (
+    <div className={className}>
+      {label && <span className="block text-sm font-semibold text-slate-700 mb-1.5">{label}</span>}
+      <div className="inline-flex w-full rounded-lg bg-slate-100 p-1" role="group" aria-label={label}>
+        {options.map((o) => (
+          <button key={o.value} type="button" onClick={() => onChange(o.value)}
+            aria-pressed={value === o.value}
+            className={`flex-1 rounded-md px-3 py-2 text-xs font-bold transition-colors
+              ${value === o.value ? 'bg-white text-brand-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Modal({ isOpen, onClose, title, size = 'md', children }) {
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = ''; };
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+  const sizes = { sm: 'max-w-md', md: 'max-w-xl', lg: 'max-w-3xl' };
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={title}>
+      <div className="absolute inset-0 bg-slate-900/50" onClick={onClose} />
+      <Card className={`relative w-full ${sizes[size]} anim-fade-up max-h-[85vh] overflow-y-auto`}>
+        <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-4">
+          <h2 className="text-lg font-bold text-slate-900">{title}</h2>
+          <button onClick={onClose} aria-label="닫기"
+            className="rounded-lg px-2 py-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700">✕</button>
+        </div>
+        <div className="px-6 py-5">{children}</div>
+      </Card>
+    </div>
+  );
+}
+
+
+// ========================================
+// 🧩 Common Components
+// ========================================
+
+function Header({ onHelp }) {
+  return (
+    <header className="bg-brand-800 text-white">
+      <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-5">
+        <div className="flex items-center gap-3">
+          <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand-600 text-lg">₩</span>
+          <div>
+            <h1 className="text-lg font-bold leading-tight">더치페이 계산기</h1>
+            <p className="text-xs leading-tight text-brand-200">총액 · 인원 · 비율을 넣으면 자동으로 나눈다</p>
+          </div>
+        </div>
+        <button type="button" onClick={onHelp}
+          className="rounded-lg bg-brand-700 px-3 py-1.5 text-xs font-semibold text-white ring-1 ring-brand-600 transition-colors hover:bg-brand-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-white">
+          계산 방식
+        </button>
+      </div>
+    </header>
+  );
+}
+
+function PersonRow({ index, person, amount, share, mode, isAdjustTarget, onChange, onRemove, canRemove }) {
+  return (
+    <div className={`grid grid-cols-12 items-center gap-2 rounded-lg px-2 py-2 transition-colors
+      ${isAdjustTarget ? 'bg-amber-50 ring-1 ring-amber-200' : 'hover:bg-slate-50'}`}>
+      <span className="col-span-1 text-center text-xs font-bold text-slate-400">{index + 1}</span>
+
+      <div className="col-span-4 sm:col-span-4">
+        <input
+          value={person.name}
+          onChange={(e) => onChange({ ...person, name: e.target.value })}
+          placeholder={`인원 ${index + 1}`}
+          aria-label={`${index + 1}번 이름`}
+          className="w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-sm outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-200"
+        />
+      </div>
+
+      <div className="col-span-3 sm:col-span-2">
+        <input
+          type="number" min="0" step="0.1" inputMode="decimal"
+          value={mode === 'equal' ? 1 : person.ratio}
+          disabled={mode === 'equal'}
+          onChange={(e) => onChange({ ...person, ratio: e.target.value })}
+          aria-label={`${index + 1}번 비율`}
+          className="tnum w-full rounded-md border border-slate-200 px-2 py-1.5 text-center text-sm font-semibold outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-200 disabled:bg-slate-100 disabled:text-slate-400"
+        />
+      </div>
+
+      <div className="col-span-3 sm:col-span-4 text-right">
+        <span className="tnum block text-sm font-bold text-slate-900">{won(amount)}<span className="ml-0.5 text-xs font-medium text-slate-400">원</span></span>
+        <span className="tnum block text-[11px] text-slate-400">{(share * 100).toFixed(1)}%</span>
+      </div>
+
+      <div className="col-span-1 text-right">
+        <button type="button" onClick={onRemove} disabled={!canRemove}
+          aria-label={`${index + 1}번 삭제`}
+          className="rounded-md px-1.5 py-1 text-slate-300 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-0">✕</button>
+      </div>
+    </div>
+  );
+}
+
+
+// ========================================
+// 📄 Page — 더치페이 계산기
+// ========================================
+
+function DutchPayPage() {
+  const [total, setTotal] = useState('');
+  const [tipPercent, setTipPercent] = useState('0');
+  const [mode, setMode] = useState('equal');            // equal | ratio
+  const [unit, setUnit] = useState(100);                // 반올림 단위
+  const [roundMode, setRoundMode] = useState('round');  // round | ceil | floor
+  const [adjustIndex, setAdjustIndex] = useState(0);    // 차액 부담자 (-1 = 조정 안 함)
+  const [people, setPeople] = useState(() => [makePerson(), makePerson(), makePerson()]);
+  const [copied, setCopied] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+
+  // 인원 수 변경 — 기존 입력은 보존한다
+  const setCount = useCallback((raw) => {
+    const n = parseNum(raw);
+    if (n === null) return;
+    const next = Math.min(50, Math.max(1, Math.floor(n)));
+    setPeople((prev) => {
+      if (next === prev.length) return prev;
+      if (next < prev.length) return prev.slice(0, next);
+      const add = Array.from({ length: next - prev.length }, () => makePerson());
+      return [...prev, ...add];
+    });
+  }, []);
+
+  // 차액 부담자 인덱스가 인원 수를 벗어나면 되돌린다
+  useEffect(() => {
+    if (adjustIndex >= people.length) setAdjustIndex(people.length > 0 ? 0 : -1);
+  }, [people.length, adjustIndex]);
+
+  const result = useMemo(
+    () => calcSplit({ total, tipPercent, people, mode, unit, roundMode, adjustIndex }),
+    [total, tipPercent, people, mode, unit, roundMode, adjustIndex]
+  );
+
+  const updatePerson = (i, next) =>
+    setPeople((prev) => prev.map((p, k) => (k === i ? next : p)));
+
+  const removePerson = (i) =>
+    setPeople((prev) => (prev.length <= 1 ? prev : prev.filter((_, k) => k !== i)));
+
+  const addPerson = () =>
+    setPeople((prev) => (prev.length >= 50 ? prev : [...prev, makePerson()]));
+
+  const resetAll = () => {
+    setTotal(''); setTipPercent('0'); setMode('equal');
+    setUnit(100); setRoundMode('round'); setAdjustIndex(0);
+    setPeople([makePerson(), makePerson(), makePerson()]);
+  };
+
+  const summaryText = useMemo(() => {
+    if (!result.ok) return '';
+    const t = parseNum(total) ?? 0;
+    const lines = ['[더치페이 정산]'];
+    lines.push(`총액 ${won(t)}원` + (result.tipAmount > 0 ? ` + 추가 ${won(result.tipAmount)}원 = ${won(result.grandTotal)}원` : ''));
+    lines.push(`${people.length}명 · ${mode === 'equal' ? '균등 분배' : '비율 분배'}`);
+    lines.push('');
+    result.rows.forEach((r, i) => {
+      lines.push(`${r.name || `인원 ${i + 1}`} : ${won(r.final)}원` + (mode === 'ratio' ? `  (비율 ${r.weight})` : ''));
+    });
+    return lines.join('\n');
+  }, [result, total, people.length, mode]);
+
+  const copy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(summaryText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (e) {
+      setCopied(false);
+      window.prompt('복사에 실패했다. 아래 내용을 직접 복사한다.', summaryText);
+    }
+  }, [summaryText]);
+
+  const totalNum = parseNum(total);
+  const hasInput = totalNum !== null && totalNum > 0;
+  const perPersonEqual = hasInput && result.ok ? result.grandTotal / people.length : 0;
+
+  return (
+    <>
+      <Header onHelp={() => setHelpOpen(true)} />
+
+      <main className="mx-auto max-w-5xl px-4 py-6 md:py-10">
+        <div className="grid gap-6 lg:grid-cols-5">
+
+          {/* ── 입력 ── */}
+          <div className="lg:col-span-3 space-y-5">
+
+            <Card className="p-5 md:p-6">
+              <h2 className="mb-4 text-base font-bold text-slate-900">기본 정보</h2>
+
+              <Input
+                label="총액" type="text" inputMode="numeric" size="lg" align="right"
+                value={total} onChange={(v) => setTotal(v.replace(/[^0-9.,]/g, ''))}
+                placeholder="0" suffix="원"
+                hint={hasInput ? `${won(totalNum)}원` : '결제한 전체 금액을 입력한다'}
+              />
+
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <Stepper
+                  label="사람 수" value={String(people.length)} onChange={setCount}
+                  min={1} max={50} suffix="명"
+                  hint="인원을 바꿔도 입력한 이름과 비율은 유지된다"
+                />
+                <Input
+                  label="추가 비율 (봉사료 · 팁)" type="number" inputMode="decimal" align="right"
+                  value={tipPercent} onChange={setTipPercent} placeholder="0" suffix="%"
+                  hint={result.ok && result.tipAmount > 0 ? `+ ${won(result.tipAmount)}원` : '필요 없으면 0'}
+                />
+              </div>
+
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <Segmented
+                  label="분배 방식" value={mode} onChange={setMode}
+                  options={[{ value: 'equal', label: '균등 (1/N)' }, { value: 'ratio', label: '비율 지정' }]}
+                />
+                <Segmented
+                  label="반올림 단위" value={unit} onChange={setUnit}
+                  options={[
+                    { value: 1, label: '1원' }, { value: 10, label: '10원' },
+                    { value: 100, label: '100원' }, { value: 1000, label: '1천원' },
+                  ]}
+                />
+              </div>
+            </Card>
+
+            {/* 인원 목록 */}
+            <Card className="overflow-hidden">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3">
+                <h2 className="text-base font-bold text-slate-900">
+                  인원별 {mode === 'ratio' ? '비율' : '금액'}
+                </h2>
+                <div className="flex items-center gap-2">
+                  {mode === 'equal' && <Badge tone="gray">균등 분배 중</Badge>}
+                  <Button size="sm" variant="secondary" onClick={addPerson} disabled={people.length >= 50}>
+                    + 인원 추가
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-12 gap-2 border-b border-slate-100 px-2 py-2 text-[11px] font-bold text-slate-400">
+                <span className="col-span-1 text-center">#</span>
+                <span className="col-span-4">이름</span>
+                <span className="col-span-3 sm:col-span-2 text-center">비율</span>
+                <span className="col-span-3 sm:col-span-4 text-right pr-1">부담액</span>
+                <span className="col-span-1"></span>
+              </div>
+
+              <div className="divide-y divide-slate-100 px-2 py-1">
+                {people.map((p, i) => (
+                  <PersonRow
+                    key={p.id}
+                    index={i}
+                    person={p}
+                    mode={mode}
+                    amount={result.ok ? result.rows[i].final : 0}
+                    share={result.ok ? result.rows[i].share : 0}
+                    isAdjustTarget={result.ok && result.adjusted && adjustIndex === i}
+                    onChange={(next) => updatePerson(i, next)}
+                    onRemove={() => removePerson(i)}
+                    canRemove={people.length > 1}
+                  />
+                ))}
+              </div>
+
+              {mode === 'ratio' && (
+                <p className="border-t border-slate-100 px-4 py-3 text-xs leading-relaxed text-slate-500">
+                  비율은 상대값이다. <strong>2 : 1 : 1</strong> 과 <strong>4 : 2 : 2</strong> 는 같은 결과가 나온다.
+                  0을 넣으면 그 사람은 부담하지 않는다.
+                </p>
+              )}
+            </Card>
+
+            {/* 잔돈 처리 */}
+            <Card className="p-5 md:p-6">
+              <h2 className="mb-4 text-base font-bold text-slate-900">잔돈 처리</h2>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Segmented
+                  label="반올림 방향" value={roundMode} onChange={setRoundMode}
+                  options={[
+                    { value: 'round', label: '반올림' },
+                    { value: 'ceil', label: '올림' },
+                    { value: 'floor', label: '내림' },
+                  ]}
+                />
+                <div>
+                  <label htmlFor="adj" className="block text-sm font-semibold text-slate-700 mb-1.5">차액 부담자</label>
+                  <select id="adj" value={adjustIndex}
+                    onChange={(e) => setAdjustIndex(Number(e.target.value))}
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100">
+                    <option value={-1}>조정하지 않음 (차액을 남긴다)</option>
+                    {people.map((p, i) => (
+                      <option key={p.id} value={i}>{p.name || `인원 ${i + 1}`} 이(가) 부담</option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-xs text-slate-500">반올림으로 생긴 차액을 한 사람이 흡수한다</p>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* ── 결과 ── */}
+          <div className="lg:col-span-2">
+            <div className="lg:sticky lg:top-6 space-y-4">
+
+              {!result.ok ? (
+                <Card className="p-6 text-center">
+                  <p className="text-3xl">🧾</p>
+                  <p className="mt-3 text-sm font-bold text-slate-700">
+                    {totalNum === null ? '총액을 입력하면 계산된다' : result.error}
+                  </p>
+                  <p className="mt-1.5 text-xs leading-relaxed text-slate-400">
+                    총액 · 사람 수 · 비율만 넣으면<br />1인당 금액이 바로 나온다.
+                  </p>
+                </Card>
+              ) : (
+                <>
+                  <Card className="overflow-hidden anim-fade-up">
+                    <div className="bg-brand-800 px-6 py-5 text-white">
+                      <p className="text-xs font-bold uppercase tracking-wider text-brand-200">
+                        {mode === 'equal' ? '1인당 (균등)' : '1인 평균'}
+                      </p>
+                      <p className="tnum mt-1 text-3xl font-black">
+                        {/* 균등 모드는 반올림된 기본 금액(차액 조정 전)을 보여준다 */}
+                        {won(mode === 'equal' && result.rows.length ? result.rows[0].rounded : perPersonEqual)}
+                        <span className="ml-1 text-lg font-bold text-brand-200">원</span>
+                      </p>
+                      {mode === 'ratio' && (
+                        <p className="mt-1 text-xs text-brand-200">비율이 달라 실제 부담액은 아래 목록을 본다</p>
+                      )}
+                    </div>
+
+                    <dl className="divide-y divide-slate-100 px-6 py-2 text-sm">
+                      <div className="flex items-center justify-between py-2.5">
+                        <dt className="text-slate-500">총액</dt>
+                        <dd className="tnum font-semibold">{won(totalNum)}원</dd>
+                      </div>
+                      {result.tipAmount > 0 && (
+                        <div className="flex items-center justify-between py-2.5">
+                          <dt className="text-slate-500">추가 ({tipPercent}%)</dt>
+                          <dd className="tnum font-semibold text-brand-700">+ {won(result.tipAmount)}원</dd>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between py-2.5">
+                        <dt className="text-slate-500">합계</dt>
+                        <dd className="tnum font-bold text-slate-900">{won(result.grandTotal)}원</dd>
+                      </div>
+                      <div className="flex items-center justify-between py-2.5">
+                        <dt className="text-slate-500">인원</dt>
+                        <dd className="tnum font-semibold">{people.length}명</dd>
+                      </div>
+                      <div className="flex items-center justify-between py-2.5">
+                        <dt className="text-slate-500">거둘 금액</dt>
+                        <dd className="tnum font-bold">
+                          {won(result.rows.reduce((a, r) => a + r.final, 0))}원
+                        </dd>
+                      </div>
+                    </dl>
+
+                    <div className="border-t border-slate-100 px-6 py-4">
+                      {Math.abs(result.diff) < 0.5 ? (
+                        <Badge tone="brand">합계가 정확히 맞는다</Badge>
+                      ) : result.adjusted ? (
+                        <div>
+                          <Badge tone="amber">차액 {won(Math.abs(result.diff))}원 조정됨</Badge>
+                          <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                            반올림으로 생긴 {result.diff > 0 ? '부족분' : '초과분'}을{' '}
+                            <strong>{people[adjustIndex]?.name || `인원 ${adjustIndex + 1}`}</strong>
+                            {result.diff > 0 ? '이(가) 더 낸다.' : '이(가) 덜 낸다.'}
+                          </p>
+                        </div>
+                      ) : (
+                        <div>
+                          <Badge tone="red">
+                            {result.diff > 0 ? '부족' : '초과'} {won(Math.abs(result.diff))}원
+                          </Badge>
+                          <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                            반올림 때문에 합계가 맞지 않는다. 차액 부담자를 지정하거나 반올림 단위를 줄인다.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+
+                  <div className="flex gap-2">
+                    <Button className="flex-1" onClick={copy}>
+                      {copied ? '복사됨 ✓' : '정산 내역 복사'}
+                    </Button>
+                    <Button variant="ghost" onClick={resetAll}>초기화</Button>
+                  </div>
+
+                  <Card className="p-4">
+                    <p className="mb-2 text-xs font-bold text-slate-500">빠른 확인</p>
+                    <ul className="space-y-1.5 text-xs text-slate-600">
+                      <li className="flex justify-between">
+                        <span>반올림 전 1인 평균</span>
+                        <span className="tnum font-semibold">{won(perPersonEqual)}원</span>
+                      </li>
+                      <li className="flex justify-between">
+                        <span>가장 많이 내는 사람</span>
+                        <span className="tnum font-semibold">
+                          {won(Math.max(...result.rows.map((r) => r.final)))}원
+                        </span>
+                      </li>
+                      <li className="flex justify-between">
+                        <span>가장 적게 내는 사람</span>
+                        <span className="tnum font-semibold">
+                          {won(Math.min(...result.rows.map((r) => r.final)))}원
+                        </span>
+                      </li>
+                    </ul>
+                  </Card>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <footer className="border-t border-slate-200 bg-white">
+        <div className="mx-auto max-w-5xl px-4 py-6 text-xs text-slate-400">
+          입력값은 브라우저 안에서만 계산되며 어디로도 전송되지 않는다.
+        </div>
+      </footer>
+
+      <Modal isOpen={helpOpen} onClose={() => setHelpOpen(false)} title="계산 방식">
+        <div className="space-y-4 text-sm leading-relaxed text-slate-700">
+          <div>
+            <p className="font-bold text-slate-900">1. 합계를 먼저 만든다</p>
+            <p className="mt-1 text-slate-600">합계 = 총액 × (1 + 추가 비율 ÷ 100)</p>
+          </div>
+          <div>
+            <p className="font-bold text-slate-900">2. 비율대로 나눈다</p>
+            <p className="mt-1 text-slate-600">
+              개인 부담액 = 합계 × (개인 비율 ÷ 비율 합).
+              균등 모드는 모두의 비율을 1로 두는 것과 같다.
+            </p>
+          </div>
+          <div>
+            <p className="font-bold text-slate-900">3. 잔돈을 정리한다</p>
+            <p className="mt-1 text-slate-600">
+              지정한 단위로 반올림하면 개인 금액의 합이 합계와 어긋난다.
+              이 차액을 한 사람이 흡수하도록 지정하면 총액이 정확히 맞는다.
+            </p>
+          </div>
+          <div className="rounded-lg bg-slate-50 px-4 py-3">
+            <p className="text-xs font-bold text-slate-700">예시</p>
+            <p className="mt-1 text-xs leading-relaxed text-slate-600">
+              총액 100,000원 · 3명 · 100원 단위 반올림 → 각 33,300원, 합계 99,900원.
+              차액 100원을 1번이 부담하면 33,400 / 33,300 / 33,300 원이 되어 정확히 100,000원이 된다.
+            </p>
+          </div>
+        </div>
+      </Modal>
+    </>
+  );
+}
+
+
+// ========================================
+// 🚀 App
+// ========================================
+
+function App() {
+  return (
+    <div className="flex min-h-screen flex-col">
+      <div className="flex-1">
+        <DutchPayPage />
+      </div>
+    </div>
+  );
+}
+
+
+// ========================================
+// Rendering
+// ========================================
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

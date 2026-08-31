@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>15분 에그인헬 — 원팬 토마토 달걀 스튜</title>
+  <meta name="description" content="팬 하나로 끝나는 15분 에그인헬 레시피. 인분 자동 계산, 재료 체크리스트, 단계별 타이머 제공.">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@1.3.9/dist/web/static/pretendard.min.css">
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <!-- CDN 버전 고정: Babel 은 반드시 7.x (8.x 는 인라인 text/babel 미지원) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.25.9/babel.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Pretendard', 'system-ui', 'sans-serif'] },
+          colors: {
+            cream: '#FFFBF5',
+            paper: '#FFFFFF',
+            tomato: { 50: '#FEF3F0', 100: '#FDE4DD', 300: '#F0A48F', 500: '#D94F30', 600: '#C03E22', 700: '#9A2F19' },
+            char: { 500: '#7A6A5F', 700: '#4A3B33', 900: '#2A201B' },
+            yolk: '#F2A93B',
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    /* Tailwind 유틸리티로 표현 불가한 것만 */
+    html { scroll-behavior: smooth; }
+    @keyframes simmer { 0%, 100% { transform: translateY(0); opacity: .85 } 50% { transform: translateY(-3px); opacity: 1 } }
+    .animate-simmer { animation: simmer 2.4s ease-in-out infinite; }
+    @keyframes pop-in { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
+    .animate-pop { animation: pop-in .35s ease-out both; }
+    .no-tap-highlight { -webkit-tap-highlight-color: transparent; }
+    ::selection { background: #FDE4DD; color: #9A2F19; }
+  </style>
+</head>
+<body class="bg-cream text-char-900 font-sans antialiased">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    // ========================================
+    // React Hooks
+    // ========================================
+    const { useState, useEffect, useMemo, useCallback } = React;
+
+    // ========================================
+    // 📦 Recipe Data
+    // ========================================
+    const RECIPE = {
+      title: '15분 에그인헬',
+      subtitle: '팬 하나로 끝나는 토마토 달걀 스튜. 빵만 있으면 아침, 점심, 저녁 아무 때나 통합니다.',
+      image: 'shakshuka-eggs-in-tomato.jpg',
+      baseServings: 2,
+      totalMinutes: 15,
+      difficulty: '쉬움',
+      category: '원팬 / 빵',
+    };
+
+    // amount 가 null 이면 스케일링 대상이 아님 (약간 / 한 줌 등)
+    const INGREDIENT_GROUPS = [
+      {
+        id: 'base',
+        title: '베이스',
+        emoji: '🍅',
+        items: [
+          { name: '홀토마토 캔', amount: 400, unit: 'g', note: '또는 토마토 파스타 소스 1컵' },
+          { name: '양파', amount: 0.5, unit: '개', note: '굵게 다지기' },
+          { name: '파프리카', amount: 0.5, unit: '개', note: '한 입 크기로 썰기' },
+          { name: '마늘', amount: 4, unit: '쪽', note: '다지기' },
+          { name: '올리브유', amount: 2, unit: '큰술' },
+        ],
+      },
+      {
+        id: 'spice',
+        title: '향신료',
+        emoji: '🌶️',
+        items: [
+          { name: '파프리카 가루', amount: 1, unit: '작은술' },
+          { name: '커민 가루', amount: 0.5, unit: '작은술', note: '있으면 꼭' },
+          { name: '고춧가루 / 칠리플레이크', amount: 0.5, unit: '작은술' },
+          { name: '소금', amount: 0.5, unit: '작은술' },
+          { name: '후추', amount: null, unit: '약간' },
+          { name: '설탕', amount: 1, unit: '작은술', note: '토마토 산미 잡기용' },
+        ],
+      },
+      {
+        id: 'finish',
+        title: '마무리',
+        emoji: '🥚',
+        items: [
+          { name: '달걀', amount: 4, unit: '개' },
+          { name: '페타 치즈 또는 모차렐라', amount: null, unit: '한 줌', optional: true },
+          { name: '파슬리 또는 고수', amount: null, unit: '한 줌' },
+          { name: '바게트나 치아바타', amount: null, unit: '곁들임용' },
+        ],
+      },
+    ];
+
+    const STEPS = [
+      {
+        id: 1, at: 0, title: '재료 손질',
+        body: '양파, 파프리카, 마늘을 썹니다. 홀토마토는 캔째로 손이나 가위로 대충 으깨 둡니다.',
+        timer: null,
+      },
+      {
+        id: 2, at: 3, title: '볶기',
+        body: '깊은 팬에 올리브유를 두르고 중강 불에서 양파와 파프리카를 3분간 볶습니다. 양파 가장자리가 투명해지면 마늘을 넣고 30초 더 볶습니다.',
+        timer: { seconds: 180, label: '3분 볶기' },
+      },
+      {
+        id: 3, at: 5, title: '향신료 깨우기',
+        body: '불을 중불로 낮추고 파프리카 가루, 커민, 고춧가루를 넣어 30초만 볶습니다. 기름에 향이 확 올라옵니다.',
+        warn: '이 단계를 건너뛰면 가루 맛이 남습니다.',
+        timer: { seconds: 30, label: '30초 향내기' },
+      },
+      {
+        id: 4, at: 6, title: '소스 끓이기',
+        body: '으깬 토마토, 소금, 후추, 설탕을 넣고 저은 뒤 중불에서 5분간 보글보글 끓입니다. 소스가 걸쭉해지고 표면에 기름이 살짝 뜨면 됩니다.',
+        timer: { seconds: 300, label: '5분 졸이기' },
+      },
+      {
+        id: 5, at: 11, title: '달걀 넣기',
+        body: '숟가락으로 소스에 홈을 4개 파고 달걀을 하나씩 깨 넣습니다. 흰자 부분에만 소금을 살짝 뿌립니다.',
+        timer: null,
+      },
+      {
+        id: 6, at: 12, title: '뚜껑 덮고 익히기',
+        body: '뚜껑을 덮고 약불에서 3~4분. 흰자는 완전히 굳고 노른자는 흔들릴 때 불을 끕니다.',
+        warn: '뚜껑 없이 익히면 흰자가 익기 전에 바닥이 탑니다.',
+        timer: { seconds: 210, label: '3분 30초 뜸들이기' },
+      },
+      {
+        id: 7, at: 15, title: '마무리',
+        body: '치즈를 부수어 뿌리고 파슬리를 흩뿌립니다. 팬째로 식탁에 올려 빵으로 퍼먹습니다.',
+        timer: null,
+      },
+    ];
+
+    const TIPS = [
+      { point: '향신료는 기름에 먼저', reason: '지용성 향 성분은 기름에서만 제대로 우러납니다.' },
+      { point: '소스를 충분히 졸이기', reason: '묽으면 달걀이 가라앉아 삶은 달걀처럼 됩니다.' },
+      { point: '설탕 1작은술', reason: '캔 토마토 특유의 금속성 신맛을 눌러 줍니다.' },
+      { point: '잔열 계산', reason: '불을 끈 뒤에도 1분간 계속 익습니다. 살짝 덜 익었을 때 끄세요.' },
+    ];
+
+    const VARIATIONS = [
+      { emoji: '🥓', name: '든든하게', desc: '초리조나 베이컨을 2번 단계에서 함께 볶기' },
+      { emoji: '🥛', name: '크리미하게', desc: '4번 끝에 생크림 2큰술 또는 요거트 한 숟갈' },
+      { emoji: '🌿', name: '초록 버전', desc: '토마토 대신 시금치 + 크림으로 그린 샥슈카' },
+      { emoji: '🔥', name: '매운맛', desc: '하리사 1큰술 또는 청양고추 1개' },
+    ];
+
+    // ========================================
+    // 🔧 Utils
+    // ========================================
+    const FRACTION_SYMBOLS = { 0.25: '¼', 0.5: '½', 0.75: '¾' };
+
+    function formatAmount(value) {
+      const rounded = Math.round(value * 100) / 100;
+      const whole = Math.floor(rounded);
+      const frac = Math.round((rounded - whole) * 100) / 100;
+      const symbol = FRACTION_SYMBOLS[frac];
+      if (symbol) return whole > 0 ? `${whole}${symbol}` : symbol;
+      return String(Number(rounded.toFixed(2)));
+    }
+
+    function formatClock(totalSeconds) {
+      const m = Math.floor(totalSeconds / 60);
+      const s = totalSeconds % 60;
+      return `${m}:${String(s).padStart(2, '0')}`;
+    }
+
+    function loadStored(key, fallback) {
+      try {
+        const raw = window.localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch (e) {
+        return fallback;
+      }
+    }
+
+    function saveStored(key, value) {
+      try {
+        window.localStorage.setItem(key, JSON.stringify(value));
+      } catch (e) {
+        /* 시크릿 모드 등 저장 불가 환경은 조용히 무시 */
+      }
+    }
+
+    function playChime() {
+      try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        const ctx = new Ctx();
+        [880, 1320].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          const start = ctx.currentTime + i * 0.22;
+          gain.gain.setValueAtTime(0.0001, start);
+          gain.gain.exponentialRampToValueAtTime(0.25, start + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.35);
+          osc.connect(gain).connect(ctx.destination);
+          osc.start(start);
+          osc.stop(start + 0.4);
+        });
+        setTimeout(() => ctx.close(), 1500);
+      } catch (e) {
+        /* 오디오 미지원 환경 무시 */
+      }
+    }
+
+    // ========================================
+    // 🎨 Design System Components
+    // ========================================
+    function Badge({ children, variant = 'neutral', className = '' }) {
+      const variants = {
+        neutral: 'bg-tomato-50 text-tomato-700 ring-1 ring-tomato-100',
+        solid: 'bg-tomato-500 text-white',
+        outline: 'bg-transparent text-char-500 ring-1 ring-char-500/25',
+        yolk: 'bg-yolk/15 text-[#8A5A08] ring-1 ring-yolk/30',
+      };
+      return (
+        <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold tracking-tight ${variants[variant]} ${className}`}>
+          {children}
+        </span>
+      );
+    }
+
+    function Card({ children, className = '' }) {
+      return (
+        <div className={`rounded-2xl bg-paper ring-1 ring-char-500/10 shadow-[0_1px_2px_rgba(42,32,27,.04),0_12px_32px_-16px_rgba(42,32,27,.18)] ${className}`}>
+          {children}
+        </div>
+      );
+    }
+
+    function Button({ children, variant = 'primary', size = 'md', disabled = false, onClick, className = '', ...rest }) {
+      const base = 'no-tap-highlight inline-flex items-center justify-center gap-1.5 rounded-full font-semibold transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-tomato-500 focus-visible:ring-offset-2 focus-visible:ring-offset-cream disabled:opacity-40 disabled:cursor-not-allowed';
+      const variants = {
+        primary: 'bg-tomato-500 text-white hover:bg-tomato-600 active:scale-[.97] shadow-sm',
+        secondary: 'bg-tomato-50 text-tomato-700 hover:bg-tomato-100 active:scale-[.97]',
+        ghost: 'bg-transparent text-char-500 hover:bg-char-500/10 active:scale-[.97]',
+        danger: 'bg-white text-tomato-600 ring-1 ring-tomato-300 hover:bg-tomato-50 active:scale-[.97]',
+      };
+      const sizes = { sm: 'px-3 py-1.5 text-xs', md: 'px-4 py-2 text-sm', lg: 'px-6 py-3 text-base' };
+      return (
+        <button type="button" onClick={onClick} disabled={disabled}
+          className={`${base} ${variants[variant]} ${sizes[size]} ${className}`} {...rest}>
+          {children}
+        </button>
+      );
+    }
+
+    function CheckItem({ checked, onToggle, children, className = '' }) {
+      return (
+        <button type="button" role="checkbox" aria-checked={checked} onClick={onToggle}
+          className={`no-tap-highlight group flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-tomato-50/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-tomato-500 ${className}`}>
+          <span aria-hidden="true"
+            className={`mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-md border-2 transition-all duration-150 ${checked ? 'border-tomato-500 bg-tomato-500' : 'border-char-500/30 bg-white group-hover:border-tomato-300'}`}>
+            {checked && (
+              <svg viewBox="0 0 20 20" className="h-3.5 w-3.5 text-white" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 10.5l4 4 8-9" />
+              </svg>
+            )}
+          </span>
+          <span className={`min-w-0 flex-1 transition-opacity ${checked ? 'opacity-40' : ''}`}>{children}</span>
+        </button>
+      );
+    }
+
+    function ProgressBar({ value, max, className = '' }) {
+      const pct = max === 0 ? 0 : Math.round((value / max) * 100);
+      return (
+        <div className={`h-1.5 w-full overflow-hidden rounded-full bg-char-500/10 ${className}`}
+          role="progressbar" aria-valuenow={pct} aria-valuemin="0" aria-valuemax="100">
+          <div className="h-full rounded-full bg-gradient-to-r from-yolk to-tomato-500 transition-[width] duration-500 ease-out"
+            style={{ width: `${pct}%` }} />
+        </div>
+      );
+    }
+
+    function SectionTitle({ eyebrow, title, children }) {
+      return (
+        <div className="mb-6">
+          {eyebrow && <p className="mb-1.5 text-xs font-bold uppercase tracking-[0.18em] text-tomato-500">{eyebrow}</p>}
+          <h2 className="text-2xl font-extrabold tracking-tight text-char-900 sm:text-3xl">{title}</h2>
+          {children && <p className="mt-2 max-w-2xl text-sm leading-relaxed text-char-500">{children}</p>}
+        </div>
+      );
+    }
+
+    // ========================================
+    // ⏱️ Cook Timer Hook
+    // ========================================
+    function useCookTimer() {
+      const [activeStepId, setActiveStepId] = useState(null);
+      const [remaining, setRemaining] = useState(0);
+      const [running, setRunning] = useState(false);
+      const [finishedStepId, setFinishedStepId] = useState(null);
+
+      useEffect(() => {
+        if (!running) return undefined;
+        const tick = setInterval(() => {
+          setRemaining((prev) => {
+            if (prev <= 1) {
+              setRunning(false);
+              setFinishedStepId(activeStepId);
+              playChime();
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+        return () => clearInterval(tick);
+      }, [running, activeStepId]);
+
+      const start = useCallback((stepId, seconds) => {
+        setActiveStepId(stepId);
+        setRemaining(seconds);
+        setFinishedStepId(null);
+        setRunning(true);
+      }, []);
+
+      const toggle = useCallback(() => setRunning((prev) => !prev), []);
+
+      const stop = useCallback(() => {
+        setRunning(false);
+        setActiveStepId(null);
+        setRemaining(0);
+      }, []);
+
+      return { activeStepId, remaining, running, finishedStepId, start, toggle, stop };
+    }
+
+    // ========================================
+    // 🧩 Layout Components
+    // ========================================
+    function Header({ progressValue, progressMax }) {
+      const [scrolled, setScrolled] = useState(false);
+
+      useEffect(() => {
+        const onScroll = () => setScrolled(window.scrollY > 24);
+        onScroll();
+        window.addEventListener('scroll', onScroll, { passive: true });
+        return () => window.removeEventListener('scroll', onScroll);
+      }, []);
+
+      return (
+        <header className={`sticky top-0 z-40 transition-all duration-300 ${scrolled ? 'bg-cream/85 backdrop-blur-md ring-1 ring-char-500/10' : 'bg-transparent'}`}>
+          <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-3">
+            <a href="#top" className="flex items-center gap-2 font-extrabold tracking-tight">
+              <span aria-hidden="true" className="text-xl">🍳</span>
+              <span className="text-sm sm:text-base">15분 에그인헬</span>
+            </a>
+            <nav className="flex items-center gap-1" aria-label="섹션 이동">
+              <a href="#ingredients" className="rounded-full px-3 py-1.5 text-xs font-semibold text-char-500 transition-colors hover:bg-tomato-50 hover:text-tomato-700 sm:text-sm">재료</a>
+              <a href="#steps" className="rounded-full px-3 py-1.5 text-xs font-semibold text-char-500 transition-colors hover:bg-tomato-50 hover:text-tomato-700 sm:text-sm">만드는 법</a>
+              <a href="#tips" className="hidden rounded-full px-3 py-1.5 text-xs font-semibold text-char-500 transition-colors hover:bg-tomato-50 hover:text-tomato-700 sm:inline-block sm:text-sm">성공 포인트</a>
+            </nav>
+          </div>
+          {scrolled && <ProgressBar value={progressValue} max={progressMax} className="h-1 rounded-none" />}
+        </header>
+      );
+    }
+
+    function Hero() {
+      const [imageFailed, setImageFailed] = useState(false);
+
+      const scrollTo = (id) => {
+        const el = document.getElementById(id);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      };
+
+      return (
+        <section id="top" className="mx-auto max-w-5xl px-5 pt-6 pb-12 sm:pt-10">
+          <div className="grid items-center gap-8 md:grid-cols-[1.05fr_1fr]">
+            <div className="animate-pop">
+              <div className="mb-4 flex flex-wrap gap-2">
+                <Badge variant="solid">⏱ {RECIPE.totalMinutes}분</Badge>
+                <Badge>{RECIPE.baseServings}인분 기준</Badge>
+                <Badge variant="yolk">난이도 {RECIPE.difficulty}</Badge>
+                <Badge variant="outline">{RECIPE.category}</Badge>
+              </div>
+              <h1 className="text-4xl font-black leading-[1.15] tracking-tight text-char-900 sm:text-5xl">
+                퇴근하고 <span className="text-tomato-500">15분</span>,<br />
+                팬 하나로 끝나는<br />에그인헬
+              </h1>
+              <p className="mt-5 max-w-lg text-base leading-relaxed text-char-500">{RECIPE.subtitle}</p>
+              <div className="mt-7 flex flex-wrap gap-2.5">
+                <Button size="lg" onClick={() => scrollTo('steps')}>바로 요리 시작하기</Button>
+                <Button size="lg" variant="secondary" onClick={() => scrollTo('ingredients')}>재료부터 보기</Button>
+              </div>
+            </div>
+
+            <div className="animate-pop">
+              <div className="relative overflow-hidden rounded-3xl ring-1 ring-char-500/10 shadow-[0_24px_60px_-24px_rgba(154,47,25,.45)]">
+                {imageFailed ? (
+                  <div className="flex aspect-[4/3] items-center justify-center bg-gradient-to-br from-tomato-500 via-tomato-600 to-[#7A1F0E]">
+                    <span aria-hidden="true" className="animate-simmer text-7xl">🍳</span>
+                  </div>
+                ) : (
+                  <img src={RECIPE.image} alt="토마토 소스 위에 달걀을 올려 익힌 에그인헬 한 팬"
+                    onError={() => setImageFailed(true)}
+                    className="aspect-[4/3] w-full object-cover" />
+                )}
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent p-5">
+                  <p className="text-sm font-semibold text-white/95">흰자는 완전히, 노른자는 흔들리게</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    // ========================================
+    // 📄 Page Sections
+    // ========================================
+    function ServingsControl({ servings, onChange }) {
+      const options = [1, 2, 4, 6];
+      return (
+        <div className="inline-flex items-center gap-1 rounded-full bg-tomato-50 p-1" role="group" aria-label="인분 선택">
+          {options.map((n) => (
+            <button key={n} type="button" onClick={() => onChange(n)} aria-pressed={servings === n}
+              className={`no-tap-highlight rounded-full px-3.5 py-1.5 text-sm font-bold transition-all ${servings === n ? 'bg-tomato-500 text-white shadow-sm' : 'text-tomato-700 hover:bg-tomato-100'}`}>
+              {n}인분
+            </button>
+          ))}
+        </div>
+      );
+    }
+
+    function IngredientRow({ item, ratio, checked, onToggle }) {
+      const quantity = item.amount === null
+        ? item.unit
+        : `${formatAmount(item.amount * ratio)}${item.unit}`;
+
+      return (
+        <CheckItem checked={checked} onToggle={onToggle}>
+          <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <span className="text-[15px] font-semibold text-char-900">{item.name}</span>
+            {item.optional && <span className="text-[11px] font-semibold text-char-500/70">선택</span>}
+            <span className="ml-auto whitespace-nowrap rounded-md bg-char-500/10 px-2 py-0.5 text-[13px] font-bold tabular-nums text-tomato-700">{quantity}</span>
+          </span>
+          {item.note && <span className="mt-0.5 block text-[13px] leading-snug text-char-500">{item.note}</span>}
+        </CheckItem>
+      );
+    }
+
+    function IngredientsSection({ servings, onServingsChange, checked, onToggle, onReset }) {
+      const ratio = servings / RECIPE.baseServings;
+      const totalCount = useMemo(() => INGREDIENT_GROUPS.reduce((sum, g) => sum + g.items.length, 0), []);
+      const checkedCount = Object.values(checked).filter(Boolean).length;
+
+      return (
+        <section id="ingredients" className="mx-auto max-w-5xl scroll-mt-20 px-5 py-12">
+          <SectionTitle eyebrow="Ingredients" title="재료">
+            인분을 바꾸면 분량이 자동으로 계산됩니다. 장 볼 때 하나씩 체크해 보세요.
+          </SectionTitle>
+
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <ServingsControl servings={servings} onChange={onServingsChange} />
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-semibold tabular-nums text-char-500">{checkedCount} / {totalCount} 준비됨</span>
+              {checkedCount > 0 && <Button size="sm" variant="ghost" onClick={onReset}>초기화</Button>}
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            {INGREDIENT_GROUPS.map((group) => (
+              <Card key={group.id} className="p-4">
+                <h3 className="mb-2 flex items-center gap-2 px-3 text-sm font-extrabold tracking-tight text-char-900">
+                  <span aria-hidden="true">{group.emoji}</span>{group.title}
+                </h3>
+                <ul className="space-y-0.5">
+                  {group.items.map((item) => {
+                    const key = `${group.id}:${item.name}`;
+                    return (
+                      <li key={key}>
+                        <IngredientRow item={item} ratio={ratio} checked={!!checked[key]} onToggle={() => onToggle(key)} />
+                      </li>
+                    );
+                  })}
+                </ul>
+              </Card>
+            ))}
+          </div>
+        </section>
+      );
+    }
+
+    function StepTimer({ step, timer }) {
+      const isActive = timer.activeStepId === step.id;
+      const isDone = timer.finishedStepId === step.id;
+      const total = step.timer.seconds;
+      const pct = isActive ? ((total - timer.remaining) / total) * 100 : 0;
+
+      if (!isActive) {
+        return (
+          <div className="mt-4 flex items-center gap-2">
+            <Button size="sm" variant="secondary" onClick={() => timer.start(step.id, total)}>
+              <span aria-hidden="true">⏱</span> {step.timer.label}
+            </Button>
+            {isDone && <span className="text-xs font-bold text-tomato-600">타이머 완료!</span>}
+          </div>
+        );
+      }
+
+      return (
+        <div className="mt-4 rounded-2xl bg-char-900 p-4 text-white">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-white/50">{step.timer.label}</p>
+              <p className={`text-3xl font-black tabular-nums ${timer.remaining === 0 ? 'text-yolk' : ''}`}>
+                {formatClock(timer.remaining)}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              {timer.remaining > 0 && (
+                <Button size="sm" variant="primary" onClick={timer.toggle}>
+                  {timer.running ? '일시정지' : '이어서'}
+                </Button>
+              )}
+              <Button size="sm" variant="ghost" className="text-white/70 hover:bg-white/10 hover:text-white" onClick={timer.stop}>
+                {timer.remaining === 0 ? '닫기' : '취소'}
+              </Button>
+            </div>
+          </div>
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/15">
+            <div className="h-full rounded-full bg-gradient-to-r from-yolk to-tomato-500 transition-[width] duration-1000 ease-linear"
+              style={{ width: `${pct}%` }} />
+          </div>
+          {timer.remaining === 0 && <p className="mt-3 text-sm font-semibold text-yolk">시간 끝! 다음 단계로 넘어가세요.</p>}
+        </div>
+      );
+    }
+
+    function StepCard({ step, index, isLast, done, onToggle, timer }) {
+      return (
+        <li className="relative pl-12 sm:pl-16">
+          {!isLast && <span aria-hidden="true" className="absolute left-[19px] top-11 bottom-0 w-0.5 bg-char-500/15 sm:left-[27px]" />}
+
+          <button type="button" onClick={onToggle} aria-pressed={done} aria-label={`${step.title} 단계 완료 표시`}
+            className={`no-tap-highlight absolute left-0 top-1 flex h-10 w-10 items-center justify-center rounded-full text-sm font-black transition-all duration-200 sm:h-14 sm:w-14 sm:text-base ${done ? 'bg-tomato-500 text-white' : 'bg-paper text-char-900 ring-1 ring-char-500/15 hover:ring-tomato-300'}`}>
+            {done ? (
+              <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 10.5l4 4 8-9" />
+              </svg>
+            ) : index + 1}
+          </button>
+
+          <Card className={`mb-4 p-5 transition-opacity ${done ? 'opacity-55' : ''}`}>
+            <div className="mb-1.5 flex flex-wrap items-center gap-2">
+              <h3 className="text-lg font-extrabold tracking-tight text-char-900">{step.title}</h3>
+              <Badge variant="outline">{step.at}분 경과</Badge>
+            </div>
+            <p className="text-[15px] leading-relaxed text-char-700">{step.body}</p>
+            {step.warn && (
+              <p className="mt-3 flex gap-2 rounded-xl bg-tomato-50 px-3.5 py-2.5 text-[13px] font-semibold leading-snug text-tomato-700">
+                <span aria-hidden="true">⚠️</span>{step.warn}
+              </p>
+            )}
+            {step.timer && <StepTimer step={step} timer={timer} />}
+          </Card>
+        </li>
+      );
+    }
+
+    function StepsSection({ doneSteps, onToggle, onReset, timer }) {
+      const doneCount = Object.values(doneSteps).filter(Boolean).length;
+
+      return (
+        <section id="steps" className="mx-auto max-w-5xl scroll-mt-20 px-5 py-12">
+          <SectionTitle eyebrow="Method" title="만드는 법">
+            0분에서 15분까지, 경과 시간대로 따라가면 됩니다. 타이머가 필요한 단계에는 버튼이 붙어 있어요.
+          </SectionTitle>
+
+          <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+            <div className="min-w-[200px] flex-1">
+              <div className="mb-2 flex items-center justify-between text-sm font-semibold text-char-500">
+                <span>진행률</span>
+                <span className="tabular-nums">{doneCount} / {STEPS.length} 단계</span>
+              </div>
+              <ProgressBar value={doneCount} max={STEPS.length} />
+            </div>
+            {doneCount > 0 && <Button size="sm" variant="ghost" onClick={onReset}>단계 초기화</Button>}
+          </div>
+
+          <ol className="list-none">
+            {STEPS.map((step, i) => (
+              <StepCard key={step.id} step={step} index={i} isLast={i === STEPS.length - 1}
+                done={!!doneSteps[step.id]} onToggle={() => onToggle(step.id)} timer={timer} />
+            ))}
+          </ol>
+
+          {doneCount === STEPS.length && (
+            <div className="animate-pop mt-2 rounded-2xl bg-gradient-to-br from-tomato-500 to-tomato-700 p-6 text-center text-white">
+              <p className="text-2xl font-black">완성! 🍳</p>
+              <p className="mt-1 text-sm text-white/85">팬째로 올리고, 빵으로 소스까지 싹 닦아 드세요.</p>
+            </div>
+          )}
+        </section>
+      );
+    }
+
+    function TipsSection() {
+      return (
+        <section id="tips" className="mx-auto max-w-5xl scroll-mt-20 px-5 py-12">
+          <SectionTitle eyebrow="Why it works" title="성공 포인트">
+            왜 그렇게 해야 하는지 알면 다음에는 레시피 없이도 만들 수 있습니다.
+          </SectionTitle>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {TIPS.map((tip, i) => (
+              <Card key={tip.point} className="flex gap-4 p-5">
+                <span aria-hidden="true" className="text-2xl font-black text-tomato-100">{String(i + 1).padStart(2, '0')}</span>
+                <div>
+                  <h3 className="font-extrabold tracking-tight text-char-900">{tip.point}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-char-500">{tip.reason}</p>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </section>
+      );
+    }
+
+    function VariationsSection() {
+      return (
+        <section id="variations" className="mx-auto max-w-5xl scroll-mt-20 px-5 py-12">
+          <SectionTitle eyebrow="Variations" title="응용">
+            같은 뼈대에 하나만 더하면 완전히 다른 요리가 됩니다.
+          </SectionTitle>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {VARIATIONS.map((v) => (
+              <Card key={v.name} className="p-5 transition-transform duration-200 hover:-translate-y-1">
+                <span aria-hidden="true" className="text-3xl">{v.emoji}</span>
+                <h3 className="mt-3 font-extrabold tracking-tight text-char-900">{v.name}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-char-500">{v.desc}</p>
+              </Card>
+            ))}
+          </div>
+        </section>
+      );
+    }
+
+    function PairingSection() {
+      return (
+        <section className="mx-auto max-w-5xl px-5 py-12">
+          <Card className="overflow-hidden">
+            <div className="grid gap-6 p-7 sm:grid-cols-[auto_1fr] sm:items-center sm:p-9">
+              <span aria-hidden="true" className="animate-simmer text-5xl">🥖</span>
+              <div>
+                <h2 className="text-xl font-extrabold tracking-tight text-char-900">곁들이면 좋은 것</h2>
+                <p className="mt-2 text-[15px] leading-relaxed text-char-500">
+                  노릇하게 구운 바게트, 그리고 올리브유와 소금만 뿌린 루꼴라.
+                  남은 소스는 <strong className="font-bold text-tomato-600">빵으로 팬을 닦아 먹는 게 정석</strong>입니다.
+                </p>
+              </div>
+            </div>
+          </Card>
+        </section>
+      );
+    }
+
+    function Footer() {
+      return (
+        <footer className="border-t border-char-500/10 px-5 py-10">
+          <div className="mx-auto flex max-w-5xl flex-col items-center gap-2 text-center">
+            <p className="text-sm font-bold text-char-700">15분 레시피북</p>
+            <p className="text-xs text-char-500">퇴근하고 배고픈 사람을 위한, 15분 안에 끝나는 한 그릇 요리</p>
+          </div>
+        </footer>
+      );
+    }
+
+    // ========================================
+    // 🚀 App
+    // ========================================
+    const STORAGE_KEY = 'eggs-in-hell-state-v1';
+
+    function App() {
+      const initial = useMemo(() => loadStored(STORAGE_KEY, {}), []);
+      const [servings, setServings] = useState(initial.servings || RECIPE.baseServings);
+      const [checkedIngredients, setCheckedIngredients] = useState(initial.checkedIngredients || {});
+      const [doneSteps, setDoneSteps] = useState(initial.doneSteps || {});
+      const timer = useCookTimer();
+
+      useEffect(() => {
+        saveStored(STORAGE_KEY, { servings, checkedIngredients, doneSteps });
+      }, [servings, checkedIngredients, doneSteps]);
+
+      const toggleIngredient = useCallback((key) => {
+        setCheckedIngredients((prev) => ({ ...prev, [key]: !prev[key] }));
+      }, []);
+
+      const toggleStep = useCallback((id) => {
+        setDoneSteps((prev) => ({ ...prev, [id]: !prev[id] }));
+      }, []);
+
+      const doneCount = Object.values(doneSteps).filter(Boolean).length;
+
+      return (
+        <div className="min-h-screen">
+          <Header progressValue={doneCount} progressMax={STEPS.length} />
+          <main>
+            <Hero />
+            <IngredientsSection
+              servings={servings}
+              onServingsChange={setServings}
+              checked={checkedIngredients}
+              onToggle={toggleIngredient}
+              onReset={() => setCheckedIngredients({})}
+            />
+            <StepsSection
+              doneSteps={doneSteps}
+              onToggle={toggleStep}
+              onReset={() => setDoneSteps({})}
+              timer={timer}
+            />
+            <TipsSection />
+            <VariationsSection />
+            <PairingSection />
+          </main>
+          <Footer />
+        </div>
+      );
+    }
+
+    // ========================================
+    // Rendering
+    // ========================================
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

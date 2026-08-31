@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR 스튜디오 — 페이지 QR코드 생성기</title>
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <!-- ⚠️ 모든 CDN 버전 고정. Babel 은 반드시 7.x (8.x 는 인라인 text/babel 미지원) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.25.9/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+  <style>
+    html, body, #root { height: 100%; }
+    body { overflow: hidden; }
+    /* 얇은 스크롤바 — 각 패널 내부에서만 스크롤 */
+    .thin-scroll::-webkit-scrollbar { width: 6px; }
+    .thin-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    .thin-scroll::-webkit-scrollbar-track { background: transparent; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    .fade-up { animation: fadeUp .35s ease-out both; }
+  </style>
+</head>
+<body class="bg-slate-100">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, useRef, useCallback, createContext, useContext } = React;
+
+    // ========================================
+    // 🎛️ Constants — 페이지 유형 / 코드 스타일 / 스킨
+    // ========================================
+
+    const PAGE_TYPES = [
+      { id: 'link',    label: 'URL 링크', emoji: '🔗', hint: '연결할 주소를 소개하는 랜딩 페이지' },
+      { id: 'card',    label: '명함',     emoji: '💼', hint: '이름·소속·연락처를 담은 디지털 명함' },
+      { id: 'menu',    label: '메뉴판',   emoji: '🍽️', hint: '매장 메뉴와 안내를 보여주는 페이지' },
+      { id: 'invite',  label: '초대장',   emoji: '💌', hint: '행사 일시·장소를 알리는 초대 카드' },
+      { id: 'wifi',    label: '와이파이', emoji: '📶', hint: '네트워크 접속 정보 안내' },
+      { id: 'coupon',  label: '쿠폰',     emoji: '🎟️', hint: '할인·증정 혜택 쿠폰' },
+      { id: 'notice',  label: '안내문',   emoji: '📢', hint: '공지사항 · 이용 안내' },
+    ];
+    const TYPE_MAP = Object.fromEntries(PAGE_TYPES.map(t => [t.id, t]));
+
+    const CODE_STYLES = [
+      { id: 'square',  label: '클래식' },
+      { id: 'rounded', label: '라운드' },
+      { id: 'dot',     label: '도트' },
+      { id: 'diamond', label: '다이아' },
+    ];
+    const STYLE_MAP = Object.fromEntries(CODE_STYLES.map(s => [s.id, s]));
+
+    // fg1 → fg2 그라디언트, bg 는 코드 배경. 모두 스캔 대비를 확보한 조합.
+    const SKINS = [
+      { id: 'classic',  label: '클래식',   bg: '#ffffff', fg1: '#0f172a', fg2: '#334155', page: ['#f8fafc', '#e2e8f0'], ink: '#0f172a', sub: '#475569' },
+      { id: 'midnight', label: '미드나잇', bg: '#0b1220', fg1: '#7dd3fc', fg2: '#a5b4fc', page: ['#0b1220', '#1e293b'], ink: '#e2e8f0', sub: '#94a3b8' },
+      { id: 'sunset',   label: '선셋',     bg: '#fff7ed', fg1: '#c2410c', fg2: '#be185d', page: ['#ffedd5', '#fecdd3'], ink: '#7c2d12', sub: '#9a3412' },
+      { id: 'forest',   label: '포레스트', bg: '#f0fdf4', fg1: '#14532d', fg2: '#047857', page: ['#dcfce7', '#a7f3d0'], ink: '#052e16', sub: '#166534' },
+      { id: 'ocean',    label: '오션',     bg: '#f0f9ff', fg1: '#0c4a6e', fg2: '#1d4ed8', page: ['#e0f2fe', '#dbeafe'], ink: '#0c4a6e', sub: '#1e40af' },
+      { id: 'grape',    label: '그레이프', bg: '#faf5ff', fg1: '#581c87', fg2: '#9d174d', page: ['#f3e8ff', '#fbcfe8'], ink: '#3b0764', sub: '#6b21a8' },
+    ];
+    const SKIN_MAP = Object.fromEntries(SKINS.map(s => [s.id, s]));
+
+    // ========================================
+    // 🔐 Payload 인코딩 (base64url) — 링크 하나에 페이지 정보를 담는다
+    // ========================================
+
+    function encodePayload(obj) {
+      const json = JSON.stringify(obj);
+      return btoa(unescape(encodeURIComponent(json)))
+        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    function decodePayload(str) {
+      try {
+        const b64 = str.replace(/-/g, '+').replace(/_/g, '/');
+        return JSON.parse(decodeURIComponent(escape(atob(b64))));
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // file:// 로 열어도 동작하도록 origin 대신 현재 문서 주소를 사용
+    const baseUrl = () => window.location.href.split('#')[0];
+
+    // ========================================
+    // 🎨 Design System Components
+    // ========================================
+
+    function Button({ variant = 'primary', size = 'md', className = '', children, ...props }) {
+      const variants = {
+        primary: 'bg-slate-900 text-white hover:bg-slate-700 disabled:bg-slate-300',
+        secondary: 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50',
+        ghost: 'bg-transparent text-slate-500 hover:bg-slate-200',
+      };
+      const sizes = { sm: 'px-2.5 py-1.5 text-xs', md: 'px-3.5 py-2 text-sm', lg: 'px-5 py-2.5 text-base' };
+      return (
+        <button
+          type="button"
+          className={`inline-flex items-center justify-center gap-1.5 rounded-lg font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-1 disabled:cursor-not-allowed ${variants[variant]} ${sizes[size]} ${className}`}
+          {...props}
+        >
+          {children}
+        </button>
+      );
+    }
+
+    function Field({ label, hint, children }) {
+      return (
+        <label className="block">
+          <span className="mb-1 flex items-baseline justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{label}</span>
+            {hint && <span className="text-[10px] text-slate-400">{hint}</span>}
+          </span>
+          {children}
+        </label>
+      );
+    }
+
+    function Input({ className = '', ...props }) {
+      return (
+        <input
+          className={`w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 placeholder-slate-400 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900 ${className}`}
+          {...props}
+        />
+      );
+    }
+
+    function Textarea({ className = '', ...props }) {
+      return (
+        <textarea
+          className={`w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm leading-relaxed text-slate-800 placeholder-slate-400 focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900 ${className}`}
+          {...props}
+        />
+      );
+    }
+
+    function Panel({ title, badge, className = '', bodyClassName = '', children }) {
+      return (
+        <section className={`flex min-h-0 flex-col rounded-xl border border-slate-200 bg-white shadow-sm ${className}`}>
+          <header className="flex shrink-0 items-center justify-between border-b border-slate-100 px-3.5 py-2">
+            <h2 className="text-xs font-bold tracking-wide text-slate-700">{title}</h2>
+            {badge && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">{badge}</span>}
+          </header>
+          <div className={`thin-scroll min-h-0 flex-1 overflow-y-auto p-3.5 ${bodyClassName}`}>{children}</div>
+        </section>
+      );
+    }
+
+    function OptionTile({ selected, onClick, title, children, className = '' }) {
+      return (
+        <button
+          type="button"
+          onClick={onClick}
+          aria-pressed={selected}
+          className={`flex flex-col items-center justify-center gap-1 rounded-lg border px-1.5 py-2 text-center transition-all ${
+            selected
+              ? 'border-slate-900 bg-slate-900 text-white shadow-sm'
+              : 'border-slate-200 bg-white text-slate-600 hover:border-slate-400 hover:bg-slate-50'
+          } ${className}`}
+        >
+          {children}
+          <span className="text-[11px] font-semibold leading-tight">{title}</span>
+        </button>
+      );
+    }
+
+    // ========================================
+    // 🔀 Router (해시 기반) — 생성기 / 랜딩 페이지
+    // ========================================
+
+    const RouterContext = createContext({ hash: '#/', navigate: () => {} });
+
+    function Router({ children }) {
+      const [hash, setHash] = useState(window.location.hash || '#/');
+
+      useEffect(() => {
+        const onChange = () => setHash(window.location.hash || '#/');
+        window.addEventListener('hashchange', onChange);
+        return () => window.removeEventListener('hashchange', onChange);
+      }, []);
+
+      const navigate = useCallback((to) => { window.location.hash = to; }, []);
+
+      return <RouterContext.Provider value={{ hash, navigate }}>{children}</RouterContext.Provider>;
+    }
+
+    const useRouter = () => useContext(RouterContext);
+
+    // ========================================
+    // 🧩 QRCodeSvg — 매트릭스를 직접 SVG 로 그려 스타일·스킨 적용
+    // ========================================
+
+    function buildMatrix(text) {
+      try {
+        qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
+        const qr = qrcode(0, 'H'); // 0 = 자동 버전, H = 30% 복원력 (중앙 아이콘 대비)
+        qr.addData(text);
+        qr.make();
+        const n = qr.getModuleCount();
+        const rows = [];
+        for (let r = 0; r < n; r++) {
+          const row = [];
+          for (let c = 0; c < n; c++) row.push(qr.isDark(r, c));
+          rows.push(row);
+        }
+        return rows;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    const isFinderZone = (r, c, n) =>
+      (r < 7 && c < 7) || (r < 7 && c >= n - 7) || (r >= n - 7 && c < 7);
+
+    function QRCodeSvg({ text, styleId, skinId, emoji, svgRef }) {
+      const matrix = useMemo(() => buildMatrix(text), [text]);
+      const skin = SKIN_MAP[skinId];
+
+      if (!matrix) {
+        return (
+          <div className="flex h-full w-full items-center justify-center rounded-xl border border-dashed border-slate-300 p-6 text-center text-xs leading-relaxed text-slate-400">
+            내용이 너무 길어 QR로 만들 수 없습니다.<br />설명을 조금 줄여 주세요.
+          </div>
+        );
+      }
+
+      const n = matrix.length;
+      const pad = 4; // quiet zone
+      const total = n + pad * 2;
+      const gradId = `qr-grad-${skinId}`;
+      const fill = `url(#${gradId})`;
+      const cells = [];
+
+      // 데이터 모듈 — 파인더(눈) 영역은 제외하고 따로 그린다
+      for (let r = 0; r < n; r++) {
+        for (let c = 0; c < n; c++) {
+          if (!matrix[r][c] || isFinderZone(r, c, n)) continue;
+          const x = c + pad, y = r + pad, key = `${r}-${c}`;
+          if (styleId === 'dot') {
+            cells.push(<circle key={key} cx={x + 0.5} cy={y + 0.5} r={0.44} fill={fill} />);
+          } else if (styleId === 'diamond') {
+            cells.push(
+              <polygon
+                key={key}
+                points={`${x + 0.5},${y + 0.02} ${x + 0.98},${y + 0.5} ${x + 0.5},${y + 0.98} ${x + 0.02},${y + 0.5}`}
+                fill={fill}
+              />
+            );
+          } else {
+            const inset = styleId === 'rounded' ? 0.04 : 0;
+            cells.push(
+              <rect
+                key={key}
+                x={x + inset} y={y + inset}
+                width={1 - inset * 2} height={1 - inset * 2}
+                rx={styleId === 'rounded' ? 0.34 : 0}
+                fill={fill}
+              />
+            );
+          }
+        }
+      }
+
+      // 파인더 패턴(눈) — 선택한 스타일에 맞춘 라운딩
+      const eyeRx = { square: 0, rounded: 1.4, dot: 3.5, diamond: 0.6 }[styleId];
+      const eyes = [[0, 0], [0, n - 7], [n - 7, 0]].map(([r, c], i) => {
+        const x = c + pad, y = r + pad;
+        return (
+          <g key={`eye-${i}`}>
+            <rect x={x + 0.5} y={y + 0.5} width={6} height={6} rx={eyeRx} fill="none" stroke={fill} strokeWidth={1} />
+            <rect x={x + 2} y={y + 2} width={3} height={3} rx={Math.min(eyeRx, 1.5)} fill={fill} />
+          </g>
+        );
+      });
+
+      const center = total / 2;
+      const badge = 6.6;
+
+      return (
+        <svg
+          ref={svgRef}
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox={`0 0 ${total} ${total}`}
+          className="h-full w-full"
+          role="img"
+          aria-label="생성된 QR 코드"
+        >
+          <defs>
+            <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor={skin.fg1} />
+              <stop offset="100%" stopColor={skin.fg2} />
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width={total} height={total} rx={3} fill={skin.bg} />
+          {cells}
+          {eyes}
+          {/* 중앙 유형 아이콘 — ECC H 복원 범위 안의 작은 영역만 가린다 */}
+          <rect x={center - badge / 2} y={center - badge / 2} width={badge} height={badge} rx={2} fill={skin.bg} />
+          <text x={center} y={center} textAnchor="middle" dominantBaseline="central" fontSize={4.2}>{emoji}</text>
+        </svg>
+      );
+    }
+
+    function StylePreview({ styleId, active }) {
+      const color = active ? '#ffffff' : '#334155';
+      const dots = [[0, 0], [1, 0], [0, 1], [2, 1], [1, 2], [2, 2]];
+      return (
+        <svg viewBox="0 0 3 3" className="h-5 w-5" aria-hidden="true">
+          {dots.map(([x, y], i) => {
+            if (styleId === 'dot') return <circle key={i} cx={x + 0.5} cy={y + 0.5} r={0.42} fill={color} />;
+            if (styleId === 'diamond')
+              return <polygon key={i} points={`${x + 0.5},${y} ${x + 1},${y + 0.5} ${x + 0.5},${y + 1} ${x},${y + 0.5}`} fill={color} />;
+            return <rect key={i} x={x + 0.05} y={y + 0.05} width={0.9} height={0.9} rx={styleId === 'rounded' ? 0.34 : 0} fill={color} />;
+          })}
+        </svg>
+      );
+    }
+
+    // ========================================
+    // 📄 GeneratorPage — 좌: 내용 / 중앙: QR / 우: 디자인 & 링크
+    // ========================================
+
+    function GeneratorPage() {
+      const [typeId, setTypeId] = useState('link');
+      const [styleId, setStyleId] = useState('rounded');
+      const [skinId, setSkinId] = useState('ocean');
+      const [title, setTitle] = useState('AI 팩토리 4기');
+      const [desc, setDesc] = useState('QR을 스캔하면 이 페이지가 열립니다. 제목과 설명을 자유롭게 바꿔 보세요.');
+      const [copied, setCopied] = useState(false);
+      const svgRef = useRef(null);
+
+      const type = TYPE_MAP[typeId];
+      const skin = SKIN_MAP[skinId];
+
+      const url = useMemo(() => {
+        const payload = encodePayload({ t: typeId, k: skinId, h: title.trim(), d: desc.trim() });
+        return `${baseUrl()}#/p/${payload}`;
+      }, [typeId, skinId, title, desc]);
+
+      useEffect(() => {
+        if (!copied) return;
+        const id = setTimeout(() => setCopied(false), 1600);
+        return () => clearTimeout(id);
+      }, [copied]);
+
+      const copyLink = async () => {
+        try {
+          await navigator.clipboard.writeText(url);
+          setCopied(true);
+        } catch (e) {
+          window.prompt('아래 링크를 복사하세요', url);
+        }
+      };
+
+      const downloadPng = () => {
+        const svg = svgRef.current;
+        if (!svg) return;
+        // 직렬화 전 명시적 크기를 부여해야 <img> 로 로드할 때 고유 크기가 잡힌다
+        const clone = svg.cloneNode(true);
+        clone.setAttribute('width', '1024');
+        clone.setAttribute('height', '1024');
+        clone.removeAttribute('class');
+        const source = new XMLSerializer().serializeToString(clone);
+        const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+        const objectUrl = URL.createObjectURL(blob);
+        const img = new Image();
+        img.onload = () => {
+          const size = 1024;
+          const canvas = document.createElement('canvas');
+          canvas.width = canvas.height = size;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = skin.bg;
+          ctx.fillRect(0, 0, size, size);
+          ctx.drawImage(img, 0, 0, size, size);
+          URL.revokeObjectURL(objectUrl);
+          const a = document.createElement('a');
+          a.download = `qr-${typeId}-${Date.now()}.png`;
+          a.href = canvas.toDataURL('image/png');
+          a.click();
+        };
+        img.onerror = () => URL.revokeObjectURL(objectUrl);
+        img.src = objectUrl;
+      };
+
+      return (
+        <div className="grid min-h-0 flex-1 gap-3 p-3 lg:grid-cols-[19rem_minmax(0,1fr)_19rem]">
+
+          {/* ── 좌: 페이지 내용 ── */}
+          <Panel title="1. 페이지 내용" badge={type.label} bodyClassName="space-y-3">
+            <Field label="페이지 유형">
+              <div className="grid grid-cols-4 gap-1.5">
+                {PAGE_TYPES.map(t => (
+                  <OptionTile key={t.id} selected={typeId === t.id} onClick={() => setTypeId(t.id)} title={t.label}>
+                    <span className="text-base leading-none">{t.emoji}</span>
+                  </OptionTile>
+                ))}
+              </div>
+              <p className="mt-1.5 text-[10px] leading-relaxed text-slate-400">{type.hint}</p>
+            </Field>
+
+            <Field label="페이지 제목" hint={`${title.length}/40`}>
+              <Input value={title} maxLength={40} onChange={e => setTitle(e.target.value)} placeholder="예) 카페 노을 가을 메뉴" />
+            </Field>
+
+            <Field label="페이지 설명" hint={`${desc.length}/300`}>
+              <Textarea rows={7} maxLength={300} value={desc} onChange={e => setDesc(e.target.value)} placeholder="스캔한 사람에게 보여줄 설명을 입력하세요." />
+            </Field>
+          </Panel>
+
+          {/* ── 중앙: QR 미리보기 ── */}
+          <section className="flex min-h-0 flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            {/* 높이 기준으로 정사각을 유지해 노트북 한 화면 안에 들어오게 한다 */}
+            <div className="flex min-h-0 w-full flex-1 items-center justify-center">
+              <div className="aspect-square h-full max-w-full">
+                <QRCodeSvg text={url} styleId={styleId} skinId={skinId} emoji={type.emoji} svgRef={svgRef} />
+              </div>
+            </div>
+            <div className="mt-3 flex shrink-0 flex-wrap items-center justify-center gap-2">
+              <Button size="sm" onClick={downloadPng}>⬇ PNG 저장</Button>
+              <Button size="sm" variant="secondary" onClick={copyLink}>{copied ? '✅ 복사됨' : '🔗 링크 복사'}</Button>
+              <Button size="sm" variant="secondary" onClick={() => { window.location.hash = url.split('#')[1]; }}>👁 페이지 미리보기</Button>
+            </div>
+          </section>
+
+          {/* ── 우: 코드 디자인 & 링크 ── */}
+          <Panel title="2. 코드 디자인" badge={`${STYLE_MAP[styleId].label} · ${skin.label}`} bodyClassName="space-y-3">
+            <Field label="코드 스타일">
+              <div className="grid grid-cols-4 gap-1.5">
+                {CODE_STYLES.map(s => (
+                  <OptionTile key={s.id} selected={styleId === s.id} onClick={() => setStyleId(s.id)} title={s.label}>
+                    <StylePreview styleId={s.id} active={styleId === s.id} />
+                  </OptionTile>
+                ))}
+              </div>
+            </Field>
+
+            <Field label="스킨 스타일">
+              <div className="grid grid-cols-3 gap-1.5">
+                {SKINS.map(s => (
+                  <OptionTile key={s.id} selected={skinId === s.id} onClick={() => setSkinId(s.id)} title={s.label}>
+                    <span
+                      className="h-5 w-full rounded border border-black/10"
+                      style={{ background: `linear-gradient(135deg, ${s.fg1}, ${s.fg2} 60%, ${s.bg})` }}
+                    />
+                  </OptionTile>
+                ))}
+              </div>
+            </Field>
+
+            <Field label="생성된 URL 링크">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-2">
+                <p className="thin-scroll max-h-16 overflow-y-auto break-all font-mono text-[10px] leading-relaxed text-slate-600">{url}</p>
+              </div>
+              <p className="mt-1.5 text-[10px] leading-relaxed text-slate-400">
+                제목·설명·스킨이 링크 안에 함께 담깁니다. 별도 서버 없이 이 파일 하나로 페이지가 열립니다.
+              </p>
+            </Field>
+          </Panel>
+        </div>
+      );
+    }
+
+    // ========================================
+    // 📄 LandingPage — QR 스캔 시 열리는 페이지
+    // ========================================
+
+    const TYPE_LAYOUT = {
+      link:   { eyebrow: 'LINK',        cta: '연결된 정보를 확인하세요' },
+      card:   { eyebrow: 'BUSINESS CARD', cta: '연락처를 저장해 주세요' },
+      menu:   { eyebrow: 'MENU',        cta: '주문 도와드리겠습니다' },
+      invite: { eyebrow: 'INVITATION',  cta: '참석 부탁드립니다' },
+      wifi:   { eyebrow: 'WI-FI',       cta: '네트워크 접속 안내' },
+      coupon: { eyebrow: 'COUPON',      cta: '직원에게 보여주세요' },
+      notice: { eyebrow: 'NOTICE',      cta: '확인 부탁드립니다' },
+    };
+
+    function LandingPage({ data }) {
+      const { navigate } = useRouter();
+      const type = TYPE_MAP[data.t] || TYPE_MAP.link;
+      const skin = SKIN_MAP[data.k] || SKIN_MAP.classic;
+      const layout = TYPE_LAYOUT[type.id] || TYPE_LAYOUT.link;
+
+      return (
+        <div
+          className="flex h-full flex-col items-center justify-center p-6"
+          style={{ background: `linear-gradient(140deg, ${skin.page[0]}, ${skin.page[1]})` }}
+        >
+          <article
+            className="fade-up flex w-full max-w-lg flex-col overflow-hidden rounded-2xl shadow-xl"
+            style={{ backgroundColor: skin.bg, color: skin.ink }}
+          >
+            <div className="h-1.5 w-full" style={{ background: `linear-gradient(90deg, ${skin.fg1}, ${skin.fg2})` }} />
+            <div className="px-8 py-7">
+              <div className="flex items-center gap-3">
+                <span
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl"
+                  style={{ background: `linear-gradient(135deg, ${skin.fg1}, ${skin.fg2})` }}
+                >
+                  {type.emoji}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: skin.sub }}>{layout.eyebrow}</p>
+                  <p className="text-xs font-semibold" style={{ color: skin.sub }}>{type.label}</p>
+                </div>
+              </div>
+
+              <h1 className="mt-5 break-words text-2xl font-extrabold leading-snug">
+                {data.h || '제목이 없습니다'}
+              </h1>
+
+              {data.d
+                ? <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed" style={{ color: skin.sub }}>{data.d}</p>
+                : <p className="mt-3 text-sm italic" style={{ color: skin.sub }}>설명이 입력되지 않았습니다.</p>}
+
+              <div className="mt-6 flex items-center justify-between border-t pt-4" style={{ borderColor: `${skin.sub}33` }}>
+                <span className="text-xs font-semibold" style={{ color: skin.sub }}>{layout.cta}</span>
+                <span className="text-[10px]" style={{ color: skin.sub }}>QR 스튜디오</span>
+              </div>
+            </div>
+          </article>
+
+          <Button variant="ghost" size="sm" className="mt-4" onClick={() => navigate('/')}>← 생성기로 돌아가기</Button>
+        </div>
+      );
+    }
+
+    function NotFound() {
+      const { navigate } = useRouter();
+      return (
+        <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
+          <p className="text-4xl">🧩</p>
+          <p className="text-sm font-semibold text-slate-700">링크 정보를 읽을 수 없습니다.</p>
+          <p className="text-xs text-slate-400">주소가 중간에 잘리지 않았는지 확인해 주세요.</p>
+          <Button size="sm" onClick={() => navigate('/')}>생성기로 이동</Button>
+        </div>
+      );
+    }
+
+    // ========================================
+    // 🚀 App
+    // ========================================
+
+    function Shell() {
+      const { hash } = useRouter();
+
+      if (hash.startsWith('#/p/')) {
+        const data = decodePayload(hash.slice(4));
+        return data ? <LandingPage data={data} /> : <NotFound />;
+      }
+
+      return (
+        <div className="flex h-full flex-col">
+          <header className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 py-2.5">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900 text-sm text-white">▣</span>
+              <div>
+                <h1 className="text-sm font-extrabold leading-tight text-slate-900">QR 스튜디오</h1>
+                <p className="text-[10px] leading-tight text-slate-400">페이지 유형과 코드 디자인을 고르면 링크와 QR이 바로 만들어집니다</p>
+              </div>
+            </div>
+            <p className="hidden text-[10px] text-slate-400 sm:block">스캔 → 랜딩 페이지 자동 표시</p>
+          </header>
+          <GeneratorPage />
+        </div>
+      );
+    }
+
+    function App() {
+      return (
+        <Router>
+          <Shell />
+        </Router>
+      );
+    }
+
+    // ========================================
+    // Rendering
+    // ========================================
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

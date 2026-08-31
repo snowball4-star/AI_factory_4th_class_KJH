@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>D-Day 카운터</title>
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <!-- ⚠️ 모든 CDN 버전 고정. Babel 은 반드시 7.x (8.x 는 인라인 text/babel 미지원) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.25.9/babel.min.js"></script>
+  <style>
+    /* Tailwind 유틸리티로 표현 불가능한 것만 최소한으로 */
+    body {
+      font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI",
+                   "Malgun Gothic", "Apple SD Gothic Neo", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-up { animation: fade-up 0.32s ease-out both; }
+
+    @keyframes pop {
+      0%   { transform: scale(0.94); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-pop { animation: pop 0.2s ease-out both; }
+
+    /* 숫자가 흔들리지 않도록 고정폭 숫자 */
+    .tnum { font-variant-numeric: tabular-nums; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, useCallback, useRef } = React;
+
+    // ========================================
+    // 🛠️ Utils — 날짜 계산 / 저장소
+    // ========================================
+
+    const STORAGE_KEY = 'dday-counter-events-v1';
+    const MS_DAY = 24 * 60 * 60 * 1000;
+    const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+
+    const pad = (n) => String(n).padStart(2, '0');
+
+    /** Date -> "YYYY-MM-DD" (input[type=date] 용) */
+    const toDateInput = (d) =>
+      `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+    /** "YYYY-MM-DD" -> 로컬 자정 Date (타임존 밀림 방지) */
+    const parseDate = (s) => {
+      const [y, m, d] = String(s).split('-').map(Number);
+      return new Date(y, (m || 1) - 1, d || 1, 0, 0, 0, 0);
+    };
+
+    const startOfToday = () => {
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      return now;
+    };
+
+    /** 매년 반복 일정이면 올해(또는 내년)의 다음 발생일을 반환 */
+    const resolveTarget = (event) => {
+      const base = parseDate(event.date);
+      if (!event.yearly) return base;
+      const today = startOfToday();
+      const next = new Date(today.getFullYear(), base.getMonth(), base.getDate());
+      if (next.getTime() < today.getTime()) next.setFullYear(next.getFullYear() + 1);
+      return next;
+    };
+
+    /** 오늘 자정 기준 남은 일수 (양수=미래, 0=오늘, 음수=과거) */
+    const diffDays = (target) =>
+      Math.round((target.getTime() - startOfToday().getTime()) / MS_DAY);
+
+    const ddayLabel = (n) => (n === 0 ? 'D-DAY' : n > 0 ? `D-${n}` : `D+${Math.abs(n)}`);
+
+    const formatKDate = (d) =>
+      `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEKDAYS[d.getDay()]})`;
+
+    /** 등록일 ~ 목표일 사이 진행률(%) */
+    const progressPercent = (createdAt, target) => {
+      const start = new Date(createdAt).getTime();
+      const end = target.getTime();
+      const now = Date.now();
+      if (!Number.isFinite(start) || end <= start) return 100;
+      return Math.max(0, Math.min(100, ((now - start) / (end - start)) * 100));
+    };
+
+    const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
+    const loadEvents = () => {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : null;
+      } catch (e) {
+        console.warn('저장된 데이터를 읽지 못했습니다.', e);
+        return null;
+      }
+    };
+
+    const saveEvents = (events) => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+      } catch (e) {
+        console.warn('데이터를 저장하지 못했습니다.', e);
+      }
+    };
+
+    /** 첫 실행 시 보여줄 샘플 일정 */
+    const seedEvents = () => {
+      const year = new Date().getFullYear();
+      const now = new Date().toISOString();
+      return [
+        { id: uid(), title: '크리스마스', date: `${year}-12-25`, emoji: '🎄',
+          accent: 'rose', memo: '올해도 어김없이', yearly: true, pinned: false, createdAt: now },
+        { id: uid(), title: '새해 첫날', date: `${year + 1}-01-01`, emoji: '🎆',
+          accent: 'indigo', memo: '', yearly: false, pinned: false, createdAt: now },
+      ];
+    };
+
+    // 🎨 액센트 팔레트 (Tailwind CDN 이 인식하도록 클래스 전체 문자열로 보관)
+    const ACCENTS = [
+      { id: 'indigo',  name: '인디고',   dot: 'bg-indigo-500',  gradient: 'from-indigo-500 via-indigo-500 to-violet-500',
+        soft: 'bg-indigo-50 text-indigo-700 border-indigo-100' },
+      { id: 'rose',    name: '로즈',     dot: 'bg-rose-500',    gradient: 'from-rose-500 via-rose-500 to-orange-400',
+        soft: 'bg-rose-50 text-rose-700 border-rose-100' },
+      { id: 'emerald', name: '에메랄드', dot: 'bg-emerald-500', gradient: 'from-emerald-500 via-emerald-500 to-teal-400',
+        soft: 'bg-emerald-50 text-emerald-700 border-emerald-100' },
+      { id: 'amber',   name: '앰버',     dot: 'bg-amber-500',   gradient: 'from-amber-500 via-amber-500 to-yellow-400',
+        soft: 'bg-amber-50 text-amber-700 border-amber-100' },
+      { id: 'sky',     name: '스카이',   dot: 'bg-sky-500',     gradient: 'from-sky-500 via-sky-500 to-cyan-400',
+        soft: 'bg-sky-50 text-sky-700 border-sky-100' },
+      { id: 'violet',  name: '바이올렛', dot: 'bg-violet-500',  gradient: 'from-violet-500 via-violet-500 to-fuchsia-500',
+        soft: 'bg-violet-50 text-violet-700 border-violet-100' },
+    ];
+
+    const getAccent = (id) => ACCENTS.find((a) => a.id === id) || ACCENTS[0];
+
+    const EMOJIS = ['🎯', '🎂', '🎄', '🎆', '✈️', '📚', '💼', '💍', '🏃', '🎓', '🩺', '🐣'];
+
+    // ========================================
+    // 🎨 Design System Components
+    // ========================================
+
+    function Button({ variant = 'primary', size = 'md', className = '', children, ...props }) {
+      const base =
+        'inline-flex items-center justify-center gap-1.5 font-semibold rounded-xl transition ' +
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-slate-900 ' +
+        'disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.97]';
+
+      const variants = {
+        primary: 'bg-slate-900 text-white hover:bg-slate-800 shadow-sm',
+        secondary: 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 shadow-sm',
+        danger: 'bg-rose-600 text-white hover:bg-rose-500 shadow-sm',
+        ghost: 'bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-800',
+      };
+
+      const sizes = {
+        sm: 'text-xs px-2.5 py-1.5',
+        md: 'text-sm px-4 py-2.5',
+        lg: 'text-base px-5 py-3',
+      };
+
+      return (
+        <button
+          type="button"
+          className={`${base} ${variants[variant] || variants.primary} ${sizes[size] || sizes.md} ${className}`}
+          {...props}
+        >
+          {children}
+        </button>
+      );
+    }
+
+    function Input({ label, error, className = '', id, ...props }) {
+      const autoId = useRef(`in-${Math.random().toString(36).slice(2, 8)}`).current;
+      const inputId = id || autoId;
+      return (
+        <div className={className}>
+          {label && (
+            <label htmlFor={inputId} className="block text-sm font-semibold text-slate-700 mb-1.5">
+              {label}
+            </label>
+          )}
+          <input
+            id={inputId}
+            aria-invalid={error ? 'true' : undefined}
+            className={`w-full rounded-xl border px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400
+              transition focus:outline-none focus:ring-2 focus:ring-slate-900/10
+              ${error ? 'border-rose-400 focus:border-rose-500' : 'border-slate-200 focus:border-slate-400'}`}
+            {...props}
+          />
+          {error && <p className="mt-1.5 text-xs font-medium text-rose-600">{error}</p>}
+        </div>
+      );
+    }
+
+    function Card({ className = '', children, ...props }) {
+      return (
+        <div className={`bg-white rounded-2xl border border-slate-200/80 shadow-sm ${className}`} {...props}>
+          {children}
+        </div>
+      );
+    }
+
+    function Badge({ className = '', children }) {
+      return (
+        <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${className}`}>
+          {children}
+        </span>
+      );
+    }
+
+    function Modal({ isOpen, onClose, title, size = 'md', children }) {
+      useEffect(() => {
+        if (!isOpen) return;
+        const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+        document.addEventListener('keydown', onKey);
+        const prevOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => {
+          document.removeEventListener('keydown', onKey);
+          document.body.style.overflow = prevOverflow;
+        };
+      }, [isOpen, onClose]);
+
+      if (!isOpen) return null;
+
+      const sizes = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl' };
+
+      return (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={title}
+            className={`relative w-full ${sizes[size] || sizes.md} bg-white rounded-t-3xl sm:rounded-2xl
+              shadow-xl animate-pop max-h-[92vh] overflow-y-auto`}
+          >
+            <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-100 sticky top-0 bg-white">
+              <h2 className="text-base font-bold text-slate-900">{title}</h2>
+              <Button variant="ghost" size="sm" onClick={onClose} aria-label="닫기" className="rounded-lg">✕</Button>
+            </div>
+            <div className="px-5 sm:px-6 py-5">{children}</div>
+          </div>
+        </div>
+      );
+    }
+
+    // ========================================
+    // ⏱️ Custom Hook — 1초마다 갱신되는 현재 시각
+    // ========================================
+
+    function useNow(active = true) {
+      const [now, setNow] = useState(() => Date.now());
+      useEffect(() => {
+        if (!active) return;
+        const id = setInterval(() => setNow(Date.now()), 1000);
+        return () => clearInterval(id);
+      }, [active]);
+      return now;
+    }
+
+    // ========================================
+    // 🧩 Common / Layout Components
+    // ========================================
+
+    function Header({ onAdd }) {
+      const today = new Date();
+      return (
+        <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+          <div>
+            <p className="text-xs font-semibold tracking-widest text-slate-400 mb-1">
+              {formatKDate(today)}
+            </p>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              D-Day 카운터
+            </h1>
+            <p className="text-sm text-slate-500 mt-1">
+              중요한 날까지 남은 시간을 한눈에 확인하세요.
+            </p>
+          </div>
+          <Button size="lg" onClick={onAdd} className="w-full sm:w-auto shrink-0">
+            <span aria-hidden="true">＋</span> 새 D-Day 추가
+          </Button>
+        </header>
+      );
+    }
+
+    function StatBar({ stats }) {
+      const items = [
+        { label: '전체', value: stats.total, tone: 'text-slate-900' },
+        { label: '다가오는', value: stats.upcoming, tone: 'text-indigo-600' },
+        { label: '오늘', value: stats.today, tone: 'text-rose-600' },
+        { label: '지난', value: stats.past, tone: 'text-slate-400' },
+      ];
+      return (
+        <Card className="grid grid-cols-4 divide-x divide-slate-100 mb-6">
+          {items.map((item) => (
+            <div key={item.label} className="px-2 py-3.5 text-center">
+              <p className={`text-xl sm:text-2xl font-black tnum ${item.tone}`}>{item.value}</p>
+              <p className="text-[11px] sm:text-xs font-medium text-slate-500 mt-0.5">{item.label}</p>
+            </div>
+          ))}
+        </Card>
+      );
+    }
+
+    /** 대표 일정 — 실시간 초 단위 카운트다운 */
+    function HeroCountdown({ event }) {
+      const target = useMemo(() => resolveTarget(event), [event]);
+      const days = diffDays(target);
+      const isFuture = days > 0;
+      const now = useNow(isFuture);
+
+      const accent = getAccent(event.accent);
+      const remain = Math.max(0, target.getTime() - now);
+      const hours = Math.floor((remain % MS_DAY) / (60 * 60 * 1000));
+      const minutes = Math.floor((remain % (60 * 60 * 1000)) / (60 * 1000));
+      const seconds = Math.floor((remain % (60 * 1000)) / 1000);
+      const restDays = Math.floor(remain / MS_DAY);
+
+      const percent = progressPercent(event.createdAt, target);
+
+      return (
+        <div className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${accent.gradient}
+          text-white p-6 sm:p-8 mb-6 shadow-lg animate-fade-up`}>
+          <div className="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-white/10" aria-hidden="true" />
+          <div className="absolute -right-4 -bottom-10 w-32 h-32 rounded-full bg-white/5" aria-hidden="true" />
+
+          <div className="relative">
+            <div className="flex items-center gap-2 mb-4">
+              <Badge className="bg-white/20 border-white/20 text-white">
+                {event.pinned ? '📌 고정' : '가장 가까운 일정'}
+              </Badge>
+              {event.yearly && <Badge className="bg-white/20 border-white/20 text-white">🔁 매년</Badge>}
+            </div>
+
+            <div className="flex items-start gap-3">
+              <span className="text-4xl sm:text-5xl leading-none" aria-hidden="true">{event.emoji}</span>
+              <div className="min-w-0">
+                <h2 className="text-xl sm:text-2xl font-bold truncate">{event.title}</h2>
+                <p className="text-white/75 text-sm mt-0.5">{formatKDate(target)}</p>
+              </div>
+            </div>
+
+            <p className="text-5xl sm:text-7xl font-black tracking-tighter tnum mt-5">
+              {ddayLabel(days)}
+            </p>
+
+            {isFuture ? (
+              <p className="text-white/85 text-sm sm:text-base font-medium tnum mt-2">
+                {restDays > 0 && <span>{restDays}일 </span>}
+                {pad(hours)}시간 {pad(minutes)}분 {pad(seconds)}초 남음
+              </p>
+            ) : days === 0 ? (
+              <p className="text-white/85 text-sm sm:text-base font-medium mt-2">
+                오늘이 바로 그날이에요! 🎉
+              </p>
+            ) : (
+              <p className="text-white/85 text-sm sm:text-base font-medium mt-2">
+                {Math.abs(days)}일 지났습니다.
+              </p>
+            )}
+
+            {event.memo && (
+              <p className="text-white/80 text-sm mt-4 border-l-2 border-white/40 pl-3">{event.memo}</p>
+            )}
+
+            <div className="mt-6">
+              <div className="h-1.5 w-full rounded-full bg-white/25 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-white transition-all duration-500"
+                  style={{ width: `${percent}%` }}
+                  role="progressbar"
+                  aria-valuenow={Math.round(percent)}
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  aria-label="목표일까지 진행률"
+                />
+              </div>
+              <p className="text-[11px] text-white/70 mt-1.5 tnum">진행률 {Math.round(percent)}%</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function EventCard({ event, onEdit, onDelete, onTogglePin }) {
+      const target = resolveTarget(event);
+      const days = diffDays(target);
+      const accent = getAccent(event.accent);
+      const isPast = days < 0;
+
+      return (
+        <Card className={`p-4 sm:p-5 transition hover:shadow-md hover:-translate-y-0.5 ${isPast ? 'opacity-70' : ''}`}>
+          <div className="flex items-start gap-3">
+            <div className={`shrink-0 w-11 h-11 rounded-xl border flex items-center justify-center text-xl ${accent.soft}`}>
+              <span aria-hidden="true">{event.emoji}</span>
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                {event.pinned && <span title="고정됨" aria-label="고정됨">📌</span>}
+                <h3 className="font-bold text-slate-900 truncate">{event.title}</h3>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {formatKDate(target)}
+                {event.yearly && <span className="ml-1.5 text-slate-400">· 매년 반복</span>}
+              </p>
+              {event.memo && <p className="text-xs text-slate-500 mt-1.5 line-clamp-2">{event.memo}</p>}
+            </div>
+
+            <div className="text-right shrink-0">
+              <p className={`text-xl sm:text-2xl font-black tnum ${
+                days === 0 ? 'text-rose-600' : isPast ? 'text-slate-400' : 'text-slate-900'
+              }`}>
+                {ddayLabel(days)}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-1 mt-3 pt-3 border-t border-slate-100">
+            <Button variant="ghost" size="sm" onClick={() => onTogglePin(event.id)}>
+              {event.pinned ? '고정 해제' : '고정'}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => onEdit(event)}>수정</Button>
+            <Button variant="ghost" size="sm" className="hover:text-rose-600 hover:bg-rose-50"
+                    onClick={() => onDelete(event)}>
+              삭제
+            </Button>
+          </div>
+        </Card>
+      );
+    }
+
+    function FilterTabs({ value, onChange, counts }) {
+      const tabs = [
+        { id: 'all', label: '전체' },
+        { id: 'upcoming', label: '다가오는' },
+        { id: 'past', label: '지난' },
+      ];
+      return (
+        <div className="inline-flex p-1 bg-slate-100 rounded-xl mb-4" role="tablist" aria-label="일정 필터">
+          {tabs.map((tab) => {
+            const active = value === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => onChange(tab.id)}
+                className={`px-3.5 py-1.5 text-sm font-semibold rounded-lg transition
+                  ${active ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                {tab.label}
+                <span className="ml-1.5 text-xs text-slate-400 tnum">{counts[tab.id]}</span>
+              </button>
+            );
+          })}
+        </div>
+      );
+    }
+
+    function EmptyState({ filter, onAdd }) {
+      const copy = {
+        all: { icon: '🗓️', title: '등록된 D-Day가 없어요', desc: '기다리는 날을 추가해 남은 시간을 세어보세요.' },
+        upcoming: { icon: '🌤️', title: '다가오는 일정이 없어요', desc: '새로운 목표나 기념일을 추가해보세요.' },
+        past: { icon: '📦', title: '지난 일정이 없어요', desc: '아직 지나간 D-Day가 없습니다.' },
+      }[filter];
+
+      return (
+        <Card className="py-14 px-6 text-center border-dashed">
+          <p className="text-4xl mb-3" aria-hidden="true">{copy.icon}</p>
+          <p className="font-bold text-slate-800">{copy.title}</p>
+          <p className="text-sm text-slate-500 mt-1">{copy.desc}</p>
+          {filter !== 'past' && <Button className="mt-5" onClick={onAdd}>＋ D-Day 추가하기</Button>}
+        </Card>
+      );
+    }
+
+    /** 추가 / 수정 폼 (controlled components) */
+    function EventForm({ initial, onSubmit, onCancel }) {
+      const [title, setTitle] = useState(initial?.title || '');
+      const [date, setDate] = useState(initial?.date || toDateInput(new Date()));
+      const [memo, setMemo] = useState(initial?.memo || '');
+      const [emoji, setEmoji] = useState(initial?.emoji || '🎯');
+      const [accent, setAccent] = useState(initial?.accent || 'indigo');
+      const [yearly, setYearly] = useState(Boolean(initial?.yearly));
+      const [errors, setErrors] = useState({});
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        const nextErrors = {};
+        if (!title.trim()) nextErrors.title = '일정 이름을 입력해 주세요.';
+        if (!date) nextErrors.date = '날짜를 선택해 주세요.';
+        else if (Number.isNaN(parseDate(date).getTime())) nextErrors.date = '올바른 날짜가 아닙니다.';
+
+        setErrors(nextErrors);
+        if (Object.keys(nextErrors).length > 0) return;
+
+        onSubmit({ title: title.trim(), date, memo: memo.trim(), emoji, accent, yearly });
+      };
+
+      const preview = useMemo(() => {
+        if (!date || Number.isNaN(parseDate(date).getTime())) return null;
+        return { days: diffDays(resolveTarget({ date, yearly })), target: resolveTarget({ date, yearly }) };
+      }, [date, yearly]);
+
+      return (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Input
+            label="일정 이름"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="예) 정보처리기사 실기 시험"
+            error={errors.title}
+            maxLength={40}
+            autoFocus
+          />
+
+          <Input
+            label="날짜"
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            error={errors.date}
+          />
+
+          <label className="flex items-center gap-2.5 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={yearly}
+              onChange={(e) => setYearly(e.target.checked)}
+              className="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900/20"
+            />
+            <span className="text-sm text-slate-700">
+              매년 반복 <span className="text-slate-400">(생일·기념일 등)</span>
+            </span>
+          </label>
+
+          <div>
+            <span className="block text-sm font-semibold text-slate-700 mb-1.5">아이콘</span>
+            <div className="flex flex-wrap gap-1.5">
+              {EMOJIS.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => setEmoji(item)}
+                  aria-label={`아이콘 ${item}`}
+                  aria-pressed={emoji === item}
+                  className={`w-10 h-10 rounded-xl text-xl transition
+                    ${emoji === item ? 'bg-slate-900/5 ring-2 ring-slate-900' : 'hover:bg-slate-100'}`}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <span className="block text-sm font-semibold text-slate-700 mb-1.5">색상</span>
+            <div className="flex flex-wrap gap-2">
+              {ACCENTS.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setAccent(item.id)}
+                  aria-label={`색상 ${item.name}`}
+                  aria-pressed={accent === item.id}
+                  className={`w-8 h-8 rounded-full ${item.dot} transition
+                    ${accent === item.id ? 'ring-2 ring-offset-2 ring-slate-900' : 'hover:scale-110'}`}
+                />
+              ))}
+            </div>
+          </div>
+
+          <Input
+            label="메모 (선택)"
+            value={memo}
+            onChange={(e) => setMemo(e.target.value)}
+            placeholder="한 줄 메모를 남겨보세요"
+            maxLength={60}
+          />
+
+          {preview && (
+            <div className="rounded-xl bg-slate-50 border border-slate-100 px-4 py-3 text-sm text-slate-600">
+              미리보기 · <span className="font-bold text-slate-900 tnum">{ddayLabel(preview.days)}</span>
+              <span className="text-slate-400"> · {formatKDate(preview.target)}</span>
+            </div>
+          )}
+
+          <div className="flex gap-2 pt-1">
+            <Button type="button" variant="secondary" className="flex-1" onClick={onCancel}>취소</Button>
+            <button
+              type="submit"
+              className="flex-1 inline-flex items-center justify-center rounded-xl bg-slate-900 text-white
+                text-sm font-semibold px-4 py-2.5 shadow-sm transition hover:bg-slate-800 active:scale-[0.97]
+                focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-slate-900"
+            >
+              {initial ? '수정 완료' : '추가하기'}
+            </button>
+          </div>
+        </form>
+      );
+    }
+
+    // ========================================
+    // 🚀 App
+    // ========================================
+
+    function App() {
+      const [events, setEvents] = useState(() => loadEvents() || seedEvents());
+      const [filter, setFilter] = useState('all');
+      const [formOpen, setFormOpen] = useState(false);
+      const [editing, setEditing] = useState(null);
+      const [deleting, setDeleting] = useState(null);
+
+      // 변경 시마다 localStorage 동기화
+      useEffect(() => { saveEvents(events); }, [events]);
+
+      // 자정을 넘겨도 D-Day 가 갱신되도록 1분마다 리렌더
+      const [, setTick] = useState(0);
+      useEffect(() => {
+        const id = setInterval(() => setTick((t) => t + 1), 60 * 1000);
+        return () => clearInterval(id);
+      }, []);
+
+      const decorated = useMemo(
+        () => events.map((event) => {
+          const target = resolveTarget(event);
+          return { event, target, days: diffDays(target) };
+        }),
+        [events]
+      );
+
+      const stats = useMemo(() => ({
+        total: decorated.length,
+        upcoming: decorated.filter((d) => d.days > 0).length,
+        today: decorated.filter((d) => d.days === 0).length,
+        past: decorated.filter((d) => d.days < 0).length,
+      }), [decorated]);
+
+      // 정렬: 고정 우선 → 미래(가까운 순) → 과거(최근 순)
+      const sorted = useMemo(() => {
+        const list = [...decorated];
+        list.sort((a, b) => {
+          if (a.event.pinned !== b.event.pinned) return a.event.pinned ? -1 : 1;
+          const aFuture = a.days >= 0;
+          const bFuture = b.days >= 0;
+          if (aFuture !== bFuture) return aFuture ? -1 : 1;
+          return aFuture ? a.days - b.days : b.days - a.days;
+        });
+        return list;
+      }, [decorated]);
+
+      const hero = sorted[0];
+
+      const visible = useMemo(() => {
+        if (filter === 'upcoming') return sorted.filter((d) => d.days >= 0);
+        if (filter === 'past') return sorted.filter((d) => d.days < 0);
+        return sorted;
+      }, [sorted, filter]);
+
+      const counts = {
+        all: stats.total,
+        upcoming: stats.upcoming + stats.today,
+        past: stats.past,
+      };
+
+      const openAdd = useCallback(() => { setEditing(null); setFormOpen(true); }, []);
+      const openEdit = useCallback((event) => { setEditing(event); setFormOpen(true); }, []);
+      const closeForm = useCallback(() => { setFormOpen(false); setEditing(null); }, []);
+
+      const handleSubmit = useCallback((values) => {
+        setEvents((prev) => {
+          if (editing) {
+            return prev.map((item) => (item.id === editing.id ? { ...item, ...values } : item));
+          }
+          return [...prev, { id: uid(), pinned: false, createdAt: new Date().toISOString(), ...values }];
+        });
+        closeForm();
+      }, [editing, closeForm]);
+
+      const handleDelete = useCallback(() => {
+        if (!deleting) return;
+        setEvents((prev) => prev.filter((item) => item.id !== deleting.id));
+        setDeleting(null);
+      }, [deleting]);
+
+      // 고정은 하나만 유지
+      const togglePin = useCallback((id) => {
+        setEvents((prev) =>
+          prev.map((item) =>
+            item.id === id ? { ...item, pinned: !item.pinned } : { ...item, pinned: false }
+          )
+        );
+      }, []);
+
+      return (
+        <div className="min-h-screen">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+            <Header onAdd={openAdd} />
+
+            {hero && <HeroCountdown event={hero.event} />}
+
+            <StatBar stats={stats} />
+
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <FilterTabs value={filter} onChange={setFilter} counts={counts} />
+              <p className="text-xs text-slate-400 mb-4 tnum">{visible.length}개 표시 중</p>
+            </div>
+
+            {visible.length === 0 ? (
+              <EmptyState filter={filter} onAdd={openAdd} />
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {visible.map(({ event }) => (
+                  <EventCard
+                    key={event.id}
+                    event={event}
+                    onEdit={openEdit}
+                    onDelete={setDeleting}
+                    onTogglePin={togglePin}
+                  />
+                ))}
+              </div>
+            )}
+
+            <footer className="mt-10 text-center text-xs text-slate-400">
+              데이터는 이 브라우저에만 저장됩니다 (localStorage).
+            </footer>
+          </div>
+
+          <Modal isOpen={formOpen} onClose={closeForm} title={editing ? 'D-Day 수정' : '새 D-Day 추가'}>
+            <EventForm
+              key={editing ? editing.id : 'new'}
+              initial={editing}
+              onSubmit={handleSubmit}
+              onCancel={closeForm}
+            />
+          </Modal>
+
+          <Modal isOpen={Boolean(deleting)} onClose={() => setDeleting(null)} title="D-Day 삭제" size="sm">
+            <p className="text-sm text-slate-600">
+              <span className="font-bold text-slate-900">{deleting?.title}</span> 일정을 삭제할까요?
+              삭제한 일정은 되돌릴 수 없습니다.
+            </p>
+            <div className="flex gap-2 mt-6">
+              <Button variant="secondary" className="flex-1" onClick={() => setDeleting(null)}>취소</Button>
+              <Button variant="danger" className="flex-1" onClick={handleDelete}>삭제</Button>
+            </div>
+          </Modal>
+        </div>
+      );
+    }
+
+    // ========================================
+    // Rendering
+    // ========================================
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

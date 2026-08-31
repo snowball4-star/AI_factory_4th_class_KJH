@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>참치마요 덮밥 (10분) — 15분 레시피북</title>
+  <meta name="description" content="참치캔 하나로 10분 만에 완성하는 참치마요 덮밥. 인분 조절, 재료 체크리스트, 조리 타이머 제공.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <!-- 모든 CDN 버전 고정. Babel은 반드시 7.x (8.x는 인라인 text/babel 미지원) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.25.9/babel.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans KR"', 'system-ui', 'sans-serif'],
+            display: ['"Gowun Dodum"', '"Noto Sans KR"', 'serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    html { scroll-behavior: smooth; }
+    section[id] { scroll-margin-top: 5rem; }
+    /* Tailwind 유틸리티로 표현할 수 없는 커스텀 애니메이션 */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up { animation: fadeUp .5s ease-out both; }
+    @keyframes pulseRing {
+      0%   { box-shadow: 0 0 0 0 rgba(234, 88, 12, .45); }
+      70%  { box-shadow: 0 0 0 12px rgba(234, 88, 12, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(234, 88, 12, 0); }
+    }
+    .pulse-ring { animation: pulseRing 1.8s ease-out infinite; }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .fade-up, .pulse-ring { animation: none; }
+    }
+    @media print {
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-[#fdf8f3] text-stone-800 font-sans antialiased">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    // ========================================
+    // React Hooks
+    // ========================================
+    const { useState, useEffect, useMemo, useRef, useCallback } = React;
+
+    // ========================================
+    // 🎨 Design System Components
+    // ========================================
+
+    function Button({ variant = 'primary', size = 'md', disabled = false, onClick, className = '', children, ...rest }) {
+      const base = 'inline-flex items-center justify-center gap-2 rounded-full font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-orange-500 disabled:opacity-40 disabled:cursor-not-allowed';
+      const variants = {
+        primary: 'bg-orange-600 text-white hover:bg-orange-700 active:scale-[.97] shadow-sm shadow-orange-600/20',
+        secondary: 'bg-white text-stone-700 border border-stone-300 hover:bg-stone-50 active:scale-[.97]',
+        danger: 'bg-red-600 text-white hover:bg-red-700 active:scale-[.97]',
+        ghost: 'bg-transparent text-stone-600 hover:bg-stone-200/70',
+      };
+      const sizes = {
+        sm: 'px-3 py-1.5 text-xs',
+        md: 'px-4 py-2 text-sm',
+        lg: 'px-6 py-3 text-base',
+      };
+      return (
+        <button
+          type="button"
+          onClick={onClick}
+          disabled={disabled}
+          className={`${base} ${variants[variant]} ${sizes[size]} ${className}`}
+          {...rest}
+        >
+          {children}
+        </button>
+      );
+    }
+
+    function Card({ className = '', children, ...rest }) {
+      return (
+        <div className={`bg-white rounded-2xl shadow-sm ring-1 ring-stone-900/5 ${className}`} {...rest}>
+          {children}
+        </div>
+      );
+    }
+
+    function Badge({ tone = 'neutral', className = '', children }) {
+      const tones = {
+        neutral: 'bg-stone-100 text-stone-600 ring-stone-200',
+        orange: 'bg-orange-50 text-orange-700 ring-orange-200',
+        green: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+        amber: 'bg-amber-50 text-amber-700 ring-amber-200',
+      };
+      return (
+        <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ring-1 ${tones[tone]} ${className}`}>
+          {children}
+        </span>
+      );
+    }
+
+    function CheckItem({ checked, onToggle, children, className = '' }) {
+      return (
+        <button
+          type="button"
+          role="checkbox"
+          aria-checked={checked}
+          onClick={onToggle}
+          className={`group flex w-full items-start gap-3 rounded-lg text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${className}`}
+        >
+          <span
+            aria-hidden="true"
+            className={`mt-0.5 flex h-5 w-5 flex-none items-center justify-center rounded-md border transition-all ${
+              checked
+                ? 'bg-orange-600 border-orange-600 text-white'
+                : 'bg-white border-stone-300 text-transparent group-hover:border-orange-400'
+            }`}
+          >
+            <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+              <path fillRule="evenodd" d="M16.7 5.3a1 1 0 010 1.4l-7.5 7.5a1 1 0 01-1.4 0L3.3 9.7a1 1 0 111.4-1.4l3.8 3.8 6.8-6.8a1 1 0 011.4 0z" clipRule="evenodd" />
+            </svg>
+          </span>
+          <span className={`flex-1 transition-colors ${checked ? 'text-stone-400 line-through decoration-stone-300' : ''}`}>
+            {children}
+          </span>
+        </button>
+      );
+    }
+
+    function Stepper({ value, min = 1, max = 4, onChange, label }) {
+      return (
+        <div className="inline-flex items-center gap-1 rounded-full bg-stone-100 p-1" role="group" aria-label={label}>
+          <button
+            type="button"
+            onClick={() => onChange(Math.max(min, value - 1))}
+            disabled={value <= min}
+            aria-label="인분 줄이기"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-lg font-bold text-stone-600 shadow-sm transition hover:text-orange-600 disabled:opacity-30 disabled:hover:text-stone-600"
+          >
+            −
+          </button>
+          <span className="w-16 text-center text-sm font-bold tabular-nums text-stone-800" aria-live="polite">
+            {value}인분
+          </span>
+          <button
+            type="button"
+            onClick={() => onChange(Math.min(max, value + 1))}
+            disabled={value >= max}
+            aria-label="인분 늘리기"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-lg font-bold text-stone-600 shadow-sm transition hover:text-orange-600 disabled:opacity-30 disabled:hover:text-stone-600"
+          >
+            +
+          </button>
+        </div>
+      );
+    }
+
+    function ProgressBar({ value, max, tone = 'orange', className = '' }) {
+      const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
+      const tones = { orange: 'bg-orange-500', green: 'bg-emerald-500' };
+      return (
+        <div className={`h-1.5 w-full overflow-hidden rounded-full bg-stone-200 ${className}`}>
+          <div
+            className={`h-full rounded-full transition-all duration-300 ${tones[tone]}`}
+            style={{ width: `${pct}%` }}
+            role="progressbar"
+            aria-valuenow={Math.round(pct)}
+            aria-valuemin="0"
+            aria-valuemax="100"
+          />
+        </div>
+      );
+    }
+
+    function SectionTitle({ eyebrow, title, children }) {
+      return (
+        <div className="mb-6">
+          {eyebrow && (
+            <p className="mb-1 text-xs font-bold uppercase tracking-[0.2em] text-orange-600">{eyebrow}</p>
+          )}
+          <h2 className="font-display text-2xl font-bold text-stone-900 sm:text-3xl">{title}</h2>
+          {children && <p className="mt-2 text-sm text-stone-500">{children}</p>}
+        </div>
+      );
+    }
+
+    // ========================================
+    // 📊 Recipe Data
+    // ========================================
+
+    const RECIPE = {
+      title: '참치마요 덮밥',
+      subtitle: '편의점에서 사 먹던 그 맛을, 참치캔 하나로 집에서',
+      intro: '불을 거의 쓰지 않기 때문에 자취방에서 가장 실패하기 어려운 한 그릇이다. 준비 4분 + 조리 6분, 딱 10분이면 완성된다.',
+      image: 'images/tuna-mayo-rice-bowl.jpg',
+      imageAlt: '참치마요 덮밥 - 나무 밥상 위 뜨거운 밥에 참치마요와 반숙 노른자를 올린 덮밥',
+      totalMinutes: 10,
+      baseServings: 1,
+      difficulty: '아주 쉬움',
+      category: '밥 · 한식',
+    };
+
+    // qty가 null이면 "한 줌", "약간"처럼 인분에 따라 환산하지 않는 분량이다.
+    const INGREDIENTS = [
+      { name: '따뜻한 밥', qty: 1, unit: '공기', gram: 210, note: '즉석밥도 충분하다' },
+      { name: '참치캔', qty: 1, unit: '개', gram: 100, note: '기름을 꼭 짜낸다' },
+      { name: '마요네즈', qty: 2, unit: '큰술' },
+      { name: '설탕', qty: 0.5, unit: '작은술' },
+      { name: '진간장', qty: 1, unit: '작은술', note: '밥 밑간용' },
+      { name: '참기름', qty: 1, unit: '작은술', note: '밥 밑간용' },
+      { name: '달걀', qty: 1, unit: '개', note: '반숙 프라이' },
+      { name: '양파', qty: 0.125, unit: '개', note: '잘게 다져 물에 5분 담근다' },
+      { name: '김가루', qty: null, unit: '한 줌' },
+      { name: '쪽파 또는 대파', qty: null, unit: '약간', note: '송송 썰기' },
+      { name: '스리라차', qty: 1, unit: '작은술', note: '매콤한 마요를 원할 때', optional: true },
+    ];
+
+    const STEPS = [
+      {
+        at: 0,
+        title: '양파 매운맛 빼기',
+        body: '다진 양파를 찬물에 담가둔다. 이 5분이 아삭함은 남기고 매운맛만 빼주는 시간이다. 그동안 나머지를 준비한다.',
+      },
+      {
+        at: 2,
+        title: '참치 기름 짜기',
+        body: '참치캔 뚜껑을 반쯤 열어 손으로 꾹 눌러 기름을 완전히 빼낸다. 기름이 남으면 마요가 묽어지고 비린내가 돈다.',
+      },
+      {
+        at: 4,
+        title: '마요 무침',
+        body: '볼에 참치, 마요네즈, 설탕, 물기를 꽉 짠 양파를 넣고 섞는다. 참치 살을 너무 으깨지 말고 결이 살아있게 가볍게만 버무린다.',
+      },
+      {
+        at: 6,
+        title: '달걀 부치기',
+        body: '팬에 기름을 두르고 중약불에서 달걀을 노른자가 흐르는 반숙으로 부친다. 흰자 가장자리가 바삭해지면 딱 좋다.',
+      },
+      {
+        at: 8,
+        title: '밥 밑간',
+        body: '뜨거운 밥에 간장과 참기름을 넣고 주걱으로 자르듯 섞는다. 밥알이 뭉개지지 않게 가볍게.',
+      },
+      {
+        at: 10,
+        title: '담기',
+        body: '그릇에 밥을 담고 김가루를 깐 뒤 참치마요를 올린다. 가운데 반숙 달걀을 얹고 쪽파를 뿌린다. 노른자를 터뜨려 비벼 먹는다.',
+      },
+    ];
+
+    const TIPS = [
+      { icon: '💧', title: '기름은 반드시 완전히 뺀다', body: '참치마요가 질척해지는 원인의 90%는 남은 기름이다.' },
+      { icon: '🔥', title: '밥은 뜨거울 때 밑간한다', body: '식은 밥에는 간장과 참기름이 스며들지 않고 겉돌기만 한다.' },
+      { icon: '🍙', title: '김가루는 밥과 참치 사이에', body: '위에 뿌리면 금방 눅눅해지지만, 사이에 깔면 마지막까지 향이 산다.' },
+      { icon: '⏱️', title: '마요는 먹기 직전에 무친다', body: '미리 만들어두면 양파에서 물이 나와 묽어진다.' },
+    ];
+
+    const VARIATIONS = [
+      { emoji: '🌶️', title: '매운 참치마요', body: '3번 단계에서 스리라차나 고추장 1/2작은술을 넣는다.' },
+      { emoji: '🍘', title: '삼각김밥 속', body: '밥 밑간을 생략하고 참치마요만 김밥용 김에 싸면 그대로 편의점 삼각김밥이다.' },
+      { emoji: '🥑', title: '아보카도 덮밥', body: '김가루 위에 얇게 썬 아보카도를 깔면 훨씬 부드럽고 든든해진다.' },
+      { emoji: '🧀', title: '오븐 참치마요', body: '밥 위에 참치마요를 덮고 치즈를 올려 에어프라이어 180도 6분이면 그라탕처럼 된다.' },
+    ];
+
+    // ========================================
+    // 🧮 Utilities
+    // ========================================
+
+    // 0.125 → "1/8", 1.5 → "1과 1/2" 처럼 요리책 표기로 변환한다.
+    const FRACTIONS = [
+      [0.125, '1/8'], [0.25, '1/4'], [1 / 3, '1/3'], [0.375, '3/8'],
+      [0.5, '1/2'], [0.625, '5/8'], [2 / 3, '2/3'], [0.75, '3/4'], [0.875, '7/8'],
+    ];
+
+    function formatQty(value) {
+      const rounded = Math.round(value * 1000) / 1000;
+      const whole = Math.floor(rounded + 1e-9);
+      const frac = rounded - whole;
+
+      let fracLabel = '';
+      let best = Infinity;
+      FRACTIONS.forEach(function (entry) {
+        const diff = Math.abs(frac - entry[0]);
+        if (diff < best && diff < 0.04) {
+          best = diff;
+          fracLabel = entry[1];
+        }
+      });
+
+      // 표준 분수로 떨어지지 않으면 소수 한 자리로 표기한다.
+      if (frac > 0.04 && !fracLabel) return String(Math.round(rounded * 10) / 10);
+      if (whole === 0) return fracLabel || '0';
+      return fracLabel ? `${whole}과 ${fracLabel}` : String(whole);
+    }
+
+    function formatClock(totalSeconds) {
+      const s = Math.max(0, Math.floor(totalSeconds));
+      const m = Math.floor(s / 60);
+      const rest = s % 60;
+      return `${String(m).padStart(2, '0')}:${String(rest).padStart(2, '0')}`;
+    }
+
+    // ========================================
+    // 🧩 Layout Components
+    // ========================================
+
+    const NAV_ITEMS = [
+      { href: '#ingredients', label: '재료' },
+      { href: '#steps', label: '만드는 법' },
+      { href: '#tips', label: '성공 포인트' },
+      { href: '#variations', label: '응용' },
+    ];
+
+    function Header() {
+      return (
+        <header className="no-print sticky top-0 z-30 border-b border-stone-200/80 bg-[#fdf8f3]/90 backdrop-blur">
+          <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+            <a href="#top" className="flex items-center gap-2 font-display text-base font-bold text-stone-900">
+              <span aria-hidden="true" className="text-xl">🥣</span>
+              참치마요 덮밥
+            </a>
+            <nav aria-label="섹션 이동" className="hidden gap-1 sm:flex">
+              {NAV_ITEMS.map(function (item) {
+                return (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    className="rounded-full px-3 py-1.5 text-sm text-stone-600 transition hover:bg-stone-200/70 hover:text-stone-900"
+                  >
+                    {item.label}
+                  </a>
+                );
+              })}
+            </nav>
+            <Badge tone="orange" className="sm:hidden">10분</Badge>
+          </div>
+        </header>
+      );
+    }
+
+    function Hero() {
+      const [imgFailed, setImgFailed] = useState(false);
+
+      return (
+        <section id="top" className="mx-auto max-w-5xl px-4 pb-4 pt-8 sm:px-6 sm:pt-12">
+          <div className="grid items-center gap-8 lg:grid-cols-2">
+            <div className="fade-up order-2 lg:order-1">
+              <div className="mb-4 flex flex-wrap gap-2">
+                <Badge tone="orange">⏱️ {RECIPE.totalMinutes}분</Badge>
+                <Badge tone="green">👤 1인분 기준</Badge>
+                <Badge tone="amber">🎚️ {RECIPE.difficulty}</Badge>
+                <Badge>{RECIPE.category}</Badge>
+              </div>
+              <h1 className="font-display text-4xl font-bold leading-tight text-stone-900 sm:text-5xl">
+                {RECIPE.title}
+              </h1>
+              <p className="mt-3 text-lg text-orange-700">{RECIPE.subtitle}</p>
+              <p className="mt-4 leading-relaxed text-stone-600">{RECIPE.intro}</p>
+              <div className="no-print mt-6 flex flex-wrap gap-2">
+                <Button size="lg" onClick={() => { window.location.hash = '#steps'; }}>
+                  바로 만들기 시작 →
+                </Button>
+                <Button size="lg" variant="secondary" onClick={() => { window.location.hash = '#ingredients'; }}>
+                  재료부터 보기
+                </Button>
+              </div>
+            </div>
+
+            <div className="fade-up order-1 lg:order-2">
+              <div className="overflow-hidden rounded-3xl bg-stone-100 shadow-lg shadow-stone-900/10 ring-1 ring-stone-900/5">
+                {imgFailed ? (
+                  <div className="flex aspect-[4/3] flex-col items-center justify-center gap-2 text-stone-400">
+                    <span className="text-5xl" aria-hidden="true">🍚</span>
+                    <p className="text-sm">이미지를 불러오지 못했습니다</p>
+                  </div>
+                ) : (
+                  <img
+                    src={RECIPE.image}
+                    alt={RECIPE.imageAlt}
+                    onError={() => setImgFailed(true)}
+                    className="aspect-[4/3] w-full object-cover"
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    function Footer() {
+      return (
+        <footer className="mt-16 border-t border-stone-200 bg-[#f7efe6]">
+          <div className="mx-auto max-w-5xl px-4 py-8 text-center text-sm text-stone-500 sm:px-6">
+            <p className="font-display text-base text-stone-700">15분 레시피북 · 참치마요 덮밥</p>
+            <p className="mt-1">불 앞에 6분만 서 있으면 되는, 가장 실패하기 어려운 한 그릇.</p>
+          </div>
+        </footer>
+      );
+    }
+
+    // ========================================
+    // 📄 Page Section Components
+    // ========================================
+
+    function IngredientsSection() {
+      const [servings, setServings] = useState(RECIPE.baseServings);
+      const [checked, setChecked] = useState({});
+
+      const ratio = servings / RECIPE.baseServings;
+      const doneCount = INGREDIENTS.filter((item) => checked[item.name]).length;
+
+      const toggle = useCallback(function (name) {
+        setChecked((prev) => Object.assign({}, prev, { [name]: !prev[name] }));
+      }, []);
+
+      const scaled = useMemo(
+        function () {
+          return INGREDIENTS.map(function (item) {
+            if (item.qty === null) return Object.assign({}, item, { amount: item.unit });
+            const gramLabel = item.gram ? ` (${Math.round(item.gram * ratio)}g)` : '';
+            return Object.assign({}, item, {
+              amount: `${formatQty(item.qty * ratio)}${item.unit}${gramLabel}`,
+            });
+          });
+        },
+        [ratio]
+      );
+
+      return (
+        <section id="ingredients" className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+          <SectionTitle eyebrow="Ingredients" title="재료">
+            인분을 조절하면 분량이 자동으로 환산됩니다. 장 볼 때 하나씩 체크해 보세요.
+          </SectionTitle>
+
+          <Card className="overflow-hidden">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-100 px-5 py-4">
+              <Stepper value={servings} onChange={setServings} label="인분 조절" />
+              <div className="no-print flex items-center gap-3">
+                <span className="text-sm tabular-nums text-stone-500">
+                  {doneCount} / {INGREDIENTS.length}
+                </span>
+                <Button variant="ghost" size="sm" onClick={() => setChecked({})} disabled={doneCount === 0}>
+                  체크 초기화
+                </Button>
+              </div>
+            </div>
+
+            <div className="px-5 pt-3">
+              <ProgressBar value={doneCount} max={INGREDIENTS.length} tone="green" />
+            </div>
+
+            <ul className="divide-y divide-stone-100 px-5 py-2">
+              {scaled.map(function (item) {
+                return (
+                  <li key={item.name} className="py-3">
+                    <CheckItem checked={!!checked[item.name]} onToggle={() => toggle(item.name)}>
+                      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                        <span className="font-medium text-stone-800">
+                          {item.name}
+                          {item.optional && (
+                            <span className="ml-2 align-middle text-[11px] font-normal text-stone-400">선택</span>
+                          )}
+                        </span>
+                        <span className="text-sm font-semibold tabular-nums text-orange-700">{item.amount}</span>
+                      </div>
+                      {item.note && <p className="mt-0.5 text-xs text-stone-500">{item.note}</p>}
+                    </CheckItem>
+                  </li>
+                );
+              })}
+            </ul>
+          </Card>
+        </section>
+      );
+    }
+
+    function TimerPanel({ elapsed, running, onStart, onPause, onReset, activeIndex }) {
+      const totalSec = RECIPE.totalMinutes * 60;
+      const finished = elapsed >= totalSec;
+      const activeStep = STEPS[activeIndex];
+
+      return (
+        <Card className={`no-print sticky top-16 z-20 mb-6 p-5 ${running ? 'ring-2 ring-orange-300' : ''}`}>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-400">조리 타이머</p>
+              <p className={`font-display text-4xl font-bold tabular-nums ${finished ? 'text-emerald-600' : 'text-stone-900'}`}>
+                {formatClock(elapsed)}
+                <span className="ml-1 text-base font-normal text-stone-400">/ {formatClock(totalSec)}</span>
+              </p>
+            </div>
+            <div className="flex gap-2">
+              {running ? (
+                <Button variant="secondary" onClick={onPause}>⏸ 일시정지</Button>
+              ) : (
+                <Button onClick={onStart} disabled={finished} className={!finished && elapsed === 0 ? 'pulse-ring' : ''}>
+                  ▶ {elapsed === 0 ? '시작' : '이어서'}
+                </Button>
+              )}
+              <Button variant="ghost" onClick={onReset} disabled={elapsed === 0}>초기화</Button>
+            </div>
+          </div>
+
+          <ProgressBar className="mt-4" value={elapsed} max={totalSec} tone={finished ? 'green' : 'orange'} />
+
+          <p className="mt-3 text-sm text-stone-600" aria-live="polite">
+            {finished ? (
+              <span className="font-medium text-emerald-700">완성! 노른자를 터뜨려 비벼 드세요 🎉</span>
+            ) : (
+              <>
+                <span className="font-medium text-orange-700">지금 할 일 · {activeStep.at}분</span>
+                <span className="mx-2 text-stone-300">|</span>
+                {activeStep.title}
+              </>
+            )}
+          </p>
+        </Card>
+      );
+    }
+
+    function StepsSection() {
+      const [elapsed, setElapsed] = useState(0);
+      const [running, setRunning] = useState(false);
+      const [done, setDone] = useState({});
+      const intervalRef = useRef(null);
+
+      const totalSec = RECIPE.totalMinutes * 60;
+
+      useEffect(
+        function () {
+          if (!running) return undefined;
+          intervalRef.current = window.setInterval(function () {
+            setElapsed(function (prev) {
+              const next = prev + 1;
+              if (next >= totalSec) {
+                setRunning(false);
+                return totalSec;
+              }
+              return next;
+            });
+          }, 1000);
+          return function () {
+            window.clearInterval(intervalRef.current);
+          };
+        },
+        [running, totalSec]
+      );
+
+      // 경과 시간이 지난 마지막 타임라인 단계를 현재 단계로 본다.
+      const activeIndex = useMemo(
+        function () {
+          const minutes = elapsed / 60;
+          let idx = 0;
+          STEPS.forEach(function (step, i) {
+            if (minutes >= step.at) idx = i;
+          });
+          return idx;
+        },
+        [elapsed]
+      );
+
+      const doneCount = STEPS.filter((step) => done[step.at]).length;
+
+      const reset = useCallback(function () {
+        setRunning(false);
+        setElapsed(0);
+      }, []);
+
+      return (
+        <section id="steps" className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+          <SectionTitle eyebrow="Method" title="만드는 법">
+            타이머를 켜면 분 단위 타임라인에 맞춰 지금 해야 할 단계가 자동으로 강조됩니다.
+          </SectionTitle>
+
+          <TimerPanel
+            elapsed={elapsed}
+            running={running}
+            activeIndex={activeIndex}
+            onStart={() => setRunning(true)}
+            onPause={() => setRunning(false)}
+            onReset={reset}
+          />
+
+          <div className="no-print mb-4 flex items-center gap-3">
+            <ProgressBar value={doneCount} max={STEPS.length} />
+            <span className="flex-none text-sm tabular-nums text-stone-500">
+              {doneCount} / {STEPS.length} 단계
+            </span>
+          </div>
+
+          <ol className="relative space-y-3 border-l-2 border-stone-200 pl-6 sm:pl-8">
+            {STEPS.map(function (step, i) {
+              const isActive = i === activeIndex && elapsed > 0 && elapsed < totalSec;
+              const isDone = !!done[step.at];
+              return (
+                <li key={step.at} className="relative">
+                  <span
+                    aria-hidden="true"
+                    className={`absolute -left-[1.9rem] top-4 flex h-7 w-7 items-center justify-center rounded-full border-2 text-xs font-bold transition-all sm:-left-[2.4rem] ${
+                      isDone
+                        ? 'border-emerald-500 bg-emerald-500 text-white'
+                        : isActive
+                        ? 'border-orange-500 bg-orange-500 text-white'
+                        : 'border-stone-300 bg-[#fdf8f3] text-stone-500'
+                    }`}
+                  >
+                    {isDone ? '✓' : i + 1}
+                  </span>
+                  <Card
+                    className={`p-4 transition-all ${isActive ? 'shadow-md ring-2 ring-orange-400' : ''} ${
+                      isDone ? 'bg-stone-50/80' : ''
+                    }`}
+                  >
+                    <CheckItem
+                      checked={isDone}
+                      onToggle={() => setDone((prev) => Object.assign({}, prev, { [step.at]: !prev[step.at] }))}
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-display text-lg font-bold text-stone-900">{step.title}</h3>
+                        <Badge tone={isActive ? 'orange' : 'neutral'}>{step.at}분</Badge>
+                      </div>
+                      <p className="mt-1.5 leading-relaxed text-stone-600">{step.body}</p>
+                    </CheckItem>
+                  </Card>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      );
+    }
+
+    function TipsSection() {
+      return (
+        <section id="tips" className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+          <SectionTitle eyebrow="Key Points" title="성공 포인트">
+            이 네 가지만 지키면 편의점에서 사 먹던 것보다 낫습니다.
+          </SectionTitle>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {TIPS.map(function (tip) {
+              return (
+                <Card key={tip.title} className="flex gap-4 p-5">
+                  <span aria-hidden="true" className="text-2xl">{tip.icon}</span>
+                  <div>
+                    <h3 className="font-bold text-stone-900">{tip.title}</h3>
+                    <p className="mt-1 text-sm leading-relaxed text-stone-600">{tip.body}</p>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </section>
+      );
+    }
+
+    function VariationsSection() {
+      const [openKey, setOpenKey] = useState(VARIATIONS[0].title);
+
+      return (
+        <section id="variations" className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+          <SectionTitle eyebrow="Variations" title="응용">
+            같은 재료로 방향만 바꿔 보세요. 카드를 눌러 펼칠 수 있습니다.
+          </SectionTitle>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {VARIATIONS.map(function (v) {
+              const open = openKey === v.title;
+              return (
+                <Card key={v.title} className={`overflow-hidden transition-all ${open ? 'ring-orange-200' : ''}`}>
+                  <button
+                    type="button"
+                    onClick={() => setOpenKey(open ? null : v.title)}
+                    aria-expanded={open}
+                    className="flex w-full items-center gap-3 px-5 py-4 text-left transition hover:bg-stone-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+                  >
+                    <span aria-hidden="true" className="text-xl">{v.emoji}</span>
+                    <span className="flex-1 font-bold text-stone-900">{v.title}</span>
+                    <span aria-hidden="true" className={`text-stone-400 transition-transform ${open ? 'rotate-180' : ''}`}>
+                      ▾
+                    </span>
+                  </button>
+                  {open && (
+                    <p className="border-t border-stone-100 px-5 py-4 text-sm leading-relaxed text-stone-600">{v.body}</p>
+                  )}
+                </Card>
+              );
+            })}
+          </div>
+        </section>
+      );
+    }
+
+    // ========================================
+    // 🚀 App Component
+    // ========================================
+
+    function App() {
+      return (
+        <div className="min-h-screen">
+          <Header />
+          <main>
+            <Hero />
+            <IngredientsSection />
+            <StepsSection />
+            <TipsSection />
+            <VariationsSection />
+          </main>
+          <Footer />
+        </div>
+      );
+    }
+
+    // ========================================
+    // Rendering
+    // ========================================
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

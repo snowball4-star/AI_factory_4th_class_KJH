@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>15분 레시피북 — 발표자료</title>
+  <meta name="description" content="15분 안에 완성하는 레시피 5종 발표 슬라이드.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <!-- 모든 CDN 버전 고정. Babel은 반드시 7.x (8.x는 인라인 text/babel 미지원) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.25.9/babel.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: [
+              '-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', '"Inter"',
+              '"Apple SD Gothic Neo"', '"Noto Sans KR"', 'sans-serif',
+            ],
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    /* Apple 키노트 감성: 화면 스크롤 없이 한 장씩, 텍스트는 또렷하게 */
+    html, body { height: 100%; overflow: hidden; }
+    body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+
+    /* Tailwind 유틸리티로 표현할 수 없는 진입 애니메이션 */
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(28px) scale(.985); filter: blur(6px); }
+      to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+    }
+    @keyframes slowZoom {
+      from { transform: scale(1.06); }
+      to   { transform: scale(1); }
+    }
+    .rise { animation: riseIn .72s cubic-bezier(.16,.84,.32,1) both; }
+    .d1 { animation-delay: .06s } .d2 { animation-delay: .16s } .d3 { animation-delay: .26s }
+    .d4 { animation-delay: .36s } .d5 { animation-delay: .46s } .d6 { animation-delay: .56s }
+    .d7 { animation-delay: .66s } .d8 { animation-delay: .76s }
+    .ken { animation: slowZoom 9s ease-out both; }
+
+    .tight { letter-spacing: -0.035em; }
+    .tighter { letter-spacing: -0.05em; }
+
+    /* 슬라이드 내부에서만 스크롤 허용 (좁은 화면 대비) */
+    .slide-scroll { overflow-y: auto; overscroll-behavior: contain; }
+    .slide-scroll::-webkit-scrollbar { width: 0; height: 0; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .rise, .ken { animation: none; }
+    }
+    @media print {
+      html, body { overflow: visible; height: auto; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-black font-sans">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    // ========================================
+    // React Hooks
+    // ========================================
+    const { useState, useEffect, useMemo, useRef, useCallback } = React;
+
+    // ========================================
+    // 🎨 Design System Components
+    // ========================================
+
+    function Button({ variant = 'primary', size = 'md', disabled = false, onClick, className = '', children, ...rest }) {
+      const base = 'inline-flex items-center justify-center gap-2 rounded-full font-medium tracking-tight transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 disabled:opacity-30 disabled:cursor-not-allowed';
+      const variants = {
+        primary: 'bg-white text-black hover:bg-white/90 active:scale-[.97]',
+        secondary: 'bg-white/10 text-white ring-1 ring-white/20 backdrop-blur hover:bg-white/20 active:scale-[.97]',
+        danger: 'bg-red-500 text-white hover:bg-red-600 active:scale-[.97]',
+        ghost: 'bg-transparent text-white/60 hover:text-white hover:bg-white/10',
+      };
+      const sizes = { sm: 'px-3 py-1.5 text-xs', md: 'px-5 py-2.5 text-sm', lg: 'px-7 py-3.5 text-base' };
+      return (
+        <button type="button" onClick={onClick} disabled={disabled}
+          className={`${base} ${variants[variant]} ${sizes[size]} ${className}`} {...rest}>
+          {children}
+        </button>
+      );
+    }
+
+    function Badge({ tone = 'light', className = '', children }) {
+      const tones = {
+        light: 'bg-black/5 text-black/70 ring-black/10',
+        dark: 'bg-white/10 text-white/80 ring-white/20 backdrop-blur',
+      };
+      return (
+        <span className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium tracking-tight ring-1 ${tones[tone]} ${className}`}>
+          {children}
+        </span>
+      );
+    }
+
+    function Card({ className = '', children, ...rest }) {
+      return (
+        <div className={`rounded-3xl bg-white shadow-[0_2px_20px_rgba(0,0,0,.06)] ring-1 ring-black/5 ${className}`} {...rest}>
+          {children}
+        </div>
+      );
+    }
+
+    function Modal({ isOpen, onClose, title, size = 'lg', children }) {
+      useEffect(
+        function () {
+          if (!isOpen) return undefined;
+          function onKey(e) {
+            if (e.key === 'Escape') onClose();
+          }
+          window.addEventListener('keydown', onKey);
+          return function () {
+            window.removeEventListener('keydown', onKey);
+          };
+        },
+        [isOpen, onClose]
+      );
+
+      if (!isOpen) return null;
+
+      const sizes = { md: 'max-w-2xl', lg: 'max-w-5xl', xl: 'max-w-7xl' };
+
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8" role="dialog" aria-modal="true" aria-label={title}>
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-xl" onClick={onClose} />
+          <div className={`relative w-full ${sizes[size]} rounded-3xl bg-neutral-900/90 p-6 text-white shadow-2xl ring-1 ring-white/10 sm:p-8`}>
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+              <Button variant="ghost" size="sm" onClick={onClose} aria-label="닫기">✕</Button>
+            </div>
+            {children}
+          </div>
+        </div>
+      );
+    }
+
+    function ProgressBar({ value, max, className = '' }) {
+      const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
+      return (
+        <div className={`h-[3px] w-full bg-white/10 ${className}`}>
+          <div
+            className="h-full bg-white/80 transition-all duration-500 ease-out"
+            style={{ width: `${pct}%` }}
+            role="progressbar"
+            aria-valuenow={Math.round(pct)}
+            aria-valuemin="0"
+            aria-valuemax="100"
+          />
+        </div>
+      );
+    }
+
+    // 이미지 로드 실패 시 그라디언트 플레이스홀더로 대체한다.
+    function Photo({ src, alt, gradient, emoji, className = '', imgClassName = '' }) {
+      const [failed, setFailed] = useState(false);
+      if (failed) {
+        return (
+          <div className={`flex items-center justify-center bg-gradient-to-br ${gradient} ${className}`} role="img" aria-label={alt}>
+            <span className="text-[18vw] opacity-40 sm:text-[8vw]" aria-hidden="true">{emoji}</span>
+          </div>
+        );
+      }
+      return (
+        <img src={src} alt={alt} onError={() => setFailed(true)}
+          className={`h-full w-full object-cover ${imgClassName} ${className}`} />
+      );
+    }
+
+    // ========================================
+    // 📊 Deck Data
+    // ========================================
+
+    const RECIPES = [
+      {
+        id: 'pasta',
+        name: '마늘 간장 버터 파스타',
+        emoji: '🍝',
+        minutes: 15,
+        servings: '1인분',
+        difficulty: '쉬움',
+        category: '면 · 양식',
+        image: '../images/garlic-soy-butter-pasta.jpg',
+        imageAlt: '마늘 간장 버터 파스타 - 오후 햇살이 드는 부엌 식탁 위에 놓인 윤기 나는 간장 파스타와 반숙 프라이',
+        gradient: 'from-amber-400 to-orange-600',
+        tagline: '집에 늘 있는 재료로 만드는 감칠맛 폭탄',
+        story: '면 삶는 시간 안에 소스가 끝난다. 그래서 15분을 넘지 않는다.',
+        hook: '면수 한 국자',
+        hookNote: '기름과 간장을 하나로 묶는 유화제',
+        ingredients: ['스파게티 100g', '마늘 5~6쪽', '버터 20g', '진간장 1.5큰술', '면수 1국자'],
+        timeline: [
+          { at: 0, title: '물 올리기', desc: '물 1.5L + 소금 1큰술, 끓는 동안 마늘 편 썰기' },
+          { at: 4, title: '면 삶기', desc: '포장지 시간보다 1분 짧게' },
+          { at: 6, title: '마늘 볶기', desc: '약불 3분, 가장자리가 연한 갈색까지' },
+          { at: 9, title: '소스 만들기', desc: '간장·설탕 10초 지진 뒤 면수 투입' },
+          { at: 11, title: '면 합치기', desc: '중불 1분, 소스가 면에 착 감긴다' },
+          { at: 13, title: '마무리', desc: '불 끄고 남은 버터·후추·대파' },
+        ],
+        tips: [
+          { title: '면수는 반드시 남긴다', body: '전분이 기름과 간장을 묶어준다. 없으면 소스가 겉돌고 기름지다.' },
+          { title: '간장은 팬에 직접 닿게', body: '바닥에 지져야 불향이 난다. 면수에 섞으면 그냥 짠 국물.' },
+        ],
+      },
+      {
+        id: 'tuna',
+        name: '참치마요 덮밥',
+        emoji: '🍚',
+        minutes: 10,
+        servings: '1인분',
+        difficulty: '아주 쉬움',
+        category: '밥 · 한식',
+        image: '../images/tuna-mayo-rice-bowl.jpg',
+        imageAlt: '참치마요 덮밥 - 나무 밥상 위 뜨거운 밥에 참치마요와 반숙 노른자를 올린 덮밥',
+        gradient: 'from-orange-400 to-rose-600',
+        tagline: '편의점에서 사 먹던 그 맛을, 참치캔 하나로',
+        story: '불을 거의 쓰지 않는다. 자취방에서 가장 실패하기 어려운 한 그릇.',
+        hook: '기름 0%',
+        hookNote: '참치마요가 질척해지는 원인의 90%',
+        ingredients: ['따뜻한 밥 1공기', '참치캔 1개', '마요네즈 2큰술', '달걀 1개', '양파 1/8개'],
+        timeline: [
+          { at: 0, title: '양파 담그기', desc: '다진 양파를 찬물에 5분, 매운맛만 빠진다' },
+          { at: 2, title: '기름 짜기', desc: '캔을 눌러 기름을 완전히 빼낸다' },
+          { at: 4, title: '마요 무침', desc: '참치·마요·설탕·양파, 결 살려 가볍게' },
+          { at: 6, title: '달걀 부치기', desc: '중약불 반숙, 흰자 가장자리는 바삭하게' },
+          { at: 8, title: '밥 밑간', desc: '뜨거운 밥에 간장·참기름, 자르듯 섞기' },
+          { at: 10, title: '담기', desc: '밥 → 김가루 → 참치마요 → 반숙 달걀' },
+        ],
+        tips: [
+          { title: '김가루는 밥과 참치 사이에', body: '위에 뿌리면 눅눅해지고, 사이에 깔면 끝까지 향이 산다.' },
+          { title: '밥은 뜨거울 때 밑간한다', body: '식은 밥에는 간장과 참기름이 스며들지 않고 겉돈다.' },
+        ],
+      },
+      {
+        id: 'tomato',
+        name: '토마토 달걀볶음',
+        emoji: '🍅',
+        minutes: 12,
+        servings: '2인분',
+        difficulty: '쉬움',
+        category: '볶음 · 중식',
+        image: '../images/tomato-egg-stirfry.jpg',
+        imageAlt: '토마토 달걀볶음 - 웍에서 갓 볶아낸 붉은 토마토와 노란 스크램블 에그',
+        gradient: 'from-rose-500 to-red-700',
+        tagline: '재료는 단 두 가지, 사라지는 밥은 두 공기',
+        story: '중국 가정식의 국민 반찬, 시홍스차오지단(西红柿炒鸡蛋).',
+        hook: '두 번에 나눠',
+        hookNote: '달걀을 반숙으로 꺼냈다가 마지막에 합친다',
+        ingredients: ['완숙 토마토 2개', '달걀 3개', '설탕 1작은술', '굴소스 1작은술', '대파 1/2대'],
+        timeline: [
+          { at: 0, title: '토마토 손질', desc: '큼직하게 6~8등분' },
+          { at: 3, title: '달걀 풀기', desc: '소금 1/4작은술 + 물 1큰술로 폭신하게' },
+          { at: 5, title: '달걀 익히기', desc: '센 불, 70%만 익혀 즉시 꺼낸다' },
+          { at: 7, title: '토마토 볶기', desc: '파·마늘 향 낸 뒤 중불 2~3분' },
+          { at: 10, title: '간하기', desc: '설탕·소금·굴소스, 원하면 물전분' },
+          { at: 12, title: '합치기', desc: '달걀 재투입 30초, 참기름 마무리' },
+        ],
+        tips: [
+          { title: '설탕은 단맛이 아니라 균형', body: '토마토가 실 때 설탕이 없으면 시큼한 맛만 남는다.' },
+          { title: '토마토는 허물어질 때까지', body: '형태가 살아있으면 소스가 안 생겨 재료가 따로 논다.' },
+        ],
+      },
+      {
+        id: 'noodles',
+        name: '들기름 막국수',
+        emoji: '🥢',
+        minutes: 10,
+        servings: '1인분',
+        difficulty: '아주 쉬움',
+        category: '면 · 한식',
+        image: '../images/perilla-oil-noodles.jpg',
+        imageAlt: '들기름 막국수 - 검은 그릇에 담긴 메밀면 위에 김가루와 들기름, 반숙 달걀',
+        gradient: 'from-emerald-400 to-teal-600',
+        tagline: '재료가 적을수록 고소함이 선명해진다',
+        story: '양념 없이 들기름과 간장만으로 끝내는 비빔면.',
+        hook: '물기 0',
+        hookNote: '이 요리의 유일한 실패 요인',
+        ingredients: ['막국수면 100g', '들기름 1.5큰술', '진간장 1큰술', '김가루 한 줌', '달걀 1개'],
+        timeline: [
+          { at: 0, title: '달걀 삶기', desc: '물 올리자마자 달걀부터, 반숙 7분' },
+          { at: 2, title: '양념장', desc: '간장·들기름·식초·설탕을 그릇에 바로' },
+          { at: 5, title: '면 삶기', desc: '같은 물에 메밀면 3~4분' },
+          { at: 8, title: '헹구기', desc: '찬물에 30초, 물기는 꽉 짜낸다' },
+          { at: 9, title: '비비기', desc: '30초, 면이 반질반질 윤날 때까지' },
+          { at: 10, title: '올리기', desc: '김가루 수북이, 달걀·쪽파·통깨' },
+        ],
+        tips: [
+          { title: '김가루는 아끼지 않는다', body: '간장과 들기름 사이를 잇는 감칠맛. 생각의 두 배를 넣어도 된다.' },
+          { title: '면은 찬물에 헹군다', body: '뜨거운 채로 비비면 들기름 향이 증발하고 면이 퍼진다.' },
+        ],
+      },
+      {
+        id: 'toast',
+        name: '바나나 캐러멜 프렌치토스트',
+        emoji: '🍌',
+        minutes: 15,
+        servings: '1~2인분',
+        difficulty: '보통',
+        category: '디저트',
+        image: '../images/banana-caramel-french-toast.jpg',
+        imageAlt: '바나나 캐러멜 프렌치토스트 - 황금빛으로 구운 두툼한 토스트 위에 캐러멜 바나나와 아이스크림',
+        gradient: 'from-yellow-400 to-amber-700',
+        tagline: '검게 반점이 생긴 바나나를 처리하는 가장 맛있는 방법',
+        story: '팬 하나로 캐러멜과 토스트를 모두 해결한다. 설거지도 적다.',
+        hook: '팬 하나',
+        hookNote: '토스트를 구운 팬을 닦지 않고 캐러멜까지',
+        ingredients: ['두꺼운 식빵 2장', '달걀 2개', '우유 120ml', '바나나 1개', '설탕 2큰술'],
+        timeline: [
+          { at: 0, title: '달걀물', desc: '달걀·우유·설탕·소금, 체에 한 번 내린다' },
+          { at: 3, title: '적시기', desc: '한 면 2분씩, 스펀지처럼 묵직하게' },
+          { at: 5, title: '바나나 자르기', desc: '길게 반 가르거나 1cm 어슷썰기' },
+          { at: 7, title: '토스트 굽기', desc: '중약불 한 면 3분, 진한 황금색' },
+          { at: 12, title: '캐러멜', desc: '설탕 2큰술 젓지 말고 30~40초 → 버터·생크림' },
+          { at: 15, title: '완성', desc: '바나나 30초 코팅, 아이스크림·계피' },
+        ],
+        tips: [
+          { title: '캐러멜 설탕은 절대 젓지 않는다', body: '저으면 재결정화되어 서걱거리는 알갱이가 생긴다. 팬만 돌린다.' },
+          { title: '하루 지난 두꺼운 식빵', body: '살짝 마른 빵이 달걀물을 훨씬 잘 빨아들인다. 두께는 2.5cm 이상.' },
+        ],
+      },
+    ];
+
+    const PRINCIPLES = [
+      {
+        no: '01',
+        title: '잔열을 계산한다',
+        body: '면은 1분 덜 삶고, 달걀은 70%만 익히고, 바나나는 30초만 굴린다. 마지막 1분은 언제나 팬이 아니라 잔열의 몫이다.',
+        proof: '파스타 · 토마토 달걀볶음 · 프렌치토스트',
+      },
+      {
+        no: '02',
+        title: '수분을 통제한다',
+        body: '막국수는 물기를 꽉 짜내고, 참치는 기름을 완전히 빼고, 파스타는 반대로 면수를 남긴다. 어디에 물을 남길지가 맛을 가른다.',
+        proof: '막국수 · 참치마요 · 파스타',
+      },
+      {
+        no: '03',
+        title: '설탕은 단맛이 아니다',
+        body: '네 개의 레시피에 들어가는 설탕 1/2~1작은술은 균형추다. 간장의 짠맛과 토마토의 신맛을 눌러 맛의 각을 없앤다.',
+        proof: '5개 중 4개 레시피에 공통',
+      },
+    ];
+
+    const TOTAL_MINUTES = RECIPES.reduce((sum, r) => sum + r.minutes, 0);
+    const AVG_MINUTES = Math.round((TOTAL_MINUTES / RECIPES.length) * 10) / 10;
+    const VARIATION_COUNT = 21;
+
+    // ========================================
+    // 🧩 Slide Layout Components
+    // ========================================
+
+    function Slide({ theme = 'dark', className = '', children }) {
+      const bg = theme === 'dark' ? 'bg-black text-white' : 'bg-[#f5f5f7] text-black';
+      return (
+        <div className={`slide-scroll flex h-full w-full flex-col justify-center ${bg} ${className}`}>
+          {children}
+        </div>
+      );
+    }
+
+    function SlideBody({ className = '', children }) {
+      return (
+        <div className={`mx-auto w-full max-w-6xl px-6 py-14 sm:px-10 lg:px-14 ${className}`}>{children}</div>
+      );
+    }
+
+    function Eyebrow({ tone = 'dark', children }) {
+      const color = tone === 'dark' ? 'text-white/45' : 'text-black/40';
+      return (
+        <p className={`rise d1 mb-5 text-[11px] font-semibold uppercase tracking-[0.32em] ${color}`}>{children}</p>
+      );
+    }
+
+    function GradientText({ gradient, children }) {
+      return (
+        <span className={`bg-gradient-to-r ${gradient} bg-clip-text text-transparent`}>{children}</span>
+      );
+    }
+
+    // ========================================
+    // 📄 Slide Components
+    // ========================================
+
+    function CoverSlide() {
+      return (
+        <Slide theme="dark" className="relative overflow-hidden">
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+            <div className="absolute -left-40 top-1/4 h-[36rem] w-[36rem] rounded-full bg-orange-600/25 blur-[140px]" />
+            <div className="absolute -right-40 bottom-0 h-[32rem] w-[32rem] rounded-full bg-emerald-500/20 blur-[140px]" />
+          </div>
+          <SlideBody className="relative text-center">
+            <p className="rise d1 text-sm font-medium tracking-[0.3em] text-white/50">AI FACTORY 4기 · WEEK 1</p>
+            <h1 className="rise d2 tighter mt-8 text-6xl font-bold leading-[0.95] sm:text-8xl lg:text-9xl">
+              15분<span className="text-white/40">,</span>
+              <br />
+              <GradientText gradient="from-amber-300 via-orange-400 to-rose-400">한 그릇</GradientText>
+            </h1>
+            <p className="rise d3 mx-auto mt-9 max-w-2xl text-lg font-light leading-relaxed text-white/60 sm:text-2xl">
+              퇴근하고 돌아온 부엌에서 실제로 만들 수 있는 레시피 다섯 개
+            </p>
+            <div className="rise d4 mt-12 flex flex-wrap items-center justify-center gap-3">
+              {RECIPES.map((r) => (
+                <span key={r.id} className="text-3xl sm:text-4xl" aria-hidden="true">{r.emoji}</span>
+              ))}
+            </div>
+            <p className="rise d5 mt-14 text-xs tracking-[0.2em] text-white/30">← → 또는 스페이스로 이동 · G 전체 보기</p>
+          </SlideBody>
+        </Slide>
+      );
+    }
+
+    function ProblemSlide() {
+      return (
+        <Slide theme="dark">
+          <SlideBody>
+            <Eyebrow>The Problem</Eyebrow>
+            <h2 className="rise d2 tighter text-4xl font-semibold leading-[1.1] sm:text-6xl lg:text-7xl">
+              레시피는 넘쳐나는데<br />
+              <span className="text-white/35">만들지는 않는다.</span>
+            </h2>
+            <div className="mt-16 grid gap-8 sm:grid-cols-3">
+              {[
+                { k: '재료 12개', v: '절반은 집에 없다' },
+                { k: '조리 50분', v: '평일 저녁엔 불가능하다' },
+                { k: '"적당히"', v: '몇 분인지 알 수 없다' },
+              ].map((item, i) => (
+                <div key={item.k} className={`rise d${i + 3} border-t border-white/15 pt-6`}>
+                  <p className="tight text-2xl font-semibold sm:text-3xl">{item.k}</p>
+                  <p className="mt-2 text-base font-light text-white/50">{item.v}</p>
+                </div>
+              ))}
+            </div>
+            <p className="rise d6 mt-16 text-xl font-light text-white/70 sm:text-2xl">
+              그래서 기준을 하나만 세웠습니다 —{' '}
+              <span className="font-medium text-white">15분 안에 끝날 것.</span>
+            </p>
+          </SlideBody>
+        </Slide>
+      );
+    }
+
+    function NumbersSlide() {
+      const stats = [
+        { value: RECIPES.length, unit: '개', label: '레시피', note: '밥 · 면 · 볶음 · 디저트' },
+        { value: AVG_MINUTES, unit: '분', label: '평균 조리 시간', note: `가장 긴 것도 15분` },
+        { value: TOTAL_MINUTES, unit: '분', label: '다섯 개 전부 합쳐', note: '영화 한 편보다 짧다' },
+      ];
+      return (
+        <Slide theme="light">
+          <SlideBody>
+            <Eyebrow tone="light">By the numbers</Eyebrow>
+            <h2 className="rise d2 tighter mb-14 text-4xl font-semibold sm:text-5xl">숫자로 보면 이렇습니다.</h2>
+            <div className="grid gap-6 sm:grid-cols-3">
+              {stats.map((s, i) => (
+                <div key={s.label} className={`rise d${i + 3}`}>
+                  <p className="tighter text-7xl font-bold leading-none sm:text-8xl">
+                    {s.value}
+                    <span className="ml-1 text-3xl font-medium text-black/30 sm:text-4xl">{s.unit}</span>
+                  </p>
+                  <p className="tight mt-4 text-lg font-semibold">{s.label}</p>
+                  <p className="mt-1 text-sm font-light text-black/45">{s.note}</p>
+                </div>
+              ))}
+            </div>
+          </SlideBody>
+        </Slide>
+      );
+    }
+
+    function LineupSlide({ onJump }) {
+      return (
+        <Slide theme="light">
+          <SlideBody>
+            <Eyebrow tone="light">The Lineup</Eyebrow>
+            <h2 className="rise d2 tighter mb-10 text-4xl font-semibold sm:text-5xl">다섯 개의 한 그릇.</h2>
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+              {RECIPES.map((r, i) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => onJump(r.id)}
+                  className={`rise d${i + 3} group text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-black/40 rounded-3xl`}
+                >
+                  <Card className="overflow-hidden transition-transform duration-300 group-hover:-translate-y-1.5">
+                    <div className="aspect-[4/5] overflow-hidden bg-black/5">
+                      <Photo
+                        src={r.image}
+                        alt={r.imageAlt}
+                        gradient={r.gradient}
+                        emoji={r.emoji}
+                        imgClassName="transition-transform duration-500 group-hover:scale-105"
+                      />
+                    </div>
+                    <div className="p-4">
+                      <p className="tight text-sm font-semibold leading-snug">{r.name}</p>
+                      <p className="mt-1.5 text-xs font-medium text-black/40">
+                        {r.minutes}분 · {r.category}
+                      </p>
+                    </div>
+                  </Card>
+                </button>
+              ))}
+            </div>
+            <p className="rise d8 mt-8 text-sm font-light text-black/40">카드를 누르면 해당 레시피로 바로 이동합니다.</p>
+          </SlideBody>
+        </Slide>
+      );
+    }
+
+    function RecipeHeroSlide({ recipe }) {
+      return (
+        <Slide theme="dark" className="relative overflow-hidden">
+          <div className="absolute inset-0" aria-hidden="true">
+            <div className="ken h-full w-full">
+              <Photo src={recipe.image} alt={recipe.imageAlt} gradient={recipe.gradient} emoji={recipe.emoji} className="h-full w-full" />
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/75 to-black/25" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40" />
+          </div>
+          <SlideBody className="relative">
+            <div className="max-w-3xl">
+              <div className="rise d1 mb-6 flex flex-wrap gap-2">
+                <Badge tone="dark">⏱ {recipe.minutes}분</Badge>
+                <Badge tone="dark">{recipe.servings}</Badge>
+                <Badge tone="dark">난이도 {recipe.difficulty}</Badge>
+                <Badge tone="dark">{recipe.category}</Badge>
+              </div>
+              <h2 className="rise d2 tighter text-5xl font-bold leading-[1.02] sm:text-7xl lg:text-8xl">
+                <GradientText gradient={recipe.gradient}>{recipe.name}</GradientText>
+              </h2>
+              <p className="rise d3 mt-6 text-xl font-light leading-relaxed text-white/75 sm:text-3xl">{recipe.tagline}</p>
+              <p className="rise d4 mt-4 text-base font-light text-white/45 sm:text-lg">{recipe.story}</p>
+              <div className="rise d5 mt-12 border-l-2 border-white/25 pl-5">
+                <p className="tight text-3xl font-semibold sm:text-4xl">{recipe.hook}</p>
+                <p className="mt-1 text-sm font-light text-white/50">{recipe.hookNote}</p>
+              </div>
+            </div>
+          </SlideBody>
+        </Slide>
+      );
+    }
+
+    function RecipeDetailSlide({ recipe }) {
+      return (
+        <Slide theme="light">
+          <SlideBody>
+            <div className="rise d1 mb-8 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+              <span className="text-2xl" aria-hidden="true">{recipe.emoji}</span>
+              <h2 className="tight text-2xl font-semibold sm:text-3xl">{recipe.name}</h2>
+              <span className="text-sm font-medium text-black/35">{recipe.minutes}분 타임라인</span>
+            </div>
+
+            <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr]">
+              {/* 분 단위 타임라인 */}
+              <ol className="rise d2 space-y-0">
+                {recipe.timeline.map((step, i) => (
+                  <li key={step.at} className="flex gap-5 border-t border-black/10 py-3.5 first:border-t-0">
+                    <span className="tight w-14 flex-none pt-0.5 text-sm font-semibold tabular-nums text-black/35">
+                      {step.at}분
+                    </span>
+                    <div className="min-w-0">
+                      <p className="tight font-semibold">{step.title}</p>
+                      <p className="mt-0.5 text-sm font-light leading-relaxed text-black/55">{step.desc}</p>
+                    </div>
+                    <span className="ml-auto hidden flex-none pt-1 text-xs font-semibold tabular-nums text-black/15 sm:block">
+                      0{i + 1}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+
+              <div className="space-y-6">
+                {/* 핵심 재료 */}
+                <div className="rise d3">
+                  <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.24em] text-black/35">핵심 재료</p>
+                  <ul className="flex flex-wrap gap-2">
+                    {recipe.ingredients.map((ing) => (
+                      <li key={ing}>
+                        <Badge tone="light">{ing}</Badge>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* 성공 포인트 */}
+                <div className="rise d4 space-y-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-black/35">성공 포인트</p>
+                  {recipe.tips.map((tip) => (
+                    <Card key={tip.title} className="p-4">
+                      <p className={`tight bg-gradient-to-r ${recipe.gradient} bg-clip-text text-sm font-semibold text-transparent`}>
+                        {tip.title}
+                      </p>
+                      <p className="mt-1.5 text-sm font-light leading-relaxed text-black/60">{tip.body}</p>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </SlideBody>
+        </Slide>
+      );
+    }
+
+    function PrinciplesSlide() {
+      return (
+        <Slide theme="dark">
+          <SlideBody>
+            <Eyebrow>What they share</Eyebrow>
+            <h2 className="rise d2 tighter mb-12 text-4xl font-semibold leading-tight sm:text-6xl">
+              다섯 개를 관통하는<br />세 가지 원칙.
+            </h2>
+            <div className="grid gap-8 lg:grid-cols-3">
+              {PRINCIPLES.map((p, i) => (
+                <div key={p.no} className={`rise d${i + 3} border-t border-white/15 pt-6`}>
+                  <p className="text-sm font-semibold tracking-[0.2em] text-white/30">{p.no}</p>
+                  <h3 className="tight mt-3 text-2xl font-semibold sm:text-3xl">{p.title}</h3>
+                  <p className="mt-3 text-base font-light leading-relaxed text-white/60">{p.body}</p>
+                  <p className="mt-4 text-xs font-medium tracking-wide text-white/30">{p.proof}</p>
+                </div>
+              ))}
+            </div>
+          </SlideBody>
+        </Slide>
+      );
+    }
+
+    function OneMoreThingSlide() {
+      return (
+        <Slide theme="dark" className="relative overflow-hidden">
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+            <div className="absolute left-1/2 top-1/2 h-[40rem] w-[40rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/[0.06] blur-[120px]" />
+          </div>
+          <SlideBody className="relative text-center">
+            <p className="rise d1 tighter text-4xl font-light text-white/80 sm:text-6xl">One more thing.</p>
+            <p className="rise d3 tighter mt-12 text-7xl font-bold leading-none sm:text-9xl">
+              <GradientText gradient="from-amber-300 via-orange-400 to-rose-400">{VARIATION_COUNT}</GradientText>
+            </p>
+            <p className="rise d4 mt-6 text-xl font-light text-white/60 sm:text-2xl">
+              레시피 5개에 딸린 응용 버전의 수
+            </p>
+            <p className="rise d5 mx-auto mt-8 max-w-2xl text-base font-light leading-relaxed text-white/45">
+              참치 파스타, 삼각김밥 속, 토마토 달걀탕, 명란 막국수, 사과 캐러멜 토스트…
+              같은 재료로 방향만 바꾸면 다섯 개가 스물여섯 끼가 됩니다.
+            </p>
+          </SlideBody>
+        </Slide>
+      );
+    }
+
+    function ClosingSlide() {
+      return (
+        <Slide theme="dark">
+          <SlideBody className="text-center">
+            <h2 className="rise d1 tighter text-5xl font-bold leading-tight sm:text-7xl">
+              오늘 저녁,<br />
+              <span className="text-white/40">15분이면 됩니다.</span>
+            </h2>
+            <div className="rise d3 mt-14 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm font-light text-white/45">
+              {RECIPES.map((r) => (
+                <span key={r.id} className="flex items-center gap-2">
+                  <span aria-hidden="true">{r.emoji}</span>
+                  {r.name} · {r.minutes}분
+                </span>
+              ))}
+            </div>
+            <p className="rise d5 mt-16 text-xs tracking-[0.3em] text-white/25">감사합니다</p>
+          </SlideBody>
+        </Slide>
+      );
+    }
+
+    // ========================================
+    // 🗂 Slide Registry
+    // ========================================
+
+    function buildSlides(onJump) {
+      const recipeSlides = [];
+      RECIPES.forEach(function (recipe) {
+        recipeSlides.push({
+          key: `${recipe.id}-hero`,
+          label: recipe.name,
+          sub: '표지',
+          anchor: recipe.id,
+          render: () => <RecipeHeroSlide recipe={recipe} />,
+        });
+        recipeSlides.push({
+          key: `${recipe.id}-detail`,
+          label: recipe.name,
+          sub: '타임라인',
+          render: () => <RecipeDetailSlide recipe={recipe} />,
+        });
+      });
+
+      return [
+        { key: 'cover', label: '15분, 한 그릇', sub: '표지', render: () => <CoverSlide /> },
+        { key: 'problem', label: '문제 정의', sub: '왜 15분인가', render: () => <ProblemSlide /> },
+        { key: 'numbers', label: '숫자', sub: '5 · 12.4 · 62', render: () => <NumbersSlide /> },
+        { key: 'lineup', label: '라인업', sub: '레시피 5종', render: () => <LineupSlide onJump={onJump} /> },
+        ...recipeSlides,
+        { key: 'principles', label: '세 가지 원칙', sub: '공통점', render: () => <PrinciplesSlide /> },
+        { key: 'onemore', label: 'One more thing', sub: '응용 21가지', render: () => <OneMoreThingSlide /> },
+        { key: 'closing', label: '마무리', sub: '감사합니다', render: () => <ClosingSlide /> },
+      ];
+    }
+
+    // ========================================
+    // 🎛 Deck Chrome (컨트롤 UI)
+    // ========================================
+
+    function DeckControls({ index, total, onPrev, onNext, onOpenOverview, onToggleFullscreen }) {
+      return (
+        <div className="no-print pointer-events-none fixed inset-x-0 bottom-0 z-40 flex items-end justify-between gap-4 p-4 sm:p-6">
+          <div className="pointer-events-auto flex items-center gap-2">
+            <Button variant="secondary" size="sm" onClick={onPrev} disabled={index === 0} aria-label="이전 슬라이드">←</Button>
+            <Button variant="secondary" size="sm" onClick={onNext} disabled={index === total - 1} aria-label="다음 슬라이드">→</Button>
+            <span className="ml-2 text-xs font-medium tabular-nums text-white/40 mix-blend-difference">
+              {index + 1} / {total}
+            </span>
+          </div>
+          <div className="pointer-events-auto flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={onOpenOverview} aria-label="전체 슬라이드 보기">⊞ 전체</Button>
+            <Button variant="ghost" size="sm" onClick={onToggleFullscreen} aria-label="전체 화면 전환">⛶ 전체화면</Button>
+          </div>
+        </div>
+      );
+    }
+
+    function OverviewModal({ isOpen, onClose, slides, index, onSelect }) {
+      return (
+        <Modal isOpen={isOpen} onClose={onClose} title="전체 슬라이드" size="xl">
+          <div className="grid max-h-[65vh] grid-cols-2 gap-3 overflow-y-auto pr-1 sm:grid-cols-3 lg:grid-cols-4">
+            {slides.map((slide, i) => {
+              const active = i === index;
+              return (
+                <button
+                  key={slide.key}
+                  type="button"
+                  onClick={() => onSelect(i)}
+                  aria-current={active ? 'true' : undefined}
+                  className={`rounded-2xl border p-4 text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 ${
+                    active ? 'border-white/70 bg-white/10' : 'border-white/10 bg-white/[0.03] hover:bg-white/10'
+                  }`}
+                >
+                  <p className="text-[11px] font-semibold tabular-nums text-white/35">{String(i + 1).padStart(2, '0')}</p>
+                  <p className="tight mt-1.5 text-sm font-semibold leading-snug">{slide.label}</p>
+                  <p className="mt-0.5 text-xs font-light text-white/45">{slide.sub}</p>
+                </button>
+              );
+            })}
+          </div>
+        </Modal>
+      );
+    }
+
+    // ========================================
+    // 🚀 App Component
+    // ========================================
+
+    function App() {
+      const [index, setIndex] = useState(0);
+      const [overviewOpen, setOverviewOpen] = useState(false);
+      const touchStartX = useRef(null);
+
+      // 이벤트 핸들러가 항상 최신 값을 보도록 ref에 미러링한다.
+      const slidesRef = useRef([]);
+      const indexRef = useRef(0);
+
+      // 라인업 카드에서 특정 레시피 슬라이드로 점프한다.
+      const jumpToAnchor = useCallback(function (anchor) {
+        const target = slidesRef.current.findIndex((s) => s.anchor === anchor);
+        if (target >= 0) setIndex(target);
+      }, []);
+
+      const slides = useMemo(() => buildSlides(jumpToAnchor), [jumpToAnchor]);
+      slidesRef.current = slides;
+      indexRef.current = index;
+
+      const total = slides.length;
+
+      const goTo = useCallback(
+        function (target) {
+          setIndex(function (prevIndex) {
+            const clamped = Math.max(0, Math.min(slidesRef.current.length - 1, target));
+            return clamped === prevIndex ? prevIndex : clamped;
+          });
+        },
+        []
+      );
+
+      const next = useCallback(() => goTo(indexRef.current + 1), [goTo]);
+      const prev = useCallback(() => goTo(indexRef.current - 1), [goTo]);
+
+      // 해시(#/3)로 특정 슬라이드에 바로 접근·복귀할 수 있게 동기화한다.
+      useEffect(function () {
+        function readHash() {
+          const match = /^#\/(\d+)$/.exec(window.location.hash);
+          if (!match) return;
+          const parsed = parseInt(match[1], 10) - 1;
+          if (!isNaN(parsed)) {
+            setIndex(Math.max(0, Math.min(slidesRef.current.length - 1, parsed)));
+          }
+        }
+        readHash();
+        window.addEventListener('hashchange', readHash);
+        return function () {
+          window.removeEventListener('hashchange', readHash);
+        };
+      }, []);
+
+      useEffect(
+        function () {
+          const want = `#/${index + 1}`;
+          if (window.location.hash !== want) {
+            window.history.replaceState(null, '', want);
+          }
+        },
+        [index]
+      );
+
+      // 키보드 내비게이션
+      useEffect(
+        function () {
+          function onKey(e) {
+            if (overviewOpen) return;
+            switch (e.key) {
+              case 'ArrowRight':
+              case 'ArrowDown':
+              case 'PageDown':
+              case ' ':
+                e.preventDefault();
+                next();
+                break;
+              case 'ArrowLeft':
+              case 'ArrowUp':
+              case 'PageUp':
+                e.preventDefault();
+                prev();
+                break;
+              case 'Home':
+                e.preventDefault();
+                goTo(0);
+                break;
+              case 'End':
+                e.preventDefault();
+                goTo(slidesRef.current.length - 1);
+                break;
+              case 'g':
+              case 'G':
+                setOverviewOpen(true);
+                break;
+              case 'f':
+              case 'F':
+                toggleFullscreen();
+                break;
+              default:
+                break;
+            }
+          }
+          window.addEventListener('keydown', onKey);
+          return function () {
+            window.removeEventListener('keydown', onKey);
+          };
+        },
+        [next, prev, goTo, overviewOpen]
+      );
+
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          const req = document.documentElement.requestFullscreen;
+          if (req) req.call(document.documentElement).catch(function () {});
+        } else if (document.exitFullscreen) {
+          document.exitFullscreen().catch(function () {});
+        }
+      }
+
+      function onTouchStart(e) {
+        touchStartX.current = e.changedTouches[0].clientX;
+      }
+
+      function onTouchEnd(e) {
+        if (touchStartX.current === null) return;
+        const dx = e.changedTouches[0].clientX - touchStartX.current;
+        if (Math.abs(dx) > 60) {
+          if (dx < 0) next();
+          else prev();
+        }
+        touchStartX.current = null;
+      }
+
+      const current = slides[index];
+
+      return (
+        <div
+          className="relative h-screen w-screen overflow-hidden bg-black"
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+        >
+          <ProgressBar className="no-print fixed inset-x-0 top-0 z-40" value={index + 1} max={total} />
+
+          {/* key를 바꿔 슬라이드마다 진입 애니메이션을 다시 실행한다 */}
+          <div key={current.key} className="h-full w-full">
+            {current.render()}
+          </div>
+
+          {/* 좌우 클릭 영역 (Apple 키노트처럼 화면 아무 곳이나 눌러 넘기기) */}
+          <button
+            type="button"
+            aria-label="이전 슬라이드"
+            onClick={prev}
+            className="no-print absolute inset-y-0 left-0 z-30 w-[12%] cursor-w-resize focus:outline-none"
+          />
+          <button
+            type="button"
+            aria-label="다음 슬라이드"
+            onClick={next}
+            className="no-print absolute inset-y-0 right-0 z-30 w-[12%] cursor-e-resize focus:outline-none"
+          />
+
+          <DeckControls
+            index={index}
+            total={total}
+            onPrev={prev}
+            onNext={next}
+            onOpenOverview={() => setOverviewOpen(true)}
+            onToggleFullscreen={toggleFullscreen}
+          />
+
+          <OverviewModal
+            isOpen={overviewOpen}
+            onClose={() => setOverviewOpen(false)}
+            slides={slides}
+            index={index}
+            onSelect={function (i) {
+              goTo(i);
+              setOverviewOpen(false);
+            }}
+          />
+        </div>
+      );
+    }
+
+    // ========================================
+    // Rendering
+    // ========================================
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
