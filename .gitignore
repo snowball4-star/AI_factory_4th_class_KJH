@@ -20,3 +20,6 @@ credentials.json
 
 # Claude Code 로컬 툴링
 .claude/
+
+# Playwright MCP 작업 산출물 (스냅샷 YAML / 콘솔 로그)
+.playwright-mcp/
