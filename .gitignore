@@ -23,3 +23,6 @@ credentials.json
 
 # Playwright MCP 작업 산출물 (스냅샷 YAML / 콘솔 로그)
 .playwright-mcp/
+
+# Node 의존성
+node_modules/

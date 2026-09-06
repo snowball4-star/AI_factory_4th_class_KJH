@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Midjourney · AI 이미지 생성 스튜디오</title>
+
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <!-- CDN 버전 고정: Babel 은 반드시 7.x (8.x 는 인라인 text/babel 미지원) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.25.9/babel.min.js"></script>
+
+  <style>
+    /* Tailwind 유틸리티로 표현할 수 없는 것만 여기에 둔다 */
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    .shimmer {
+      background-image: linear-gradient(100deg, rgba(255,255,255,0) 20%, rgba(255,255,255,0.09) 40%, rgba(255,255,255,0) 60%);
+      background-size: 200% 100%;
+      animation: shimmer 1.6s linear infinite;
+    }
+    @keyframes floatUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .float-in { animation: floatUp .45s ease-out both; }
+    .scroll-thin::-webkit-scrollbar { height: 8px; width: 8px; }
+    .scroll-thin::-webkit-scrollbar-thumb { background: rgba(255,255,255,.16); border-radius: 9999px; }
+    .scroll-thin::-webkit-scrollbar-track { background: transparent; }
+  </style>
+</head>
+<body class="bg-[#0a0a12] text-slate-100 antialiased">
+  <div id="root"></div>
+
+  <script type="text/babel">
+// ========================================
+// React Hooks
+// ========================================
+const { useState, useEffect, useMemo, useRef, useCallback } = React;
+
+// ========================================
+// 🎨 Design System Components
+// ========================================
+
+function Button({ children, variant = 'primary', size = 'md', disabled = false, onClick, type = 'button', className = '', title }) {
+  const base = 'inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl font-semibold transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0a12] disabled:opacity-40 disabled:cursor-not-allowed';
+  const variants = {
+    primary: 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-fuchsia-900/30 hover:from-violet-500 hover:to-fuchsia-500 active:scale-[.98]',
+    secondary: 'bg-white/10 text-slate-100 border border-white/15 hover:bg-white/[.16] active:scale-[.98]',
+    danger: 'bg-rose-600/90 text-white hover:bg-rose-500 active:scale-[.98]',
+    ghost: 'text-slate-300 hover:text-white hover:bg-white/10',
+  };
+  const sizes = { sm: 'px-3 py-1.5 text-xs', md: 'px-4 py-2.5 text-sm', lg: 'px-6 py-3.5 text-base' };
+  return (
+    <button type={type} onClick={onClick} disabled={disabled} title={title}
+      className={`${base} ${variants[variant]} ${sizes[size]} ${className}`}>
+      {children}
+    </button>
+  );
+}
+
+function Textarea({ label, value, onChange, placeholder, rows = 4, error, disabled = false, hint, className = '' }) {
+  return (
+    <label className={`block ${className}`}>
+      {label && (
+        <span className="mb-2 flex items-baseline justify-between">
+          <span className="text-sm font-semibold text-slate-200">{label}</span>
+          {hint && <span className="text-[11px] text-slate-500">{hint}</span>}
+        </span>
+      )}
+      <textarea
+        value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
+        rows={rows} disabled={disabled} aria-invalid={!!error}
+        className={`w-full resize-y rounded-xl border bg-white/[.04] px-4 py-3 text-sm leading-relaxed text-slate-100 placeholder:text-slate-600 transition focus:outline-none focus:ring-2 focus:ring-fuchsia-500/60 disabled:opacity-50 ${error ? 'border-rose-500/70' : 'border-white/10 hover:border-white/20'}`}
+      />
+      {error && <span className="mt-1.5 block text-xs text-rose-400">{error}</span>}
+    </label>
+  );
+}
+
+function Input({ label, type = 'text', value, onChange, placeholder, error, hint, disabled = false, className = '' }) {
+  return (
+    <label className={`block ${className}`}>
+      {label && <span className="mb-2 block text-sm font-semibold text-slate-200">{label}</span>}
+      <input
+        type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
+        disabled={disabled} aria-invalid={!!error}
+        className={`w-full rounded-xl border bg-white/[.04] px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 transition focus:outline-none focus:ring-2 focus:ring-fuchsia-500/60 disabled:opacity-50 ${error ? 'border-rose-500/70' : 'border-white/10 hover:border-white/20'}`}
+      />
+      {hint && !error && <span className="mt-1.5 block text-xs text-slate-500">{hint}</span>}
+      {error && <span className="mt-1.5 block text-xs text-rose-400">{error}</span>}
+    </label>
+  );
+}
+
+function Card({ children, className = '' }) {
+  return (
+    <div className={`rounded-2xl border border-white/10 bg-white/[.03] p-5 shadow-xl shadow-black/30 backdrop-blur ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+function Badge({ children, tone = 'default', className = '' }) {
+  const tones = {
+    default: 'bg-white/10 text-slate-300 border-white/10',
+    accent: 'bg-fuchsia-500/15 text-fuchsia-300 border-fuchsia-500/30',
+    warn: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+    ok: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+  };
+  return <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium ${tones[tone]} ${className}`}>{children}</span>;
+}
+
+function Modal({ isOpen, onClose, title, children, size = 'md' }) {
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = ''; };
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+  const sizes = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl' };
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={title}>
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className={`relative w-full ${sizes[size]} float-in rounded-2xl border border-white/12 bg-[#12121e] p-6 shadow-2xl`}>
+        <div className="mb-4 flex items-start justify-between gap-4">
+          <h2 className="text-lg font-bold text-white">{title}</h2>
+          <button onClick={onClose} aria-label="닫기" className="rounded-lg p-1 text-slate-400 transition hover:bg-white/10 hover:text-white">✕</button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function Spinner({ className = 'h-5 w-5' }) {
+  return (
+    <svg className={`animate-spin ${className}`} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+      <path className="opacity-90" fill="currentColor" d="M12 2a10 10 0 0 1 10 10h-3a7 7 0 0 0-7-7V2z" />
+    </svg>
+  );
+}
+
+// ========================================
+// 🎛️ 생성 옵션 정의 (화풍 · 분위기 · 비율 · 엔진)
+// ========================================
+
+const STYLE_PRESETS = [
+  { id: 'ghibli',     emoji: '🌿', name: '지브리풍 애니',    desc: '손그림 배경, 부드러운 셀 셰이딩', modifier: 'Studio Ghibli style anime illustration, hand-painted background, soft cel shading, whimsical storybook feeling' },
+  { id: 'watercolor', emoji: '💧', name: '수채화',           desc: '번지는 물감, 종이 질감',          modifier: 'delicate watercolor painting, wet-on-wet washes, bleeding edges, textured paper' },
+  { id: 'oil',        emoji: '🖼️', name: '유화',             desc: '두꺼운 붓터치, 캔버스 질감',      modifier: 'classical oil painting, thick impasto brush strokes, rich pigment, visible canvas texture' },
+  { id: 'pixar',      emoji: '🧸', name: '3D 애니메이션',    desc: '픽사풍 캐릭터 렌더',              modifier: 'Pixar-style 3D character render, subsurface scattering, expressive design, cinematic studio lighting' },
+  { id: 'photo',      emoji: '📷', name: '실사 사진',        desc: '얕은 심도, 자연광',               modifier: 'photorealistic photograph, 50mm prime lens, shallow depth of field, natural light, ultra detailed' },
+  { id: 'cyberpunk',  emoji: '🌃', name: '사이버펑크',       desc: '네온 간판, 비 젖은 거리',         modifier: 'cyberpunk concept art, neon signage, rain-slick streets, holographic ads, blade runner atmosphere' },
+  { id: 'pixel',      emoji: '👾', name: '픽셀 아트',        desc: '16비트 레트로 게임',              modifier: '16-bit pixel art sprite, limited retro palette, crisp dithering, isometric game scene' },
+  { id: 'lineart',    emoji: '✒️', name: '미니멀 라인아트',  desc: '선 하나, 넓은 여백',              modifier: 'minimal continuous line art, clean vector strokes, generous negative space, two-tone composition' },
+  { id: 'minhwa',     emoji: '🏯', name: '한국 민화',        desc: '한지 질감, 오방색',               modifier: 'Korean traditional minhwa folk painting, hanji paper texture, flat ornamental composition, obangsaek color palette' },
+  { id: 'fantasy',    emoji: '🐉', name: '다크 판타지',      desc: '극적인 명암, 웅장한 스케일',      modifier: 'dark fantasy matte painting, dramatic chiaroscuro lighting, intricate detail, epic scale' },
+  { id: 'sticker',    emoji: '🍡', name: '스티커 · 이모티콘', desc: '굵은 외곽선, 플랫 컬러',          modifier: 'cute kawaii sticker illustration, bold clean outline, flat vivid colors, die-cut on plain background' },
+  { id: 'lofi',       emoji: '🎧', name: '로파이 일러스트',  desc: '따뜻하고 아늑한 톤',              modifier: 'lo-fi anime illustration, cozy warm muted palette, soft film grain, relaxed everyday scene' },
+];
+
+const MOOD_PRESETS = [
+  { id: 'auto',   name: '자동',          modifier: '' },
+  { id: 'bright', name: '밝고 화사한',   modifier: 'bright airy mood, sunlit, high key lighting, cheerful' },
+  { id: 'dreamy', name: '몽환적인',      modifier: 'dreamy ethereal atmosphere, soft haze, bokeh, pastel glow' },
+  { id: 'dark',   name: '어둡고 무거운', modifier: 'dark moody atmosphere, deep shadows, low key lighting, somber tone' },
+  { id: 'pastel', name: '차분한 파스텔', modifier: 'calm pastel palette, muted tones, gentle contrast' },
+  { id: 'neon',   name: '강렬한 네온',   modifier: 'vivid neon color scheme, high contrast, saturated glow' },
+  { id: 'golden', name: '따뜻한 황금빛', modifier: 'warm golden hour light, long soft shadows, amber tones' },
+  { id: 'retro',  name: '빈티지 필름',   modifier: 'vintage 1970s film photography look, visible grain, faded colors' },
+];
+
+const RATIOS = [
+  { id: '1:1',  name: '정사각 1:1',  w: 1024, h: 1024 },
+  { id: '3:4',  name: '세로 3:4',    w: 896,  h: 1152 },
+  { id: '4:3',  name: '가로 4:3',    w: 1152, h: 896 },
+  { id: '16:9', name: '와이드 16:9', w: 1216, h: 684 },
+  { id: '9:16', name: '모바일 9:16', w: 684,  h: 1216 },
+];
+
+const QUALITY_SUFFIX = 'highly detailed, masterpiece quality, sharp focus';
+
+const EXAMPLE_PROMPTS = [
+  '노을 지는 바닷가 언덕에 앉아 편지를 읽는 소녀',
+  '비 오는 밤 골목의 작은 라멘 가게, 창문에 김이 서린',
+  '우주복을 입고 달 위에서 커피를 마시는 고양이',
+  '벚꽃이 흩날리는 경복궁 돌담길과 한복 입은 여인',
+  '거대한 고래가 구름 사이를 헤엄치는 하늘 도시',
+];
+
+const PROVIDERS = {
+  free: { id: 'free', label: '무료 엔진',   sub: 'Pollinations · API 키 불필요',   needsKey: false },
+  fal:  { id: 'fal',  label: 'fal.ai FLUX', sub: 'FLUX.1 [schnell] · API 키 필요', needsKey: true },
+};
+
+// 수업에서 발급받은 fal.ai 키를 기본값으로 채워 둔다. 설정 창에서 언제든 교체할 수 있다.
+const DEFAULT_FAL_KEY = '0d813dd8-5b20-44e4-83d8-0ef522df51ea:502d998fb68284c2f1cfefc5677a6a8e';
+
+const STORAGE_KEY_GALLERY = 'my-midjourney:gallery';
+const STORAGE_KEY_FAL = 'my-midjourney:fal-key';
+
+// ========================================
+// 🔧 Helpers · 이미지 생성 로직
+// ========================================
+
+function buildFinalPrompt(prompt, style, mood) {
+  return [prompt.trim(), style && style.modifier, mood && mood.modifier, QUALITY_SUFFIX]
+    .filter(Boolean)
+    .join(', ');
+}
+
+function loadJSON(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch (_err) {
+    return fallback;
+  }
+}
+
+function saveJSON(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch (_err) { /* 저장 실패는 무시 */ }
+}
+
+// <img> 로 실제 로딩까지 끝난 뒤에 성공으로 간주한다.
+function preloadImage(url, timeoutMs = 150000) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const timer = setTimeout(() => {
+      img.src = '';
+      reject(new Error('이미지를 받아오는 데 시간이 너무 오래 걸립니다. 잠시 후 다시 시도해 주세요.'));
+    }, timeoutMs);
+    img.onload = () => { clearTimeout(timer); resolve(url); };
+    img.onerror = () => { clearTimeout(timer); reject(new Error('이미지 생성 서버가 응답하지 않았습니다. 프롬프트를 조금 바꿔 다시 시도해 보세요.')); };
+    img.src = url;
+  });
+}
+
+// 무료 엔진 — 브라우저의 <img> 요청으로만 호출한다(fetch 로 부르면 봇 차단에 걸린다).
+async function generateWithFree({ finalPrompt, ratio, seed }) {
+  const params = new URLSearchParams({
+    width: String(ratio.w),
+    height: String(ratio.h),
+    seed: String(seed),
+    model: 'flux',
+    nologo: 'true',
+    referrer: 'my-midjourney',
+  });
+  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?${params.toString()}`;
+  await preloadImage(url);
+  return url;
+}
+
+// fal.ai FLUX.1 [schnell]
+async function generateWithFal({ finalPrompt, ratio, seed, apiKey }) {
+  if (!apiKey) throw new Error('fal.ai API 키가 없습니다. 오른쪽 위 설정에서 키를 입력해 주세요.');
+
+  let res;
+  try {
+    res = await fetch('https://fal.run/fal-ai/flux/schnell', {
+      method: 'POST',
+      headers: { 'Authorization': `Key ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: finalPrompt,
+        image_size: { width: ratio.w, height: ratio.h },
+        num_images: 1,
+        num_inference_steps: 4,
+        seed,
+        enable_safety_checker: true,
+      }),
+    });
+  } catch (_err) {
+    throw new Error('fal.ai 서버에 연결하지 못했습니다. 네트워크 상태를 확인해 주세요.');
+  }
+
+  if (!res.ok) {
+    let detail = '';
+    try {
+      const body = await res.json();
+      detail = typeof body.detail === 'string' ? body.detail : JSON.stringify(body.detail || body);
+    } catch (_err) {
+      detail = await res.text().catch(() => '');
+    }
+
+    if (detail.indexOf('User is locked') !== -1 || detail.indexOf('TOP_UP') !== -1) {
+      throw new Error('fal.ai 계정에 크레딧이 없어 잠겨 있습니다(TOP_UP). fal.ai 대시보드에서 결제 수단을 등록·충전한 뒤 다시 시도하거나, 위에서 “무료 엔진”을 선택해 주세요.');
+    }
+    if (res.status === 401 || res.status === 403) throw new Error(`fal.ai 인증에 실패했습니다 (${res.status}). API 키를 다시 확인해 주세요. ${detail}`);
+    if (res.status === 422) throw new Error(`요청 값이 올바르지 않습니다. 프롬프트나 비율을 바꿔 보세요. ${detail}`);
+    if (res.status === 429) throw new Error('요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.');
+    throw new Error(`fal.ai 오류 (${res.status}) ${detail}`);
+  }
+
+  const data = await res.json();
+  const url = data && data.images && data.images[0] && data.images[0].url;
+  if (!url) throw new Error('응답에 이미지가 없습니다. 다시 시도해 주세요.');
+  await preloadImage(url);
+  return url;
+}
+
+async function downloadImage(url, filename) {
+  try {
+    const res = await fetch(url, { mode: 'cors' });
+    if (!res.ok) throw new Error('fetch failed');
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objectUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 2000);
+  } catch (_err) {
+    // 교차 출처라 직접 저장이 막히면 새 탭으로 열어 준다(이미지 우클릭 → 저장).
+    window.open(url, '_blank', 'noopener');
+  }
+}
+
+// ========================================
+// 🧩 Common / Layout Components
+// ========================================
+
+function Header({ onOpenSettings, provider }) {
+  return (
+    <header className="sticky top-0 z-30 border-b border-white/10 bg-[#0a0a12]/85 backdrop-blur">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
+        <div className="flex items-center gap-3">
+          <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 text-lg shadow-lg shadow-fuchsia-900/40" aria-hidden="true">🎨</div>
+          <div>
+            <h1 className="text-base font-extrabold tracking-tight text-white sm:text-lg">My Midjourney</h1>
+            <p className="hidden text-[11px] text-slate-500 sm:block">프롬프트 + 화풍으로 만드는 AI 이미지 스튜디오</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge tone={provider === 'fal' ? 'accent' : 'ok'} className="hidden sm:inline-flex">
+            {PROVIDERS[provider].label}
+          </Badge>
+          <Button variant="secondary" size="sm" onClick={onOpenSettings}>⚙️ 설정</Button>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function SectionTitle({ step, children, right }) {
+  return (
+    <div className="mb-3 flex items-center justify-between gap-3">
+      <h2 className="flex items-center gap-2 text-sm font-bold text-slate-200">
+        <span className="grid h-5 w-5 place-items-center rounded-md bg-fuchsia-500/20 text-[10px] font-bold text-fuchsia-300">{step}</span>
+        {children}
+      </h2>
+      {right}
+    </div>
+  );
+}
+
+// ========================================
+// 📄 Panel Components
+// ========================================
+
+function PromptPanel({ prompt, setPrompt, disabled }) {
+  return (
+    <Card>
+      <SectionTitle step="1" right={<span className="text-[11px] text-slate-500">{prompt.length}자</span>}>
+        무엇을 그릴까요?
+      </SectionTitle>
+      <Textarea
+        value={prompt}
+        onChange={setPrompt}
+        rows={4}
+        disabled={disabled}
+        placeholder="예) 노을 지는 바닷가 언덕에 앉아 편지를 읽는 소녀"
+      />
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        {EXAMPLE_PROMPTS.map((ex) => (
+          <button
+            key={ex}
+            type="button"
+            disabled={disabled}
+            onClick={() => setPrompt(ex)}
+            className="rounded-full border border-white/10 bg-white/[.04] px-3 py-1 text-[11px] text-slate-400 transition hover:border-fuchsia-500/40 hover:text-fuchsia-200 disabled:opacity-40"
+          >
+            {ex}
+          </button>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+function StylePanel({ styleId, setStyleId, disabled }) {
+  return (
+    <Card>
+      <SectionTitle step="2">화풍 고르기</SectionTitle>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3">
+        {STYLE_PRESETS.map((s) => {
+          const active = s.id === styleId;
+          return (
+            <button
+              key={s.id}
+              type="button"
+              disabled={disabled}
+              aria-pressed={active}
+              onClick={() => setStyleId(s.id)}
+              className={`rounded-xl border p-3 text-left transition disabled:opacity-40 ${
+                active
+                  ? 'border-fuchsia-500/70 bg-fuchsia-500/10 shadow-lg shadow-fuchsia-900/20'
+                  : 'border-white/10 bg-white/[.03] hover:border-white/25 hover:bg-white/[.06]'
+              }`}
+            >
+              <div className="text-lg leading-none" aria-hidden="true">{s.emoji}</div>
+              <div className={`mt-2 text-xs font-bold ${active ? 'text-fuchsia-200' : 'text-slate-200'}`}>{s.name}</div>
+              <div className="mt-0.5 text-[10px] leading-tight text-slate-500">{s.desc}</div>
+            </button>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
+function MoodPanel({ moodId, setMoodId, ratioId, setRatioId, disabled }) {
+  return (
+    <Card>
+      <SectionTitle step="3">분위기 · 비율</SectionTitle>
+
+      <div className="mb-4 flex flex-wrap gap-1.5">
+        {MOOD_PRESETS.map((m) => {
+          const active = m.id === moodId;
+          return (
+            <button
+              key={m.id}
+              type="button"
+              disabled={disabled}
+              aria-pressed={active}
+              onClick={() => setMoodId(m.id)}
+              className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition disabled:opacity-40 ${
+                active ? 'border-violet-400/70 bg-violet-500/20 text-violet-100' : 'border-white/10 bg-white/[.03] text-slate-400 hover:border-white/25 hover:text-slate-200'
+              }`}
+            >
+              {m.name}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="grid grid-cols-5 gap-1.5">
+        {RATIOS.map((r) => {
+          const active = r.id === ratioId;
+          return (
+            <button
+              key={r.id}
+              type="button"
+              disabled={disabled}
+              aria-pressed={active}
+              title={r.name}
+              onClick={() => setRatioId(r.id)}
+              className={`flex flex-col items-center gap-1.5 rounded-lg border px-1 py-2 transition disabled:opacity-40 ${
+                active ? 'border-violet-400/70 bg-violet-500/15' : 'border-white/10 bg-white/[.03] hover:border-white/25'
+              }`}
+            >
+              <span
+                className={`block rounded-[3px] border ${active ? 'border-violet-300 bg-violet-400/40' : 'border-slate-500'}`}
+                style={{ width: Math.round(22 * Math.min(1, r.w / r.h)), height: Math.round(22 * Math.min(1, r.h / r.w)) }}
+                aria-hidden="true"
+              />
+              <span className={`text-[10px] font-semibold ${active ? 'text-violet-200' : 'text-slate-500'}`}>{r.id}</span>
+            </button>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
+function ProviderPanel({ provider, setProvider, hasFalKey, disabled, onOpenSettings }) {
+  return (
+    <Card>
+      <SectionTitle step="4">생성 엔진</SectionTitle>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {Object.keys(PROVIDERS).map((key) => {
+          const p = PROVIDERS[key];
+          const active = p.id === provider;
+          return (
+            <button
+              key={p.id}
+              type="button"
+              disabled={disabled}
+              aria-pressed={active}
+              onClick={() => setProvider(p.id)}
+              className={`rounded-xl border p-3 text-left transition disabled:opacity-40 ${
+                active ? 'border-emerald-400/60 bg-emerald-500/10' : 'border-white/10 bg-white/[.03] hover:border-white/25'
+              }`}
+            >
+              <div className={`text-xs font-bold ${active ? 'text-emerald-200' : 'text-slate-200'}`}>{p.label}</div>
+              <div className="mt-0.5 text-[10px] text-slate-500">{p.sub}</div>
+            </button>
+          );
+        })}
+      </div>
+      {provider === 'fal' && !hasFalKey && (
+        <p className="mt-3 text-[11px] text-amber-300">
+          API 키가 비어 있습니다.{' '}
+          <button type="button" onClick={onOpenSettings} className="underline hover:text-amber-200">설정에서 입력</button>
+          하거나 무료 엔진을 사용하세요.
+        </p>
+      )}
+    </Card>
+  );
+}
+
+function FinalPromptPreview({ finalPrompt }) {
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(finalPrompt);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (_err) { /* 클립보드 접근이 막힌 환경 */ }
+  };
+
+  return (
+    <div className="rounded-xl border border-white/10 bg-[#0a0a12]/90 p-3 backdrop-blur">
+      <div className="flex items-center justify-between gap-2">
+        <button type="button" onClick={() => setOpen((v) => !v)} className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 transition hover:text-slate-200">
+          <span className={`transition-transform ${open ? 'rotate-90' : ''}`} aria-hidden="true">▶</span>
+          AI에게 실제로 보내는 프롬프트
+        </button>
+        <Button variant="ghost" size="sm" onClick={copy}>{copied ? '복사됨 ✓' : '복사'}</Button>
+      </div>
+      {open && <p className="mt-2 break-words font-mono text-[11px] leading-relaxed text-slate-400">{finalPrompt}</p>}
+    </div>
+  );
+}
+
+function ResultView({ status, error, image, ratio, onDownload, onCopyPrompt, onRetry }) {
+  const aspect = `${ratio.w} / ${ratio.h}`;
+
+  if (status === 'loading') {
+    return (
+      <div className="shimmer grid w-full place-items-center rounded-2xl border border-white/10 bg-white/[.03]" style={{ aspectRatio: aspect }}>
+        <div className="flex flex-col items-center gap-3">
+          <Spinner className="h-8 w-8 text-fuchsia-400" />
+          <p className="text-sm font-semibold text-slate-300">그리는 중…</p>
+          <p className="text-[11px] text-slate-500">보통 5~20초 정도 걸립니다</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === 'error') {
+    return (
+      <div className="grid w-full place-items-center rounded-2xl border border-rose-500/30 bg-rose-500/[.06] p-6" style={{ aspectRatio: aspect }}>
+        <div className="max-w-md text-center">
+          <div className="text-3xl" aria-hidden="true">⚠️</div>
+          <p className="mt-3 text-sm font-semibold text-rose-200">이미지를 만들지 못했습니다</p>
+          <p className="mt-2 text-xs leading-relaxed text-rose-300/80">{error}</p>
+          <Button variant="secondary" size="sm" className="mt-4" onClick={onRetry}>다시 시도</Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === 'done' && image) {
+    return (
+      <figure className="float-in">
+        <img
+          src={image.url}
+          alt={image.prompt}
+          className="w-full rounded-2xl border border-white/10 bg-black/40 object-contain shadow-2xl shadow-black/50"
+          style={{ aspectRatio: aspect }}
+        />
+        <figcaption className="mt-3 space-y-3">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Badge tone="accent">{image.styleName}</Badge>
+            {image.moodName !== '자동' && <Badge>{image.moodName}</Badge>}
+            <Badge>{image.ratioId}</Badge>
+            <Badge>{PROVIDERS[image.provider].label}</Badge>
+            <Badge>seed {image.seed}</Badge>
+          </div>
+          <p className="text-sm leading-relaxed text-slate-300">{image.prompt}</p>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" onClick={onDownload}>⬇ 이미지 저장</Button>
+            <Button variant="secondary" size="sm" onClick={onCopyPrompt}>프롬프트 복사</Button>
+            <Button variant="ghost" size="sm" onClick={onRetry}>🎲 다른 버전 생성</Button>
+          </div>
+        </figcaption>
+      </figure>
+    );
+  }
+
+  return (
+    <div className="grid w-full place-items-center rounded-2xl border border-dashed border-white/12 bg-white/[.02] p-6" style={{ aspectRatio: aspect }}>
+      <div className="max-w-xs text-center">
+        <div className="text-4xl" aria-hidden="true">🖼️</div>
+        <p className="mt-3 text-sm font-semibold text-slate-300">아직 생성한 이미지가 없습니다</p>
+        <p className="mt-1.5 text-xs leading-relaxed text-slate-500">
+          왼쪽에서 프롬프트를 적고 마음에 드는 화풍을 고른 뒤<br />‘✨ 이미지 생성’을 눌러 보세요.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function Gallery({ items, currentId, onSelect, onClear }) {
+  if (items.length === 0) return null;
+  return (
+    <Card className="mt-5">
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-sm font-bold text-slate-200">최근 생성 <span className="text-slate-500">({items.length})</span></h2>
+        <Button variant="ghost" size="sm" onClick={onClear}>모두 지우기</Button>
+      </div>
+      <div className="scroll-thin flex gap-2.5 overflow-x-auto pb-2">
+        {items.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            title={item.prompt}
+            onClick={() => onSelect(item)}
+            className={`h-20 w-20 shrink-0 overflow-hidden rounded-xl border transition ${
+              item.id === currentId ? 'border-fuchsia-500 ring-2 ring-fuchsia-500/40' : 'border-white/10 hover:border-white/40'
+            }`}
+          >
+            <img src={item.url} alt={item.prompt} className="h-full w-full object-cover" loading="lazy" />
+          </button>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+function SettingsModal({ isOpen, onClose, falKey, setFalKey }) {
+  const [draft, setDraft] = useState(falKey);
+  useEffect(() => { if (isOpen) setDraft(falKey); }, [isOpen, falKey]);
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="설정">
+      <div className="space-y-4">
+        <Input
+          label="fal.ai API 키"
+          value={draft}
+          onChange={setDraft}
+          placeholder="key_id:key_secret"
+          hint="브라우저의 localStorage 에만 저장되며 fal.ai 외의 어디에도 전송되지 않습니다."
+        />
+        <div className="rounded-xl border border-amber-500/25 bg-amber-500/[.07] p-3 text-[11px] leading-relaxed text-amber-200/90">
+          <p className="font-semibold">⚠️ 학습용 프로젝트 안내</p>
+          <p className="mt-1">
+            이 앱은 빌드 도구 없이 동작하는 단일 HTML 파일이라 API 키가 브라우저에 그대로 노출됩니다.
+            실제 서비스로 배포할 때는 키를 서버 환경변수에 두고 백엔드 프록시를 거쳐 호출하세요.
+          </p>
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" onClick={onClose}>취소</Button>
+          <Button onClick={() => { setFalKey(draft.trim()); onClose(); }}>저장</Button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+// ========================================
+// 🚀 App
+// ========================================
+
+function App() {
+  const [prompt, setPrompt] = useState('');
+  const [styleId, setStyleId] = useState(STYLE_PRESETS[0].id);
+  const [moodId, setMoodId] = useState('auto');
+  const [ratioId, setRatioId] = useState('1:1');
+  const [provider, setProvider] = useState('free');
+
+  const [status, setStatus] = useState('idle'); // idle | loading | done | error
+  const [error, setError] = useState('');
+  const [image, setImage] = useState(null);
+  const [gallery, setGallery] = useState(() => loadJSON(STORAGE_KEY_GALLERY, []));
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [falKey, setFalKey] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_FAL);
+      return saved === null ? DEFAULT_FAL_KEY : saved;
+    } catch (_err) {
+      return DEFAULT_FAL_KEY;
+    }
+  });
+  const [toast, setToast] = useState('');
+
+  const requestRef = useRef(0);
+
+  const style = useMemo(() => STYLE_PRESETS.find((s) => s.id === styleId), [styleId]);
+  const mood = useMemo(() => MOOD_PRESETS.find((m) => m.id === moodId), [moodId]);
+  const ratio = useMemo(() => RATIOS.find((r) => r.id === ratioId), [ratioId]);
+  const finalPrompt = useMemo(() => buildFinalPrompt(prompt, style, mood), [prompt, style, mood]);
+
+  // 결과 영역은 방금 만든 이미지의 비율을 따른다(옵션만 바꿔도 결과가 찌그러지지 않도록).
+  const viewRatio = (status === 'done' && image && RATIOS.find((r) => r.id === image.ratioId)) || ratio;
+
+  useEffect(() => { saveJSON(STORAGE_KEY_GALLERY, gallery); }, [gallery]);
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY_FAL, falKey); } catch (_err) { /* 무시 */ }
+  }, [falKey]);
+
+  const showToast = useCallback((message) => {
+    setToast(message);
+    setTimeout(() => setToast(''), 1800);
+  }, []);
+
+  const generate = useCallback(async () => {
+    if (!prompt.trim()) {
+      setError('프롬프트를 먼저 입력해 주세요.');
+      setStatus('error');
+      return;
+    }
+
+    const ticket = ++requestRef.current;
+    const seed = Math.floor(Math.random() * 1000000);
+    setStatus('loading');
+    setError('');
+
+    try {
+      const args = { finalPrompt, ratio, seed };
+      const url = provider === 'fal'
+        ? await generateWithFal({ ...args, apiKey: falKey.trim() })
+        : await generateWithFree(args);
+
+      if (ticket !== requestRef.current) return; // 더 최근 요청이 있으면 결과를 버린다
+
+      const record = {
+        id: `${Date.now()}-${seed}`,
+        url,
+        prompt: prompt.trim(),
+        finalPrompt,
+        styleName: style.name,
+        moodName: mood.name,
+        ratioId: ratio.id,
+        provider,
+        seed,
+        createdAt: new Date().toISOString(),
+      };
+      setImage(record);
+      setStatus('done');
+      setGallery((prev) => [record].concat(prev).slice(0, 24));
+    } catch (err) {
+      if (ticket !== requestRef.current) return;
+      setError(err.message || '알 수 없는 오류가 발생했습니다.');
+      setStatus('error');
+    }
+  }, [prompt, finalPrompt, ratio, provider, falKey, style, mood]);
+
+  const handleDownload = useCallback(() => {
+    if (!image) return;
+    downloadImage(image.url, `my-midjourney-${image.seed}.jpg`);
+  }, [image]);
+
+  const handleCopyPrompt = useCallback(async () => {
+    if (!image) return;
+    try {
+      await navigator.clipboard.writeText(image.finalPrompt);
+      showToast('프롬프트를 복사했습니다');
+    } catch (_err) {
+      showToast('복사에 실패했습니다');
+    }
+  }, [image, showToast]);
+
+  const handleSelectFromGallery = useCallback((item) => {
+    setImage(item);
+    setStatus('done');
+    setError('');
+  }, []);
+
+  const handleClearGallery = useCallback(() => {
+    setGallery([]);
+    showToast('갤러리를 비웠습니다');
+  }, [showToast]);
+
+  const busy = status === 'loading';
+
+  return (
+    <div className="min-h-screen">
+      <Header onOpenSettings={() => setSettingsOpen(true)} provider={provider} />
+
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:py-8">
+        <div className="grid gap-5 lg:grid-cols-5">
+
+          {/* ── 왼쪽: 입력 패널 ───────────────────────── */}
+          <section className="space-y-4 lg:col-span-2" aria-label="이미지 생성 옵션">
+            <PromptPanel prompt={prompt} setPrompt={setPrompt} disabled={busy} />
+            <StylePanel styleId={styleId} setStyleId={setStyleId} disabled={busy} />
+            <MoodPanel moodId={moodId} setMoodId={setMoodId} ratioId={ratioId} setRatioId={setRatioId} disabled={busy} />
+            <ProviderPanel
+              provider={provider}
+              setProvider={setProvider}
+              hasFalKey={!!falKey.trim()}
+              disabled={busy}
+              onOpenSettings={() => setSettingsOpen(true)}
+            />
+
+            {/* 아래로 스크롤해도 생성 버튼은 항상 손 닿는 곳에 둔다 */}
+            <div className="sticky bottom-0 space-y-3 bg-gradient-to-t from-[#0a0a12] via-[#0a0a12]/95 to-transparent py-4">
+              <Button size="lg" className="w-full" onClick={generate} disabled={busy || !prompt.trim()}>
+                {busy ? <React.Fragment><Spinner /> 생성 중…</React.Fragment> : '✨ 이미지 생성'}
+              </Button>
+              {prompt.trim() && <FinalPromptPreview finalPrompt={finalPrompt} />}
+            </div>
+          </section>
+
+          {/* ── 오른쪽: 결과 ─────────────────────────── */}
+          {/* 옵션을 스크롤해도 결과 이미지는 계속 보이도록 데스크톱에서 고정한다 */}
+          <section className="lg:sticky lg:top-24 lg:col-span-3 lg:self-start" aria-label="생성 결과" aria-live="polite">
+            <ResultView
+              status={status}
+              error={error}
+              image={image}
+              ratio={viewRatio}
+              onDownload={handleDownload}
+              onCopyPrompt={handleCopyPrompt}
+              onRetry={generate}
+            />
+            <Gallery
+              items={gallery}
+              currentId={image && image.id}
+              onSelect={handleSelectFromGallery}
+              onClear={handleClearGallery}
+            />
+          </section>
+        </div>
+      </main>
+
+      <footer className="border-t border-white/10 py-6 text-center text-[11px] text-slate-600">
+        My Midjourney · 화풍과 분위기를 골라 만드는 AI 이미지 스튜디오 — 단일 HTML 학습용 프로젝트
+      </footer>
+
+      <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} falKey={falKey} setFalKey={setFalKey} />
+
+      {toast && (
+        <div className="float-in fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full border border-white/15 bg-[#1a1a2b] px-4 py-2 text-xs text-slate-200 shadow-xl" role="status">
+          {toast}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ========================================
+// Rendering
+// ========================================
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

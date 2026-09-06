@@ -1,0 +1,16 @@
+{
+  "name": "maeum-note-ai-counselor",
+  "version": "1.0.0",
+  "private": true,
+  "description": "마음노트 · 간단 AI 상담 — 단일 파일 Express 백엔드",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}

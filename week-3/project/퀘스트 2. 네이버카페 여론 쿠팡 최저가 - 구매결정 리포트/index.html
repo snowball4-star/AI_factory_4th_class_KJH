@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>소니 카메라, 살까 말까 — 커뮤니티 후기 × 쿠팡 데이터 리포트</title>
+
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <!-- ⚠️ 모든 CDN 버전 고정. Babel 은 반드시 7.x (8.x 는 인라인 text/babel 미지원) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.25.9/babel.min.js"></script>
+
+  <style>
+    html { scroll-behavior: smooth; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up { animation: fadeUp .35s ease-out both; }
+    @keyframes growBar {
+      from { transform: scaleX(0); }
+      to   { transform: scaleX(1); }
+    }
+    .grow-bar { transform-origin: left center; animation: growBar .7s cubic-bezier(.22,1,.36,1) both; }
+    @media (prefers-reduced-motion: reduce) {
+      .fade-up, .grow-bar { animation: none; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useMemo, useCallback, useEffect, useRef } = React;
+
+    // ========================================
+    // 📊 DATA — 실측 수집값 (2026-09-06)
+    // 출처: SLR클럽 Sony/Minolta 포럼, 네이버 소니 미러리스 클럽, 쿠팡
+    // ========================================
+
+    const COLLECTED_AT = '2026-09-06';
+
+    const MODELS = [
+      {
+        id: 'A7C2',
+        name: 'A7C2',
+        fullName: '소니 A7C2 / ILCE-7CM2',
+        tagline: '경량 풀프레임',
+        accent: 'orange',
+        // 커뮤니티
+        slrHits: 92529, slrCount: 48,
+        naverHits: 61059, naverCount: 84,
+        commScore: 52.4, commRank: 1,
+        // 쿠팡
+        price: 2330000, priceList: 2785000, priceMin: 2340000,
+        bodyListings: 8, reviews: 89, rating: 4.76, fiveStar: 88,
+        pros: [
+          'AI AF 트래킹이 세대 차이로 좋아졌다 — A7M3 사용자가 체감 1순위로 꼽음',
+          '작고 가벼워 찍는 사람도 찍히는 사람도 부담이 적다',
+          '셋 중 가장 싸다. 정품 바디 233만원으로 A7M4보다 12만원 저렴',
+          '상위 기종(A1, A7R5)에서 내려온 다운그레이드 기변 사례가 다수'
+        ],
+        cons: [
+          '무거운 렌즈(50mm F1.2G 등)를 물리면 무게 밸런스가 무너지고 그립감이 나쁘다',
+          '최고 셔터 1/4000 — 밝은 야외 최대개방에서 노출 오버',
+          '연사 시 버퍼가 걸린다 (최고 사양 메모리로도)',
+          '뷰파인더가 왼쪽에 있어 적응 기간이 필요'
+        ],
+        who: '여행·일상·가족 사진 위주로, 가볍게 들고 다닐 풀프레임을 원하는 사람',
+        notFor: '대구경 G/GM 렌즈가 주력이거나 스포츠·연사가 중요한 사람'
+      },
+      {
+        id: 'A7M5',
+        name: 'A7M5',
+        fullName: '소니 A7M5 / ILCE-7M5 (A7V)',
+        tagline: '최신 기본기',
+        accent: 'sky',
+        slrHits: 78439, slrCount: 36,
+        naverHits: 44690, naverCount: 64,
+        commScore: 40.8, commRank: 2,
+        price: 3330000, priceList: 4250000, priceMin: 3329000,
+        bodyListings: 6, reviews: 57, rating: 4.77, fiveStar: 88,
+        pros: [
+          '눈추적이 거의 안 풀린다 — 마스크·모자·격한 움직임에도 유지',
+          'M4의 최대 불만이던 복합광 오토화벨 튐이 해결됨',
+          '전자셔터가 쓸 만해졌다 — 프리캡처, 30연사, 1/16000로 ND 없이 야외 최대개방',
+          '발열이 크게 줄고 배터리 효율이 개선 (영하 4~5도 5시간 2,000컷에 잔량 50%)'
+        ],
+        cons: [
+          'AI 화벨의 "일정함"은 곧 채도 높은 웜톤 — 취향을 심하게 탄다',
+          '사진만 찍는다면 M4에서 바꿀 의미가 크지 않다는 평가가 다수',
+          '"전원 끔 중에 연결" 켜두면 절전에서 못 깨어나 배터리가 방전되는 버그',
+          '사전캡처 on/off 전환이 3단계라 즉흥적 상황에 쓰기 불편'
+        ],
+        who: '사진과 영상을 함께 하는 사람, 지금 새로 풀프레임에 진입하는 사람',
+        notFor: '사진만 찍으면서 이미 A7M4·A7C2급을 쓰고 있는 사람'
+      },
+      {
+        id: 'A7M4',
+        name: 'A7M4',
+        fullName: '소니 A7M4 / ILCE-7M4 (A7 IV)',
+        tagline: '검증된 조작계',
+        accent: 'emerald',
+        slrHits: 56525, slrCount: 26,
+        naverHits: 8789, naverCount: 20,
+        commScore: 17.5, commRank: 3,
+        price: 2453500, priceList: null, priceMin: 2185000,
+        bodyListings: 8, reviews: 80, rating: 4.86, fiveStar: 94,
+        pros: [
+          'A7C2 대비 그립·조작계·셔터 스펙이 낫다',
+          '소니 SIPS 공식 인물 사진가들이 가장 많이 쓰는 바디라는 언급',
+          'A7M5의 웜톤이 부담스러운 사람에게 대안이 되는 색감',
+          '쿠팡 실측 별점이 셋 중 최고 (4.86, 5점 비율 94%)'
+        ],
+        cons: [
+          '가격 이점이 사라졌다 — A7C2보다 12만원 비싸다',
+          '발열: 메뉴 조작만 해도 뜨끈해진다',
+          '복합광에서 오토화벨이 수시로 튄다',
+          'A/S 리스크 — 수리비 116만원 사례, 셔터박스 관련 글이 반복 등장'
+        ],
+        who: '그립과 조작감을 최우선으로 두고, 중고로 예산을 아끼려는 사람',
+        notFor: '신품 정가로 사려는 사람 (같은 돈이면 A7C2가 더 최신)'
+      }
+    ];
+
+    const RUNNER_UPS = [
+      { name: 'A1M2',  score: 16.7 },
+      { name: 'A7R5',  score: 15.4 },
+      { name: 'A7CR',  score: 12.2 },
+      { name: 'A9M3',  score: 11.8 },
+      { name: 'A6700', score: 7.5 }
+    ];
+
+    const QUOTES = [
+      {
+        model: 'A7C2', source: 'SLR클럽', meta: '조회 2,933 · a7m3 → a7c2 기변 후기',
+        text: 'AF가 엄청 좋아졌습니다. 트래킹 잘 되니까 엄청 좋네요. 부피가 작아졌고 무게도 가벼워서 사용하기 편합니다. 찍는 사람도 찍히는 사람도 부담이 덜하네요. 고민하시는 분들은 빨리 바꾸세요. 향후 5년 정도 쓸 수 있겠네요.',
+        tone: 'pro'
+      },
+      {
+        model: 'A7C2', source: 'SLR클럽', meta: '조회 11,917 · 후기 글 전체 1위',
+        text: '경량화에 올인을 한 A7C2이었기에 카메라 부피도 작아 그립감이 아주 좋지 않은데 무거운 렌즈를 장착하니 한손으로 사진을 촬영하는 게 아주 고역이었다. 셔터 스피드도 가장 빠른 게 1/4000이었기에 1.2 조리개로 촬영했을 때 노출 오버가 나는 상황이 종종 발생하였다.',
+        tone: 'con'
+      },
+      {
+        model: 'A7M5', source: 'SLR클럽', meta: '조회 3,483 · A7M4 4년 사용자',
+        text: 'M4의 AF성능도 훌륭하지만 M5는 피사체가 마스크, 모자를 쓰거나 격하게 움직여도 눈추적이 거의 안 풀림. M4에서 가장 불만이었던 점이 복합광에서 오토화벨이 수시로 튀는 현상이었는데, 적어도 M5는 오토화벨이 항상 일정한 톤을 유지해줍니다. 발열은 M4 대비 상당 수준 낮아졌습니다.',
+        tone: 'pro'
+      },
+      {
+        model: 'A7M5', source: 'SLR클럽', meta: '조회 2,983 · A7M4 유저가 쓴 A7M5 후기',
+        text: '근거리에서 전신 꽉 차게 인물 1명 촬영 → 체감 거의 없음. AI WB는 좋다는 분도 많지만 별로라는 의견도 꽤 많더군요. "일정하다"고 하는데 그 일정함이 = 채도 높고, 웜톤 입니다. 취향 타는 영역이라고 봅니다.',
+        tone: 'con'
+      },
+      {
+        model: 'A7M5', source: '쿠팡 상품평', meta: '★5 · A7M5 BODY',
+        text: '제품 자체는 a7c2나 m4 비교해도 스펙상 큰 차이가 없어 보이지만 연사 박아버리니까 아이들 움직임이 활발해도 좋은 사진 많이 건지네요. 아빠에겐 최고의 카메라 같습니다.',
+        tone: 'pro'
+      },
+      {
+        model: 'A7M4', source: '네이버 소미클', meta: '조회 3,158 · A7M4 최다 조회 글',
+        text: 'a7m4 수리비용 116만 5천원 납득이 안 돼요 (전액환불 업뎃)',
+        tone: 'con'
+      },
+      {
+        model: 'A7C2', source: '쿠팡 상품평', meta: '외국인 구매자',
+        text: 'As a foreigner, this camera not having the English language is a problem. If you are buying this camera in Korea, think twice.',
+        tone: 'con'
+      }
+    ];
+
+    const SOURCES = [
+      { label: 'SLR클럽 Sony/Minolta 포럼', detail: '모델명 16종 제목검색 · 2024년 이후 후기성 글 190여 건', url: 'https://www.slrclub.com/bbs/zboard.php?id=minolta_forum' },
+      { label: '네이버 소니 미러리스 클럽 (28.8만명)', detail: '「카메라/악세서리 후기」 게시판 2,144건 · 제목+조회수', url: 'https://cafe.naver.com/nex3nex5' },
+      { label: '쿠팡', detail: '모델별 검색 첫 페이지 36개 카드 + 상위 3개 상품 상품평 전수 집계', url: 'https://www.coupang.com' }
+    ];
+
+    // ========================================
+    // 🎨 DESIGN SYSTEM COMPONENTS
+    // ========================================
+
+    const ACCENT = {
+      orange:  { bar: 'bg-orange-500',  soft: 'bg-orange-50',  text: 'text-orange-700',  ring: 'ring-orange-200',  chip: 'bg-orange-100 text-orange-800',  btn: 'bg-orange-600 hover:bg-orange-700' },
+      sky:     { bar: 'bg-sky-500',     soft: 'bg-sky-50',     text: 'text-sky-700',     ring: 'ring-sky-200',     chip: 'bg-sky-100 text-sky-800',        btn: 'bg-sky-600 hover:bg-sky-700' },
+      emerald: { bar: 'bg-emerald-500', soft: 'bg-emerald-50', text: 'text-emerald-700', ring: 'ring-emerald-200', chip: 'bg-emerald-100 text-emerald-800', btn: 'bg-emerald-600 hover:bg-emerald-700' },
+      slate:   { bar: 'bg-slate-400',   soft: 'bg-slate-50',   text: 'text-slate-700',   ring: 'ring-slate-200',   chip: 'bg-slate-100 text-slate-700',     btn: 'bg-slate-800 hover:bg-slate-900' }
+    };
+
+    function Card({ children, className = '' }) {
+      return (
+        <div className={`bg-white rounded-2xl border border-slate-200 shadow-sm ${className}`}>
+          {children}
+        </div>
+      );
+    }
+
+    function Badge({ children, tone = 'slate', className = '' }) {
+      const map = {
+        slate:   'bg-slate-100 text-slate-700',
+        orange:  'bg-orange-100 text-orange-800',
+        sky:     'bg-sky-100 text-sky-800',
+        emerald: 'bg-emerald-100 text-emerald-800',
+        rose:    'bg-rose-100 text-rose-800',
+        amber:   'bg-amber-100 text-amber-900'
+      };
+      return (
+        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${map[tone]} ${className}`}>
+          {children}
+        </span>
+      );
+    }
+
+    function Button({ children, variant = 'primary', size = 'md', disabled = false, onClick, className = '', ...rest }) {
+      const base = 'inline-flex items-center justify-center font-semibold rounded-xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-slate-400 disabled:opacity-40 disabled:cursor-not-allowed';
+      const variants = {
+        primary:   'bg-slate-900 text-white hover:bg-slate-700',
+        secondary: 'bg-white text-slate-800 border border-slate-300 hover:bg-slate-50',
+        ghost:     'bg-transparent text-slate-600 hover:bg-slate-100'
+      };
+      const sizes = { sm: 'text-xs px-3 py-1.5', md: 'text-sm px-4 py-2.5', lg: 'text-base px-6 py-3' };
+      return (
+        <button type="button" onClick={onClick} disabled={disabled}
+                className={`${base} ${variants[variant]} ${sizes[size]} ${className}`} {...rest}>
+          {children}
+        </button>
+      );
+    }
+
+    function StatTile({ label, value, unit, sub, tone = 'slate' }) {
+      return (
+        <div className="bg-white/10 backdrop-blur rounded-xl px-4 py-3 border border-white/15">
+          <div className="text-[11px] uppercase tracking-wider text-white/60 font-semibold">{label}</div>
+          <div className="mt-1 flex items-baseline gap-1">
+            <span className="text-2xl font-bold text-white tabular-nums">{value}</span>
+            {unit && <span className="text-xs text-white/70 font-medium">{unit}</span>}
+          </div>
+          {sub && <div className="text-[11px] text-white/50 mt-0.5">{sub}</div>}
+        </div>
+      );
+    }
+
+    function Bar({ value, max, accent = 'slate', label, valueLabel, delay = 0 }) {
+      const pct = max > 0 ? Math.max(2, Math.round((value / max) * 100)) : 0;
+      return (
+        <div className="flex items-center gap-3">
+          <div className="w-16 shrink-0 text-sm font-semibold text-slate-700">{label}</div>
+          <div className="flex-1 h-7 bg-slate-100 rounded-md overflow-hidden">
+            <div className={`h-full ${ACCENT[accent].bar} grow-bar rounded-md`}
+                 style={{ width: pct + '%', animationDelay: delay + 'ms' }}
+                 role="img" aria-label={`${label} ${valueLabel}`} />
+          </div>
+          <div className="w-28 shrink-0 text-right text-sm font-semibold text-slate-800 tabular-nums">{valueLabel}</div>
+        </div>
+      );
+    }
+
+    function Section({ id, eyebrow, title, description, children }) {
+      return (
+        <section id={id} className="scroll-mt-20 py-12 sm:py-16 border-t border-slate-200">
+          <div className="max-w-5xl mx-auto px-5">
+            {eyebrow && (
+              <div className="text-xs font-bold uppercase tracking-[0.18em] text-orange-600 mb-2">{eyebrow}</div>
+            )}
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">{title}</h2>
+            {description && <p className="mt-3 text-slate-600 leading-relaxed max-w-3xl">{description}</p>}
+            <div className="mt-8">{children}</div>
+          </div>
+        </section>
+      );
+    }
+
+    // ========================================
+    // 🧩 COMMON COMPONENTS
+    // ========================================
+
+    const NAV = [
+      { href: '#verdict',  label: '결론' },
+      { href: '#diagnose', label: '진단' },
+      { href: '#compare',  label: '비교표' },
+      { href: '#evidence', label: '근거' },
+      { href: '#models',   label: '기종별' },
+      { href: '#quotes',   label: '실제 후기' },
+      { href: '#limits',   label: '한계' }
+    ];
+
+    function Header() {
+      const [open, setOpen] = useState(false);
+      return (
+        <header className="sticky top-0 z-40 bg-white/85 backdrop-blur border-b border-slate-200">
+          <div className="max-w-5xl mx-auto px-5 h-14 flex items-center justify-between gap-4">
+            <a href="#top" className="font-bold text-sm tracking-tight text-slate-900 shrink-0">
+              소니 카메라 <span className="text-orange-600">살까 말까</span>
+            </a>
+            <nav className="hidden md:flex items-center gap-1" aria-label="섹션 내비게이션">
+              {NAV.map(n => (
+                <a key={n.href} href={n.href}
+                   className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
+                  {n.label}
+                </a>
+              ))}
+            </nav>
+            <Button variant="ghost" size="sm" className="md:hidden" onClick={() => setOpen(o => !o)}
+                    aria-expanded={open} aria-controls="mobile-nav">
+              {open ? '닫기' : '메뉴'}
+            </Button>
+          </div>
+          {open && (
+            <nav id="mobile-nav" className="md:hidden border-t border-slate-200 bg-white px-5 py-3 grid grid-cols-2 gap-1" aria-label="모바일 내비게이션">
+              {NAV.map(n => (
+                <a key={n.href} href={n.href} onClick={() => setOpen(false)}
+                   className="px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg">
+                  {n.label}
+                </a>
+              ))}
+            </nav>
+          )}
+        </header>
+      );
+    }
+
+    function Hero() {
+      const totalPosts = 2144 + 190;
+      return (
+        <div id="top" className="bg-slate-900 text-white">
+          <div className="max-w-5xl mx-auto px-5 py-14 sm:py-20">
+            <div className="fade-up">
+              <Badge tone="amber" className="mb-4">데이터 수집일 {COLLECTED_AT}</Badge>
+              <h1 className="text-3xl sm:text-5xl font-bold tracking-tight leading-[1.15]">
+                소니 카메라,<br className="sm:hidden" /> 지금 <span className="text-orange-400">살까 말까?</span>
+              </h1>
+              <p className="mt-5 text-slate-300 leading-relaxed max-w-2xl">
+                네이버 소니 미러리스 클럽과 SLR클럽의 후기 글을 조회수로 집계하고,
+                거기서 뽑힌 상위 3종을 쿠팡의 실제 가격·별점·리뷰수와 대조했다.
+                감상이 아니라 <strong className="text-white font-semibold">숫자로 답하는 구매 판단 리포트</strong>다.
+              </p>
+            </div>
+
+            <div className="mt-10 grid grid-cols-2 lg:grid-cols-4 gap-3 fade-up" style={{ animationDelay: '120ms' }}>
+              <StatTile label="분석한 후기 글" value={totalPosts.toLocaleString()} unit="건" sub="2024년 이후" />
+              <StatTile label="후기 조회수 합계" value="35.7" unit="만+" sub="상위 3종 기준" />
+              <StatTile label="쿠팡 상품평" value="226" unit="건" sub="상위 3개 상품 전수" />
+              <StatTile label="비교한 기종" value="16" unit="종" sub="최종 3종 선별" />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ========================================
+    // 📄 SECTION: 결론
+    // ========================================
+
+    function VerdictCard({ tone, verdict, headline, body, footnote }) {
+      const map = {
+        buy:  { chip: 'bg-emerald-500', ring: 'ring-emerald-200', label: '산다' },
+        wait: { chip: 'bg-rose-500',    ring: 'ring-rose-200',    label: '말까' },
+        cond: { chip: 'bg-amber-500',   ring: 'ring-amber-200',   label: '조건부' }
+      };
+      const m = map[tone];
+      return (
+        <Card className={`p-6 ring-1 ${m.ring}`}>
+          <div className="flex items-center gap-2 mb-3">
+            <span className={`${m.chip} text-white text-xs font-bold px-2.5 py-1 rounded-md`}>{m.label}</span>
+            <span className="text-xs font-semibold text-slate-500">{verdict}</span>
+          </div>
+          <h3 className="text-lg font-bold text-slate-900 leading-snug">{headline}</h3>
+          <p className="mt-2 text-sm text-slate-600 leading-relaxed">{body}</p>
+          {footnote && (
+            <p className="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500 leading-relaxed">
+              {footnote}
+            </p>
+          )}
+        </Card>
+      );
+    }
+
+    function VerdictSection() {
+      return (
+        <Section
+          id="verdict"
+          eyebrow="한 줄 결론"
+          title="산다면 A7C2. 단, 이미 A7M4·A7C2급을 쓰고 사진만 찍는다면 지금은 말자."
+          description="세 기종은 서로 대체재가 아니라 각각 다른 질문에 대한 답이다. 아래 세 가지 상황이 대부분을 커버한다."
+        >
+          <div className="grid md:grid-cols-3 gap-4">
+            <VerdictCard
+              tone="buy"
+              verdict="첫 풀프레임 / 크롭에서 업그레이드"
+              headline="산다 → A7C2 (233만원)"
+              body="셋 중 가장 싼데 커뮤니티 후기 조회수는 1위다. 정품 바디 233만원으로 A7M4(245만원)보다도 저렴하면서 세대가 더 최신이다. AF 트래킹 체감이 가장 크게 언급되는 구간이 바로 이 업그레이드 경로다."
+              footnote="주의: 대구경 GM 렌즈를 주력으로 쓸 계획이라면 그립 문제로 후회한다는 후기가 반복된다."
+            />
+            <VerdictCard
+              tone="cond"
+              verdict="사진 + 영상 / 아이·반려동물·스포츠"
+              headline="조건부 산다 → A7M5 (333만원)"
+              body="A7C2 대비 +100만원. 이 차액이 값을 하는 건 프리캡처·30연사·AI AF·발열 개선 영역이다. 움직이는 피사체를 자주 찍거나 영상을 겸한다면 정당화되고, 그렇지 않으면 정당화되지 않는다."
+              footnote="쿠팡 리뷰: “연사 박아버리니까 아이들 움직임이 활발해도 좋은 사진 많이 건지네요.”"
+            />
+            <VerdictCard
+              tone="wait"
+              verdict="이미 A7M4 / A7C2 보유 + 사진 위주"
+              headline="말자 → 현행 유지"
+              body="A7M4 4년 사용자와 A7M5 실사용자 모두 “사진만 찍는다면 바꾸는 거 큰 의미 없어 보인다”고 적었다. 근거리 인물 촬영에서는 체감이 거의 없다는 실측 후기까지 있다."
+              footnote="물량이 안정화된 뒤 경험해봐도 늦지 않다는 조언이 다수다."
+            />
+          </div>
+
+          <Card className="mt-6 p-6 bg-amber-50 border-amber-200">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl leading-none" aria-hidden="true">⚠️</span>
+              <div>
+                <h3 className="font-bold text-slate-900">가격이 역전돼 있다 — 이번 분석의 가장 큰 발견</h3>
+                <p className="mt-2 text-sm text-slate-700 leading-relaxed">
+                  정품 기준 <strong>A7C2 233만원 &lt; A7M4 245만원</strong>. 더 늦게 나온 A7C2가 더 싸다.
+                  따라서 “A7M4를 가성비로 산다”는 통념은 쿠팡 신품 기준으로 성립하지 않는다.
+                  A7M4를 고를 이유는 가격이 아니라 <strong>그립·조작계와 색감 취향</strong>이며,
+                  그마저도 신품보다 중고를 노리는 편이 합리적이다.
+                </p>
+              </div>
+            </div>
+          </Card>
+        </Section>
+      );
+    }
+
+    // ========================================
+    // 📄 SECTION: 인터랙티브 진단
+    // ========================================
+
+    const QUESTIONS = [
+      {
+        id: 'owned',
+        q: '지금 쓰는 카메라가 무엇인가요?',
+        options: [
+          { v: 'none',  label: '없음 (첫 카메라)' },
+          { v: 'crop',  label: '크롭 바디 (A6xxx, 캐논/후지 등)' },
+          { v: 'oldff', label: 'A7M3 이하 풀프레임' },
+          { v: 'newff', label: 'A7M4 · A7C2급 이상' }
+        ]
+      },
+      {
+        id: 'use',
+        q: '주 용도는 무엇인가요?',
+        options: [
+          { v: 'photo', label: '사진 위주' },
+          { v: 'both',  label: '사진 + 영상 반반' },
+          { v: 'video', label: '영상 위주' }
+        ]
+      },
+      {
+        id: 'subject',
+        q: '주로 무엇을 찍나요?',
+        options: [
+          { v: 'static', label: '풍경 · 일상 · 정물' },
+          { v: 'kids',   label: '아이 · 반려동물 · 인물' },
+          { v: 'sports', label: '스포츠 · 야생 · 탐조' }
+        ]
+      },
+      {
+        id: 'form',
+        q: '무엇이 더 중요한가요?',
+        options: [
+          { v: 'light', label: '최대한 가볍고 작게' },
+          { v: 'grip',  label: '그립감과 조작계' }
+        ]
+      },
+      {
+        id: 'budget',
+        q: '바디 예산은 어느 정도인가요?',
+        options: [
+          { v: 'low',  label: '250만원 이하' },
+          { v: 'mid',  label: '350만원 이하' },
+          { v: 'high', label: '제한 없음' }
+        ]
+      }
+    ];
+
+    function computeResult(a) {
+      const score = { A7C2: 0, A7M5: 0, A7M4: 0 };
+      const reasons = [];
+
+      // 보유 기기
+      if (a.owned === 'none' || a.owned === 'crop') {
+        score.A7C2 += 2; score.A7M5 += 1;
+        reasons.push('첫 풀프레임 진입에서는 AF 세대 차이 체감이 가장 크게 보고된다.');
+      }
+      if (a.owned === 'oldff') {
+        score.A7C2 += 2; score.A7M5 += 1;
+        reasons.push('A7M3 → A7C2 기변자는 “AF가 엄청 좋아졌다, 빨리 바꾸세요”라고 적었다.');
+      }
+      if (a.owned === 'newff') {
+        score.A7M5 += 1; score.A7C2 -= 1; score.A7M4 -= 3;
+      }
+
+      // 용도
+      if (a.use === 'photo') { score.A7C2 += 2; score.A7M4 += 1; score.A7M5 -= 1; }
+      if (a.use === 'both')  { score.A7M5 += 2; score.A7C2 += 1; }
+      if (a.use === 'video') { score.A7M5 += 3; }
+      if (a.use !== 'photo') reasons.push('영상을 겸한다면 A7M5의 4K 60p·듀얼 ISO·동적 액티브 손떨방이 차액을 설명한다.');
+
+      // 피사체
+      if (a.subject === 'static') { score.A7C2 += 2; score.A7M5 -= 1; }
+      if (a.subject === 'kids')   { score.A7M5 += 2; score.A7C2 += 1; }
+      if (a.subject === 'sports') { score.A7M5 += 3; score.A7C2 -= 1; }
+      if (a.subject !== 'static') reasons.push('움직이는 피사체에서는 A7M5의 프리캡처·30연사가 실사용 만족으로 직결된다는 후기가 많다.');
+      else reasons.push('정적 피사체 위주라면 최신 AF·연사에 돈을 더 쓸 이유가 약하다.');
+
+      // 폼팩터
+      if (a.form === 'light') { score.A7C2 += 3; score.A7M4 -= 2; }
+      if (a.form === 'grip')  { score.A7M4 += 3; score.A7M5 += 1; score.A7C2 -= 2;
+        reasons.push('A7C2는 “무거운 렌즈를 물리면 무게 밸런스가 무너진다”는 지적이 1위 후기의 핵심이다.'); }
+
+      // 예산
+      if (a.budget === 'low')  { score.A7C2 += 3; score.A7M4 += 1; score.A7M5 -= 4;
+        reasons.push('250만원 이하에서는 A7M5(333만원)가 사실상 선택지에서 빠진다.'); }
+      if (a.budget === 'mid')  { score.A7C2 += 1; score.A7M5 += 1; }
+      if (a.budget === 'high') { score.A7M5 += 2; }
+
+      const ranked = Object.entries(score).sort((x, y) => y[1] - x[1]);
+      const winner = ranked[0][0];
+      const runnerUp = ranked[1][0];
+
+      // 살까/말까 판정
+      const hold = a.owned === 'newff' && a.use === 'photo' && a.subject === 'static';
+
+      return { winner, runnerUp, score, hold, reasons: reasons.slice(0, 4) };
+    }
+
+    function Diagnose() {
+      const [answers, setAnswers] = useState({});
+      const answered = QUESTIONS.filter(q => answers[q.id]).length;
+      const done = answered === QUESTIONS.length;
+      const result = useMemo(() => (done ? computeResult(answers) : null), [answers, done]);
+
+      const pick = useCallback((qid, v) => {
+        setAnswers(prev => ({ ...prev, [qid]: v }));
+      }, []);
+
+      const reset = useCallback(() => setAnswers({}), []);
+
+      const winnerModel = result ? MODELS.find(m => m.id === result.winner) : null;
+      const runnerModel = result ? MODELS.find(m => m.id === result.runnerUp) : null;
+
+      return (
+        <Section
+          id="diagnose"
+          eyebrow="30초 진단"
+          title="내 경우에는 어떤가?"
+          description="5문항이면 판정이 나온다. 아래 로직은 앞서 수집한 후기 내용과 쿠팡 가격을 그대로 규칙으로 옮긴 것이다."
+        >
+          <Card className="p-6 sm:p-8">
+            {/* 진행률 */}
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-full bg-orange-500 transition-all duration-300 rounded-full"
+                     style={{ width: (answered / QUESTIONS.length) * 100 + '%' }} />
+              </div>
+              <span className="text-xs font-semibold text-slate-500 tabular-nums shrink-0">
+                {answered} / {QUESTIONS.length}
+              </span>
+            </div>
+
+            <div className="space-y-6">
+              {QUESTIONS.map((q, qi) => (
+                <fieldset key={q.id}>
+                  <legend className="text-sm font-bold text-slate-800 mb-2.5">
+                    <span className="text-orange-600 mr-1.5">{qi + 1}.</span>{q.q}
+                  </legend>
+                  <div className="flex flex-wrap gap-2">
+                    {q.options.map(o => {
+                      const active = answers[q.id] === o.v;
+                      return (
+                        <button
+                          key={o.v}
+                          type="button"
+                          onClick={() => pick(q.id, o.v)}
+                          aria-pressed={active}
+                          className={`px-3.5 py-2 rounded-xl text-sm font-medium border transition-all ${
+                            active
+                              ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                              : 'bg-white text-slate-700 border-slate-300 hover:border-slate-400 hover:bg-slate-50'
+                          }`}
+                        >
+                          {o.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+              ))}
+            </div>
+
+            {/* 결과 */}
+            <div className="mt-8 pt-6 border-t border-slate-200">
+              {!done && (
+                <p className="text-sm text-slate-500">
+                  남은 문항 {QUESTIONS.length - answered}개를 선택하면 결과가 나옵니다.
+                </p>
+              )}
+
+              {done && result && (
+                <div className="fade-up">
+                  {result.hold ? (
+                    <div className="rounded-xl bg-rose-50 border border-rose-200 p-5">
+                      <Badge tone="rose" className="mb-2">판정: 말까</Badge>
+                      <h3 className="text-xl font-bold text-slate-900">지금은 사지 않는 쪽을 권한다</h3>
+                      <p className="mt-2 text-sm text-slate-700 leading-relaxed">
+                        이미 A7M4·A7C2급을 가지고 있고, 사진 위주로 정적인 피사체를 찍는다면
+                        업그레이드 체감이 가장 작은 조합이다. A7M4 4년 사용자의 A7M5 후기는
+                        “근거리에서 전신 꽉 차게 인물 1명 촬영 → 체감 거의 없음”이라고 적었고,
+                        또 다른 실사용자는 “사진만 찍는다면 바꾸는 거 큰 의미 없어 보인다”고 결론지었다.
+                      </p>
+                      <p className="mt-3 text-sm text-slate-700 leading-relaxed">
+                        굳이 바꾼다면 <strong>{winnerModel.name}</strong> 쪽이 상대적으로 낫지만,
+                        같은 예산을 렌즈에 쓰는 편이 결과물 차이가 더 크다는 것이 후기들의 일관된 방향이다.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className={`rounded-xl ${ACCENT[winnerModel.accent].soft} border ${ACCENT[winnerModel.accent].ring} border-opacity-60 p-5`}>
+                      <Badge tone={winnerModel.accent} className="mb-2">판정: 산다</Badge>
+                      <h3 className="text-xl sm:text-2xl font-bold text-slate-900">
+                        추천 기종은 <span className={ACCENT[winnerModel.accent].text}>{winnerModel.name}</span>
+                        <span className="text-base font-semibold text-slate-500 ml-2">
+                          {winnerModel.price.toLocaleString()}원
+                        </span>
+                      </h3>
+                      <p className="mt-1 text-sm text-slate-600">
+                        차선책은 {runnerModel.name} ({runnerModel.price.toLocaleString()}원)
+                      </p>
+
+                      <ul className="mt-4 space-y-2">
+                        {result.reasons.map((r, i) => (
+                          <li key={i} className="flex gap-2 text-sm text-slate-700 leading-relaxed">
+                            <span className={`${ACCENT[winnerModel.accent].text} font-bold shrink-0`}>·</span>
+                            <span>{r}</span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      <div className="mt-4 pt-4 border-t border-white/60">
+                        <div className="text-xs font-semibold text-slate-500 mb-2">기종별 적합도 점수</div>
+                        <div className="space-y-1.5">
+                          {Object.entries(result.score)
+                            .sort((a, b) => b[1] - a[1])
+                            .map(([id, s]) => {
+                              const m = MODELS.find(x => x.id === id);
+                              const maxAbs = 12;
+                              const pct = Math.max(0, Math.min(100, ((s + 4) / maxAbs) * 100));
+                              return (
+                                <div key={id} className="flex items-center gap-3">
+                                  <span className="w-14 text-xs font-bold text-slate-700">{m.name}</span>
+                                  <div className="flex-1 h-2 bg-white rounded-full overflow-hidden">
+                                    <div className={`h-full ${ACCENT[m.accent].bar} rounded-full transition-all duration-500`}
+                                         style={{ width: pct + '%' }} />
+                                  </div>
+                                  <span className="w-8 text-right text-xs font-semibold text-slate-600 tabular-nums">{s}</span>
+                                </div>
+                              );
+                            })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="mt-4">
+                    <Button variant="secondary" size="sm" onClick={reset}>다시 진단하기</Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
+        </Section>
+      );
+    }
+
+    // ========================================
+    // 📄 SECTION: 비교표
+    // ========================================
+
+    function CompareTable() {
+      const rows = [
+        { label: '대표 정품 바디가',   get: m => m.price.toLocaleString() + '원', best: 'min', raw: m => m.price },
+        { label: '정가 (할인율)',      get: m => m.priceList ? `${m.priceList.toLocaleString()}원 (${Math.round((1 - m.price / m.priceList) * 100)}%↓)` : '할인가 표기' },
+        { label: '바디 상품 수',       get: m => m.bodyListings + '종' },
+        { label: '커뮤니티 후기 조회수', get: m => (m.slrHits + m.naverHits).toLocaleString(), best: 'max', raw: m => m.slrHits + m.naverHits },
+        { label: '커뮤니티 후기 글 수', get: m => (m.slrCount + m.naverCount) + '건', best: 'max', raw: m => m.slrCount + m.naverCount },
+        { label: '쿠팡 리뷰수',        get: m => m.reviews + '건', best: 'max', raw: m => m.reviews },
+        { label: '쿠팡 실측 별점',     get: m => '★ ' + m.rating.toFixed(2), best: 'max', raw: m => m.rating },
+        { label: '5점 비율',           get: m => m.fiveStar + '%', best: 'max', raw: m => m.fiveStar }
+      ];
+
+      return (
+        <Section
+          id="compare"
+          eyebrow="한눈에 보기"
+          title="3종 비교표"
+          description="별점은 쿠팡 목록에 정수(★5 / ★4.5)로만 표시되므로, 상위 3개 상품의 상품평을 전수로 긁어 개별 평점을 평균 내 소수점까지 계산했다."
+        >
+          <div className="overflow-x-auto -mx-5 px-5">
+            <table className="w-full min-w-[640px] border-collapse">
+              <caption className="sr-only">A7C2, A7M5, A7M4의 가격·커뮤니티 조회수·쿠팡 지표 비교</caption>
+              <thead>
+                <tr>
+                  <th scope="col" className="text-left text-xs font-bold uppercase tracking-wider text-slate-500 pb-3 pr-4 w-44">항목</th>
+                  {MODELS.map(m => (
+                    <th key={m.id} scope="col" className="pb-3 px-3 text-left">
+                      <div className={`rounded-xl ${ACCENT[m.accent].soft} px-3 py-2.5 border ${ACCENT[m.accent].ring} border-opacity-50`}>
+                        <div className={`text-base font-bold ${ACCENT[m.accent].text}`}>{m.name}</div>
+                        <div className="text-[11px] font-medium text-slate-500 mt-0.5">{m.tagline}</div>
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r, ri) => {
+                  let bestId = null;
+                  if (r.best && r.raw) {
+                    const vals = MODELS.map(m => ({ id: m.id, v: r.raw(m) }));
+                    bestId = (r.best === 'max'
+                      ? vals.reduce((a, b) => (b.v > a.v ? b : a))
+                      : vals.reduce((a, b) => (b.v < a.v ? b : a))).id;
+                  }
+                  return (
+                    <tr key={r.label} className={ri % 2 ? 'bg-slate-50/70' : ''}>
+                      <th scope="row" className="text-left text-sm font-semibold text-slate-600 py-3 pr-4 align-middle">
+                        {r.label}
+                      </th>
+                      {MODELS.map(m => (
+                        <td key={m.id} className="py-3 px-3 align-middle">
+                          <span className={`text-sm tabular-nums ${bestId === m.id ? 'font-bold text-slate-900' : 'text-slate-700'}`}>
+                            {r.get(m)}
+                          </span>
+                          {bestId === m.id && (
+                            <span className="ml-2 text-[10px] font-bold text-white bg-slate-900 px-1.5 py-0.5 rounded">최고</span>
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-4 text-xs text-slate-500 leading-relaxed">
+            ※ A7M4 최저가 2,185,000원 상품은 리뷰 0건·별점 없는 “기본구성 위너” 표기로 정품 확인이 되지 않아 대표가에서 제외했다.
+            가격은 쿠팡 와우회원가 기준 {COLLECTED_AT} 시점 스냅숏이다.
+          </p>
+        </Section>
+      );
+    }
+
+    // ========================================
+    // 📄 SECTION: 근거 (차트)
+    // ========================================
+
+    function Evidence() {
+      const maxComm = Math.max(...MODELS.map(m => m.slrHits + m.naverHits));
+      const maxPrice = Math.max(...MODELS.map(m => m.price));
+      const maxReviews = Math.max(...MODELS.map(m => m.reviews));
+      const maxScore = Math.max(...MODELS.map(m => m.commScore), ...RUNNER_UPS.map(r => r.score));
+
+      return (
+        <Section
+          id="evidence"
+          eyebrow="숫자로 보는 근거"
+          title="왜 이 3종인가"
+          description="16개 기종을 두 커뮤니티에서 각각 집계한 뒤, 사이트별 후기 조회수 점유율(%)을 합산해 순위를 냈다. 커뮤니티 규모가 달라 조회수 절대값을 그대로 더할 수 없기 때문이다."
+        >
+          <div className="grid lg:grid-cols-2 gap-5">
+            {/* 종합 점수 */}
+            <Card className="p-6">
+              <h3 className="font-bold text-slate-900">커뮤니티 후기 조회수 합산 점수</h3>
+              <p className="text-xs text-slate-500 mt-1 mb-5">두 사이트 점유율(%) 합산 · 2024년 이후</p>
+              <div className="space-y-2.5">
+                {MODELS.map((m, i) => (
+                  <Bar key={m.id} label={m.name} value={m.commScore} max={maxScore}
+                       accent={m.accent} valueLabel={m.commScore.toFixed(1) + '점'} delay={i * 90} />
+                ))}
+                <div className="pt-2 mt-2 border-t border-slate-100 space-y-2.5">
+                  {RUNNER_UPS.map((r, i) => (
+                    <Bar key={r.name} label={r.name} value={r.score} max={maxScore}
+                         accent="slate" valueLabel={r.score.toFixed(1) + '점'} delay={(MODELS.length + i) * 90} />
+                  ))}
+                </div>
+              </div>
+              <p className="mt-5 text-xs text-slate-500 leading-relaxed">
+                1·2위는 두 사이트에서 <strong>모두 동일하게</strong> 1·2위였다. 3위만 갈렸는데
+                (SLR클럽 = A7M4, 네이버 = A1M2) 합산 시 A7M4가 근소하게 앞섰다.
+              </p>
+            </Card>
+
+            {/* 사이트별 분해 */}
+            <Card className="p-6">
+              <h3 className="font-bold text-slate-900">사이트별 후기 조회수</h3>
+              <p className="text-xs text-slate-500 mt-1 mb-5">절대값 · 왼쪽 SLR클럽 / 오른쪽 네이버 소미클</p>
+              <div className="space-y-5">
+                {MODELS.map(m => {
+                  const total = m.slrHits + m.naverHits;
+                  const slrPct = Math.round((m.slrHits / total) * 100);
+                  return (
+                    <div key={m.id}>
+                      <div className="flex items-baseline justify-between mb-1.5">
+                        <span className="text-sm font-bold text-slate-800">{m.name}</span>
+                        <span className="text-xs font-semibold text-slate-500 tabular-nums">
+                          합계 {total.toLocaleString()}회
+                        </span>
+                      </div>
+                      <div className="flex h-6 rounded-md overflow-hidden bg-slate-100">
+                        <div className={`${ACCENT[m.accent].bar} grow-bar flex items-center justify-start px-2`}
+                             style={{ width: slrPct + '%' }}>
+                          <span className="text-[10px] font-bold text-white tabular-nums whitespace-nowrap">
+                            {m.slrHits.toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="bg-slate-300 grow-bar flex items-center justify-end px-2"
+                             style={{ width: (100 - slrPct) + '%' }}>
+                          <span className="text-[10px] font-bold text-slate-700 tabular-nums whitespace-nowrap">
+                            {m.naverHits.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="mt-1 text-[11px] text-slate-500">
+                        후기 글 {m.slrCount + m.naverCount}건 (SLR {m.slrCount} · 네이버 {m.naverCount})
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+
+            {/* 가격 */}
+            <Card className="p-6">
+              <h3 className="font-bold text-slate-900">쿠팡 정품 바디 가격</h3>
+              <p className="text-xs text-slate-500 mt-1 mb-5">와우회원가 · {COLLECTED_AT} 기준</p>
+              <div className="space-y-2.5">
+                {[...MODELS].sort((a, b) => a.price - b.price).map((m, i) => (
+                  <Bar key={m.id} label={m.name} value={m.price} max={maxPrice}
+                       accent={m.accent} valueLabel={(m.price / 10000).toFixed(1) + '만원'} delay={i * 90} />
+                ))}
+              </div>
+              <div className="mt-5 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3">
+                <p className="text-xs text-slate-700 leading-relaxed">
+                  <strong>가격 역전.</strong> A7C2(233.0만)가 A7M4(245.4만)보다 12.4만원 싸다.
+                  A7M5는 A7C2 대비 <strong>+100.0만원</strong>이다.
+                </p>
+              </div>
+            </Card>
+
+            {/* 별점 & 리뷰수 */}
+            <Card className="p-6">
+              <h3 className="font-bold text-slate-900">쿠팡 별점과 리뷰수</h3>
+              <p className="text-xs text-slate-500 mt-1 mb-5">상위 3개 상품 상품평 전수 집계</p>
+
+              <div className="space-y-2.5 mb-6">
+                {MODELS.map((m, i) => (
+                  <Bar key={m.id} label={m.name} value={m.reviews} max={maxReviews}
+                       accent={m.accent} valueLabel={m.reviews + '건'} delay={i * 90} />
+                ))}
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                {MODELS.map(m => (
+                  <div key={m.id} className={`rounded-lg ${ACCENT[m.accent].soft} px-3 py-3 text-center`}>
+                    <div className="text-[11px] font-semibold text-slate-500">{m.name}</div>
+                    <div className={`text-xl font-bold ${ACCENT[m.accent].text} tabular-nums mt-0.5`}>
+                      {m.rating.toFixed(2)}
+                    </div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">5점 {m.fiveStar}%</div>
+                  </div>
+                ))}
+              </div>
+
+              <p className="mt-5 text-xs text-slate-500 leading-relaxed">
+                <strong className="text-slate-700">주의:</strong> 별점이 4.76~4.86에 몰려 있어 변별력이 없다.
+                낮은 점수 리뷰를 열어보면 대부분 제품이 아니라 배송·포장·사은품(액정필름) 불만이다.
+                쿠팡 리뷰수도 인기도가 아니라 <strong className="text-slate-700">판매 누적 기간</strong>의 지표에 가깝다 —
+                최근 출시된 A7M5가 적은 이유다.
+              </p>
+            </Card>
+          </div>
+        </Section>
+      );
+    }
+
+    // ========================================
+    // 📄 SECTION: 기종별 상세 (탭)
+    // ========================================
+
+    function ModelDetail() {
+      const [active, setActive] = useState(MODELS[0].id);
+      const m = MODELS.find(x => x.id === active);
+      const a = ACCENT[m.accent];
+
+      return (
+        <Section
+          id="models"
+          eyebrow="기종별 상세"
+          title="후기가 실제로 말한 것"
+          description="장단점은 조회수 상위 후기 본문에서 반복적으로 언급된 항목만 추렸다. 스펙표가 아니라 사용자가 직접 겪은 내용이다."
+        >
+          <div role="tablist" aria-label="기종 선택" className="flex flex-wrap gap-2 mb-6">
+            {MODELS.map(x => {
+              const on = x.id === active;
+              return (
+                <button
+                  key={x.id}
+                  role="tab"
+                  aria-selected={on}
+                  aria-controls={`panel-${x.id}`}
+                  id={`tab-${x.id}`}
+                  onClick={() => setActive(x.id)}
+                  className={`px-4 py-2.5 rounded-xl text-sm font-bold border transition-all ${
+                    on ? `${ACCENT[x.accent].btn} text-white border-transparent shadow-sm`
+                       : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  {x.name}
+                  <span className={`ml-2 text-[11px] font-semibold ${on ? 'text-white/75' : 'text-slate-400'}`}>
+                    {(x.price / 10000).toFixed(0)}만
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <Card className="p-6 sm:p-8 fade-up" key={active}>
+            <div role="tabpanel" id={`panel-${m.id}`} aria-labelledby={`tab-${m.id}`}>
+              <div className="flex flex-wrap items-start justify-between gap-4 pb-6 border-b border-slate-200">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-2xl font-bold text-slate-900">{m.name}</h3>
+                    <Badge tone={m.accent}>커뮤니티 {m.commRank}위</Badge>
+                  </div>
+                  <p className="text-sm text-slate-500 mt-1">{m.fullName}</p>
+                </div>
+                <div className="text-right">
+                  <div className={`text-2xl font-bold ${a.text} tabular-nums`}>
+                    {m.price.toLocaleString()}<span className="text-base ml-0.5">원</span>
+                  </div>
+                  <div className="text-xs text-slate-500 mt-0.5">
+                    ★ {m.rating.toFixed(2)} · 리뷰 {m.reviews}건
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6 pt-6">
+                <div>
+                  <h4 className="flex items-center gap-2 text-sm font-bold text-emerald-700 mb-3">
+                    <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 grid place-items-center text-xs" aria-hidden="true">+</span>
+                    후기에서 반복된 장점
+                  </h4>
+                  <ul className="space-y-2.5">
+                    {m.pros.map((p, i) => (
+                      <li key={i} className="flex gap-2.5 text-sm text-slate-700 leading-relaxed">
+                        <span className="text-emerald-500 font-bold shrink-0 mt-0.5">▸</span>
+                        <span>{p}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="flex items-center gap-2 text-sm font-bold text-rose-700 mb-3">
+                    <span className="w-5 h-5 rounded-full bg-rose-100 text-rose-700 grid place-items-center text-xs" aria-hidden="true">−</span>
+                    후기에서 반복된 단점
+                  </h4>
+                  <ul className="space-y-2.5">
+                    {m.cons.map((c, i) => (
+                      <li key={i} className="flex gap-2.5 text-sm text-slate-700 leading-relaxed">
+                        <span className="text-rose-400 font-bold shrink-0 mt-0.5">▸</span>
+                        <span>{c}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-3 mt-6 pt-6 border-t border-slate-200">
+                <div className={`rounded-xl ${a.soft} px-4 py-3.5`}>
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">이런 사람에게</div>
+                  <p className="text-sm text-slate-800 leading-relaxed font-medium">{m.who}</p>
+                </div>
+                <div className="rounded-xl bg-slate-100 px-4 py-3.5">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">이런 사람은 피할 것</div>
+                  <p className="text-sm text-slate-700 leading-relaxed">{m.notFor}</p>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </Section>
+      );
+    }
+
+    // ========================================
+    // 📄 SECTION: 실제 후기 인용
+    // ========================================
+
+    function Quotes() {
+      const [filter, setFilter] = useState('ALL');
+      const list = filter === 'ALL' ? QUOTES : QUOTES.filter(q => q.model === filter);
+
+      return (
+        <Section
+          id="quotes"
+          eyebrow="원문 그대로"
+          title="실제 후기에서"
+          description="위 판단의 근거가 된 문장들이다. 요약이 아니라 작성자가 쓴 표현 그대로 옮겼다."
+        >
+          <div className="flex flex-wrap gap-2 mb-6">
+            {['ALL', ...MODELS.map(m => m.id)].map(f => (
+              <Button key={f} size="sm"
+                      variant={filter === f ? 'primary' : 'secondary'}
+                      onClick={() => setFilter(f)}>
+                {f === 'ALL' ? '전체' : f}
+              </Button>
+            ))}
+          </div>
+
+          {list.length === 0 ? (
+            <Card className="p-8 text-center text-sm text-slate-500">해당하는 인용이 없습니다.</Card>
+          ) : (
+            <div className="grid md:grid-cols-2 gap-4">
+              {list.map((q, i) => {
+                const m = MODELS.find(x => x.id === q.model);
+                const good = q.tone === 'pro';
+                return (
+                  <Card key={i} className={`p-5 border-l-4 ${good ? 'border-l-emerald-400' : 'border-l-rose-400'}`}>
+                    <div className="flex items-center gap-2 mb-3 flex-wrap">
+                      <Badge tone={m.accent}>{q.model}</Badge>
+                      <span className="text-xs font-semibold text-slate-700">{q.source}</span>
+                      <span className="text-xs text-slate-400">{q.meta}</span>
+                    </div>
+                    <blockquote className="text-sm text-slate-700 leading-relaxed">
+                      <span className={`${good ? 'text-emerald-400' : 'text-rose-400'} font-bold mr-1`}>“</span>
+                      {q.text}
+                      <span className={`${good ? 'text-emerald-400' : 'text-rose-400'} font-bold ml-1`}>”</span>
+                    </blockquote>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </Section>
+      );
+    }
+
+    // ========================================
+    // 📄 SECTION: 한계 & 출처
+    // ========================================
+
+    function Limits() {
+      const limits = [
+        {
+          t: '네이버 카페 본문은 읽지 못했다',
+          d: '계정 등급이 AUTO여서 소미클 후기 게시판의 본문 열람 권한이 없었다(P등급 필요). 네이버 쪽은 제목·조회수 등 목록 메타데이터만 수집했고, 본문 인용은 전부 SLR클럽과 쿠팡 상품평이다.'
+        },
+        {
+          t: '조회수는 화제성이지 성능이 아니다',
+          d: '신제품과 논쟁글이 유리하게 잡히고, 오래 안정적으로 쓰이는 기종은 낮게 잡힌다. “많이 읽힌 기종”과 “좋은 기종”은 같지 않다.'
+        },
+        {
+          t: '제목 검색의 누락',
+          d: 'SLR클럽 검색은 제목을 대상으로 하므로 본문에서만 모델을 언급한 글은 빠진다. A7C2·A7M4는 수집 시 페이지 상한(40p)에 걸려 실제 수치가 표보다 클 수 있다.'
+        },
+        {
+          t: '쿠팡 표본이 작다',
+          d: '상품평이 기종당 57~89건뿐이라 통계적 신뢰도가 낮다. 가격도 와우회원가 기준이며 시시각각 변한다. 검색 첫 페이지(36개 카드) 범위라 더 저렴한 하위 노출 상품이 있을 수 있다.'
+        }
+      ];
+
+      return (
+        <Section
+          id="limits"
+          eyebrow="투명성"
+          title="이 리포트가 말하지 않는 것"
+          description="판단에 쓴 데이터의 한계를 그대로 적는다. 아래를 감안하고 읽어야 한다."
+        >
+          <div className="grid md:grid-cols-2 gap-4">
+            {limits.map((l, i) => (
+              <Card key={i} className="p-5">
+                <h3 className="text-sm font-bold text-slate-900 flex gap-2">
+                  <span className="text-slate-300 font-mono tabular-nums">{String(i + 1).padStart(2, '0')}</span>
+                  {l.t}
+                </h3>
+                <p className="mt-2 text-sm text-slate-600 leading-relaxed pl-7">{l.d}</p>
+              </Card>
+            ))}
+          </div>
+
+          <Card className="mt-5 p-6">
+            <h3 className="text-sm font-bold text-slate-900 mb-4">데이터 출처</h3>
+            <ul className="space-y-3">
+              {SOURCES.map((s, i) => (
+                <li key={i} className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3">
+                  <a href={s.url} target="_blank" rel="noopener noreferrer"
+                     className="text-sm font-semibold text-slate-800 hover:text-orange-600 underline decoration-slate-300 underline-offset-2 shrink-0">
+                    {s.label}
+                  </a>
+                  <span className="text-xs text-slate-500">{s.detail}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-5 pt-4 border-t border-slate-100 text-xs text-slate-500 leading-relaxed">
+              수집 도구: Playwright (MCP) · 수집일 {COLLECTED_AT} ·
+              집계 대상 기간 2024-01-01 이후 · 분석 기종 16종 중 상위 3종 선별
+            </p>
+          </Card>
+        </Section>
+      );
+    }
+
+    function Footer() {
+      return (
+        <footer className="bg-slate-900 text-slate-400 py-10">
+          <div className="max-w-5xl mx-auto px-5">
+            <p className="text-sm">
+              소니 카메라 구매 판단 리포트 · 커뮤니티 후기 조회수 × 쿠팡 가격·별점·리뷰수
+            </p>
+            <p className="mt-2 text-xs text-slate-500 leading-relaxed">
+              이 리포트는 공개된 커뮤니티 게시글과 쇼핑몰 노출 정보를 집계한 결과물이며,
+              특정 판매자·브랜드와 무관합니다. 가격과 재고는 수시로 변하므로 실제 구매 전 직접 확인하세요.
+            </p>
+          </div>
+        </footer>
+      );
+    }
+
+    // ========================================
+    // 🚀 APP
+    // ========================================
+
+    function App() {
+      return (
+        <React.Fragment>
+          <Header />
+          <main>
+            <Hero />
+            <VerdictSection />
+            <Diagnose />
+            <CompareTable />
+            <Evidence />
+            <ModelDetail />
+            <Quotes />
+            <Limits />
+          </main>
+          <Footer />
+        </React.Fragment>
+      );
+    }
+
+    // ========================================
+    // RENDERING
+    // ========================================
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

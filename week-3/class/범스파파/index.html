@@ -1,0 +1,5113 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>범스파파 아카이브 — 모두의 오디오 카페 작성글 404건</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='88'%3E%F0%9F%8E%A7%3C/text%3E%3C/svg%3E">
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <!-- ⚠️ 모든 CDN 버전 고정. Babel 은 반드시 7.x (8.x 는 인라인 text/babel 미지원) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.25.9/babel.min.js"></script>
+  <style>
+    html { scroll-behavior: smooth; }
+    body { background-color: #0b0f14; }
+    /* Tailwind 유틸리티로 표현이 어려운 진입 애니메이션 */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .fade-up { animation: fadeUp .45s ease-out both; }
+    @keyframes growIn { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+    .grow-x { transform-origin: left; animation: growIn .7s cubic-bezier(.22,1,.36,1) both; }
+    @keyframes growUp { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+    .grow-y { transform-origin: bottom; animation: growUp .7s cubic-bezier(.22,1,.36,1) both; }
+    /* 커스텀 스크롤바 */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: #0b0f14; }
+    ::-webkit-scrollbar-thumb { background: #27333f; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3b4a5a; }
+    /* 히어로 배경 글로우 */
+    .hero-glow {
+      background:
+        radial-gradient(60rem 26rem at 12% -10%, rgba(245,158,11,.16), transparent 60%),
+        radial-gradient(48rem 24rem at 88% 0%, rgba(56,189,248,.12), transparent 60%);
+    }
+  </style>
+</head>
+<body class="bg-[#0b0f14] text-slate-200 antialiased">
+  <div id="root"></div>
+
+  <script type="application/json" id="articles-data">
+[
+  {
+    "id": 6328,
+    "date": "2026-08-29",
+    "board": "모두의 기기 리뷰",
+    "title": "[CDP대전] 포시 오디오 매락 vs 수월우 디스크드림2",
+    "comments": 4,
+    "views": 95,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/6328"
+  },
+  {
+    "id": 6193,
+    "date": "2026-07-01",
+    "board": "사는 이야기 ",
+    "title": "송영주 10집 <Atmosphere>",
+    "comments": 10,
+    "views": 59,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/6193"
+  },
+  {
+    "id": 6022,
+    "date": "2026-04-24",
+    "board": "사는 이야기 ",
+    "title": "저는 요즘 필름카메라를 찍고있습니다.",
+    "comments": 14,
+    "views": 131,
+    "likes": 6,
+    "url": "https://cafe.naver.com/audiodio/6022"
+  },
+  {
+    "id": 5955,
+    "date": "2026-03-25",
+    "board": "사는 이야기 ",
+    "title": "콘탁스 i4r로 찍은 출퇴근길 풍경",
+    "comments": 10,
+    "views": 127,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/5955"
+  },
+  {
+    "id": 5916,
+    "date": "2026-03-06",
+    "board": "사는 이야기 ",
+    "title": "필립스 피델리오 헤드폰 간단 수리기..",
+    "comments": 1,
+    "views": 292,
+    "likes": 5,
+    "url": "https://cafe.naver.com/audiodio/5916"
+  },
+  {
+    "id": 5833,
+    "date": "2026-01-24",
+    "board": "회원간 중고 장터",
+    "title": "인켈 카세트데크 ds-5015g",
+    "comments": 0,
+    "views": 48,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/5833"
+  },
+  {
+    "id": 5800,
+    "date": "2026-01-10",
+    "board": "사는 이야기 ",
+    "title": "오랜만에.. 그리고 cdp mdp 이야기..",
+    "comments": 5,
+    "views": 92,
+    "likes": 5,
+    "url": "https://cafe.naver.com/audiodio/5800"
+  },
+  {
+    "id": 5594,
+    "date": "2025-11-02",
+    "board": "회원간 음반 장터",
+    "title": "수입 클래식 음반 일괄 ",
+    "comments": 0,
+    "views": 40,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/5594"
+  },
+  {
+    "id": 5592,
+    "date": "2025-11-01",
+    "board": "모두의 오디오 이야기",
+    "title": "잘 세팅된 튜너와 아름다운 스피커의 소리",
+    "comments": 6,
+    "views": 610,
+    "likes": 7,
+    "url": "https://cafe.naver.com/audiodio/5592"
+  },
+  {
+    "id": 5564,
+    "date": "2025-10-21",
+    "board": "사는 이야기 ",
+    "title": "최근에 찍은 사진들",
+    "comments": 14,
+    "views": 398,
+    "likes": 7,
+    "url": "https://cafe.naver.com/audiodio/5564"
+  },
+  {
+    "id": 5557,
+    "date": "2025-10-18",
+    "board": "모두의 음악 이야기",
+    "title": "엔리코 마이나르디의 바흐 무반주 첼로 모음곡",
+    "comments": 6,
+    "views": 434,
+    "likes": 8,
+    "url": "https://cafe.naver.com/audiodio/5557"
+  },
+  {
+    "id": 5556,
+    "date": "2025-10-17",
+    "board": "회원간 중고 장터",
+    "title": "보체디비나 소프라노 ",
+    "comments": 0,
+    "views": 59,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/5556"
+  },
+  {
+    "id": 5543,
+    "date": "2025-10-12",
+    "board": "모두의 음악 이야기",
+    "title": "바흐 무반주 첼로 모음곡 추천",
+    "comments": 4,
+    "views": 96,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/5543"
+  },
+  {
+    "id": 5538,
+    "date": "2025-10-10",
+    "board": "모두의 오디오 이야기",
+    "title": "브라운 Regie 501K 리시버 - by Dieter Rams",
+    "comments": 12,
+    "views": 297,
+    "likes": 7,
+    "url": "https://cafe.naver.com/audiodio/5538"
+  },
+  {
+    "id": 5503,
+    "date": "2025-10-01",
+    "board": "모두의 오디오 이야기",
+    "title": "보체디비나 소프라노의 매력",
+    "comments": 7,
+    "views": 192,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/5503"
+  },
+  {
+    "id": 5468,
+    "date": "2025-09-06",
+    "board": "회원간 중고 장터",
+    "title": "바이브라포드 5 아이솔레이터",
+    "comments": 0,
+    "views": 29,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/5468"
+  },
+  {
+    "id": 5393,
+    "date": "2025-08-06",
+    "board": "모두의 음악 이야기",
+    "title": "하프시코드를 좋아하시나요?",
+    "comments": 14,
+    "views": 138,
+    "likes": 8,
+    "url": "https://cafe.naver.com/audiodio/5393"
+  },
+  {
+    "id": 5351,
+    "date": "2025-07-19",
+    "board": "모두의 오디오 이야기",
+    "title": "니나 시몬 I put a spell on you",
+    "comments": 6,
+    "views": 87,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/5351"
+  },
+  {
+    "id": 5302,
+    "date": "2025-06-28",
+    "board": "자유게시판 [자유롭게]",
+    "title": "진테크 황기사님의 명복을 빌며...",
+    "comments": 4,
+    "views": 344,
+    "likes": 8,
+    "url": "https://cafe.naver.com/audiodio/5302"
+  },
+  {
+    "id": 5253,
+    "date": "2025-06-15",
+    "board": "모두의 오디오 이야기",
+    "title": "추억의 붐박스",
+    "comments": 7,
+    "views": 65,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/5253"
+  },
+  {
+    "id": 5234,
+    "date": "2025-06-07",
+    "board": "모두의 음악 이야기",
+    "title": "하루의 마감",
+    "comments": 9,
+    "views": 122,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/5234"
+  },
+  {
+    "id": 5229,
+    "date": "2025-06-06",
+    "board": "모두의 음악 이야기",
+    "title": "오늘 아침은 무슨 음악으로 여시나요?",
+    "comments": 5,
+    "views": 74,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/5229"
+  },
+  {
+    "id": 5212,
+    "date": "2025-06-01",
+    "board": "회원간 중고 장터",
+    "title": "셀레스천 sl6s",
+    "comments": 0,
+    "views": 92,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/5212"
+  },
+  {
+    "id": 5205,
+    "date": "2025-05-31",
+    "board": "모두의 음악 이야기",
+    "title": "아트 페퍼 <Thursday Night at the Village Vanguard>",
+    "comments": 6,
+    "views": 95,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/5205"
+  },
+  {
+    "id": 5193,
+    "date": "2025-05-26",
+    "board": "비청 동영상",
+    "title": "JBL 4331B의 장르별 소리",
+    "comments": 21,
+    "views": 249,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/5193"
+  },
+  {
+    "id": 5183,
+    "date": "2025-05-23",
+    "board": "모두의 오디오 이야기",
+    "title": "오디오의 큰 변화",
+    "comments": 21,
+    "views": 389,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/5183"
+  },
+  {
+    "id": 5135,
+    "date": "2025-05-06",
+    "board": "모두의 오디오 이야기",
+    "title": "연휴간의 큰 변화 예고",
+    "comments": 12,
+    "views": 212,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/5135"
+  },
+  {
+    "id": 5116,
+    "date": "2025-04-26",
+    "board": "회원간 중고 장터",
+    "title": "클래식 수입음반",
+    "comments": 0,
+    "views": 35,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/5116"
+  },
+  {
+    "id": 5076,
+    "date": "2025-04-12",
+    "board": "자유게시판 [자유롭게]",
+    "title": "레고 턴테이블",
+    "comments": 11,
+    "views": 277,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/5076"
+  },
+  {
+    "id": 5074,
+    "date": "2025-04-12",
+    "board": "모두의 오디오 이야기",
+    "title": "셀레스천 놀이",
+    "comments": 13,
+    "views": 473,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/5074"
+  },
+  {
+    "id": 5071,
+    "date": "2025-04-12",
+    "board": "회원간 중고 장터",
+    "title": "바이올린 명반 모음 cd",
+    "comments": 0,
+    "views": 23,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/5071"
+  },
+  {
+    "id": 5070,
+    "date": "2025-04-11",
+    "board": "회원간 중고 장터",
+    "title": "lp 및 cd 판매",
+    "comments": 0,
+    "views": 48,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/5070"
+  },
+  {
+    "id": 4958,
+    "date": "2025-03-09",
+    "board": "모두의 음악 이야기",
+    "title": "LP돌리는 오전입니다.",
+    "comments": 11,
+    "views": 105,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/4958"
+  },
+  {
+    "id": 4937,
+    "date": "2025-03-01",
+    "board": "모두의 음악 이야기",
+    "title": "오랜만에 대편성을 듣고 있습니다.",
+    "comments": 8,
+    "views": 158,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/4937"
+  },
+  {
+    "id": 4899,
+    "date": "2025-02-17",
+    "board": "모두의 음악 이야기",
+    "title": "알리스 사라 오트의 존 필드",
+    "comments": 16,
+    "views": 159,
+    "likes": 5,
+    "url": "https://cafe.naver.com/audiodio/4899"
+  },
+  {
+    "id": 4862,
+    "date": "2025-02-08",
+    "board": "모두의 음악 이야기",
+    "title": "GETZ/GILBERTO +50",
+    "comments": 12,
+    "views": 128,
+    "likes": 5,
+    "url": "https://cafe.naver.com/audiodio/4862"
+  },
+  {
+    "id": 4828,
+    "date": "2025-01-30",
+    "board": "회원간 중고 장터",
+    "title": "네오복스, 오디오퀘스트 케이블 2종",
+    "comments": 2,
+    "views": 42,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/4828"
+  },
+  {
+    "id": 4820,
+    "date": "2025-01-26",
+    "board": "모두의 오디오 이야기",
+    "title": "노스스타 디자인 384-32 DSD 엑셀시오르 dac",
+    "comments": 14,
+    "views": 343,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/4820"
+  },
+  {
+    "id": 4800,
+    "date": "2025-01-19",
+    "board": "비청 동영상",
+    "title": "스펜더 SA1 / 캠브리지 C75/A75/CD2",
+    "comments": 14,
+    "views": 228,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/4800"
+  },
+  {
+    "id": 4798,
+    "date": "2025-01-19",
+    "board": "모두의 오디오 이야기",
+    "title": "거래는 늘 조심해야 한다",
+    "comments": 6,
+    "views": 174,
+    "likes": 7,
+    "url": "https://cafe.naver.com/audiodio/4798"
+  },
+  {
+    "id": 4764,
+    "date": "2025-01-04",
+    "board": "모두의 오디오 이야기",
+    "title": "풀레인지와 함께하는 주말",
+    "comments": 28,
+    "views": 296,
+    "likes": 6,
+    "url": "https://cafe.naver.com/audiodio/4764"
+  },
+  {
+    "id": 4723,
+    "date": "2024-12-15",
+    "board": "모두의 음악 이야기",
+    "title": "야노스 슈타커 <바흐 무반주 첼로 모음곡>",
+    "comments": 12,
+    "views": 184,
+    "likes": 5,
+    "url": "https://cafe.naver.com/audiodio/4723"
+  },
+  {
+    "id": 4658,
+    "date": "2024-11-24",
+    "board": "모두의 오디오 이야기",
+    "title": "그리고리 소콜로프",
+    "comments": 16,
+    "views": 181,
+    "likes": 5,
+    "url": "https://cafe.naver.com/audiodio/4658"
+  },
+  {
+    "id": 4616,
+    "date": "2024-11-14",
+    "board": "모두의 오디오 이야기",
+    "title": "드디어 집에 온 토템 마니2",
+    "comments": 13,
+    "views": 268,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/4616"
+  },
+  {
+    "id": 4603,
+    "date": "2024-11-09",
+    "board": "모두의 오디오 이야기",
+    "title": "이제서야 마음 편하게 감상해봅니다.",
+    "comments": 13,
+    "views": 209,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/4603"
+  },
+  {
+    "id": 4592,
+    "date": "2024-11-07",
+    "board": "모두의 오디오 이야기",
+    "title": "이사 후 오디오 상황",
+    "comments": 17,
+    "views": 235,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/4592"
+  },
+  {
+    "id": 4558,
+    "date": "2024-10-31",
+    "board": "회원간 중고 장터",
+    "title": "다인 1.3mk2 판매",
+    "comments": 2,
+    "views": 85,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/4558"
+  },
+  {
+    "id": 4546,
+    "date": "2024-10-28",
+    "board": "사는 이야기 ",
+    "title": "이사완료",
+    "comments": 26,
+    "views": 110,
+    "likes": 5,
+    "url": "https://cafe.naver.com/audiodio/4546"
+  },
+  {
+    "id": 4499,
+    "date": "2024-10-20",
+    "board": "사는 이야기 ",
+    "title": "이사 카운트다운",
+    "comments": 26,
+    "views": 183,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/4499"
+  },
+  {
+    "id": 4452,
+    "date": "2024-10-13",
+    "board": "모두의 오디오 이야기",
+    "title": "이사할 집의 오디오 구성을 그려봅니다",
+    "comments": 24,
+    "views": 245,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/4452"
+  },
+  {
+    "id": 4451,
+    "date": "2024-10-13",
+    "board": "사는 이야기 ",
+    "title": "다인님께서 보내주신 선물",
+    "comments": 6,
+    "views": 128,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/4451"
+  },
+  {
+    "id": 4414,
+    "date": "2024-10-08",
+    "board": "회원간 중고 장터",
+    "title": "avi s2000mi 인티 앰프 (가격인하)",
+    "comments": 0,
+    "views": 101,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/4414"
+  },
+  {
+    "id": 4400,
+    "date": "2024-10-06",
+    "board": "사는 이야기 ",
+    "title": "황당한 알리 거래",
+    "comments": 12,
+    "views": 128,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/4400"
+  },
+  {
+    "id": 4342,
+    "date": "2024-09-28",
+    "board": "사는 이야기 ",
+    "title": "가평입니다",
+    "comments": 15,
+    "views": 107,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/4342"
+  },
+  {
+    "id": 4309,
+    "date": "2024-09-21",
+    "board": "모두의 음악 이야기",
+    "title": "장필순 1집 LP",
+    "comments": 17,
+    "views": 154,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/4309"
+  },
+  {
+    "id": 4287,
+    "date": "2024-09-14",
+    "board": "모두의 오디오 이야기",
+    "title": "코부즈를 다시 재개했습니다.",
+    "comments": 19,
+    "views": 162,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/4287"
+  },
+  {
+    "id": 4254,
+    "date": "2024-09-04",
+    "board": "모두의 오디오 이야기",
+    "title": "안락하게 음악을 듣는 상상",
+    "comments": 12,
+    "views": 76,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/4254"
+  },
+  {
+    "id": 4231,
+    "date": "2024-08-30",
+    "board": "자유게시판 [자유롭게]",
+    "title": "오랜만입니다",
+    "comments": 8,
+    "views": 58,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/4231"
+  },
+  {
+    "id": 4179,
+    "date": "2024-08-10",
+    "board": "모두의 오디오 이야기",
+    "title": "다른 소리의 추구",
+    "comments": 16,
+    "views": 330,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/4179"
+  },
+  {
+    "id": 4112,
+    "date": "2024-07-22",
+    "board": "비청 동영상",
+    "title": "김민기의 <기지촌>",
+    "comments": 6,
+    "views": 73,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/4112"
+  },
+  {
+    "id": 4093,
+    "date": "2024-07-16",
+    "board": "사는 이야기 ",
+    "title": "드디어 이사가 확정됐습니다",
+    "comments": 40,
+    "views": 171,
+    "likes": 6,
+    "url": "https://cafe.naver.com/audiodio/4093"
+  },
+  {
+    "id": 4082,
+    "date": "2024-07-12",
+    "board": "모두의 오디오 이야기",
+    "title": "AVI S2000 mi 인티 영입",
+    "comments": 21,
+    "views": 358,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/4082"
+  },
+  {
+    "id": 4057,
+    "date": "2024-07-06",
+    "board": "회원간 중고 장터",
+    "title": "스피커 스탠드",
+    "comments": 0,
+    "views": 72,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/4057"
+  },
+  {
+    "id": 4055,
+    "date": "2024-07-05",
+    "board": "모두의 음악 이야기",
+    "title": "에스테르 니페네거의 무반주 첼로 모음곡",
+    "comments": 20,
+    "views": 101,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/4055"
+  },
+  {
+    "id": 4052,
+    "date": "2024-07-04",
+    "board": "모두의 오디오 이야기",
+    "title": "스카리님을 만나다",
+    "comments": 37,
+    "views": 358,
+    "likes": 6,
+    "url": "https://cafe.naver.com/audiodio/4052"
+  },
+  {
+    "id": 4018,
+    "date": "2024-06-26",
+    "board": "모두의 오디오 이야기",
+    "title": "KEF 107이 팔렸습니다.",
+    "comments": 16,
+    "views": 201,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/4018"
+  },
+  {
+    "id": 4016,
+    "date": "2024-06-25",
+    "board": "모두의 음악 이야기",
+    "title": "귄터 반트의 브루크너",
+    "comments": 6,
+    "views": 80,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/4016"
+  },
+  {
+    "id": 3972,
+    "date": "2024-06-15",
+    "board": "회원간 중고 장터",
+    "title": "KEF 107과 포르테1a 파워",
+    "comments": 4,
+    "views": 103,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/3972"
+  },
+  {
+    "id": 3941,
+    "date": "2024-06-09",
+    "board": "모두의 오디오 이야기",
+    "title": "하프 사이즈, 그 전설의 시작 - 사이러스 원",
+    "comments": 19,
+    "views": 270,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/3941"
+  },
+  {
+    "id": 3936,
+    "date": "2024-06-08",
+    "board": "모두의 오디오 이야기",
+    "title": "외관이 아름다운 튜너들",
+    "comments": 24,
+    "views": 237,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/3936"
+  },
+  {
+    "id": 3935,
+    "date": "2024-06-07",
+    "board": "모두의 오디오 이야기",
+    "title": "튜너 형제",
+    "comments": 10,
+    "views": 149,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/3935"
+  },
+  {
+    "id": 3926,
+    "date": "2024-06-06",
+    "board": "모두의 오디오 이야기",
+    "title": "에소테릭 LP 돌리기",
+    "comments": 10,
+    "views": 112,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/3926"
+  },
+  {
+    "id": 3907,
+    "date": "2024-06-02",
+    "board": "회원간 중고 장터",
+    "title": "프로악 1s 판매(스탠드 포함)",
+    "comments": 4,
+    "views": 123,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/3907"
+  },
+  {
+    "id": 3828,
+    "date": "2024-05-19",
+    "board": "비청 동영상",
+    "title": "프로악1s+사이러스1",
+    "comments": 7,
+    "views": 222,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/3828"
+  },
+  {
+    "id": 3823,
+    "date": "2024-05-18",
+    "board": "자유게시판 [자유롭게]",
+    "title": "그냥 아무때나 먹어도 ok인 음식",
+    "comments": 24,
+    "views": 90,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/3823"
+  },
+  {
+    "id": 3821,
+    "date": "2024-05-18",
+    "board": "비청 동영상",
+    "title": "에소테릭 N05XD 넷플과 KEF107",
+    "comments": 9,
+    "views": 138,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/3821"
+  },
+  {
+    "id": 3816,
+    "date": "2024-05-17",
+    "board": "모두의 기기 리뷰",
+    "title": "KEF 107 매칭기 3 - AVI s21 mi 인티",
+    "comments": 11,
+    "views": 330,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/3816"
+  },
+  {
+    "id": 3800,
+    "date": "2024-05-15",
+    "board": "모두의 기기 리뷰",
+    "title": "소리의 우마미 - 아큐페이즈 DP-720",
+    "comments": 9,
+    "views": 255,
+    "likes": 6,
+    "url": "https://cafe.naver.com/audiodio/3800"
+  },
+  {
+    "id": 3741,
+    "date": "2024-05-01",
+    "board": "모두의 음악 이야기",
+    "title": "도미닉 밀러 영접기",
+    "comments": 15,
+    "views": 120,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/3741"
+  },
+  {
+    "id": 3672,
+    "date": "2024-04-21",
+    "board": "회원간 중고 장터",
+    "title": "플리니우스 하우통가(가격인하)",
+    "comments": 0,
+    "views": 77,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/3672"
+  },
+  {
+    "id": 3664,
+    "date": "2024-04-16",
+    "board": "모두의 오디오 이야기",
+    "title": "KEF 107 매칭기 2 - 플리니우스 하우통가",
+    "comments": 16,
+    "views": 305,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/3664"
+  },
+  {
+    "id": 3646,
+    "date": "2024-04-10",
+    "board": "모두의 오디오 이야기",
+    "title": "KEF 107 매칭기 1 - 포르테 1a 그리고 멜로디 아스트로 블랙 22",
+    "comments": 11,
+    "views": 288,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/3646"
+  },
+  {
+    "id": 3640,
+    "date": "2024-04-07",
+    "board": "모두의 기기 리뷰",
+    "title": "분위기와 명징함을 동시에 - 로이드 신트라",
+    "comments": 20,
+    "views": 443,
+    "likes": 5,
+    "url": "https://cafe.naver.com/audiodio/3640"
+  },
+  {
+    "id": 3639,
+    "date": "2024-04-07",
+    "board": "회원간 음반 장터",
+    "title": "sacd 및 일반cd 판매",
+    "comments": 0,
+    "views": 49,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/3639"
+  },
+  {
+    "id": 3619,
+    "date": "2024-04-02",
+    "board": "모두의 오디오 이야기",
+    "title": "소리가 열린날",
+    "comments": 15,
+    "views": 275,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/3619"
+  },
+  {
+    "id": 3604,
+    "date": "2024-03-29",
+    "board": "모두의 음악 이야기",
+    "title": "한가하게 음악을 듣습니다",
+    "comments": 17,
+    "views": 164,
+    "likes": 5,
+    "url": "https://cafe.naver.com/audiodio/3604"
+  },
+  {
+    "id": 3589,
+    "date": "2024-03-25",
+    "board": "자유게시판 [자유롭게]",
+    "title": "자동차 크게 손봤습니다.",
+    "comments": 10,
+    "views": 127,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/3589"
+  },
+  {
+    "id": 3555,
+    "date": "2024-03-18",
+    "board": "회원간 중고 장터",
+    "title": "로이드 신트라, 하우통가, 사이러스1, 캠브리지cd3",
+    "comments": 4,
+    "views": 164,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/3555"
+  },
+  {
+    "id": 3535,
+    "date": "2024-03-15",
+    "board": "자유게시판 [자유롭게]",
+    "title": "긴 출장",
+    "comments": 14,
+    "views": 150,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/3535"
+  },
+  {
+    "id": 3471,
+    "date": "2024-03-02",
+    "board": "모두의 오디오 이야기",
+    "title": "외관이 아름다운 튜너",
+    "comments": 15,
+    "views": 158,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/3471"
+  },
+  {
+    "id": 3465,
+    "date": "2024-03-01",
+    "board": "자유게시판 [자유롭게]",
+    "title": "AI가 일러준 꿈의 공간",
+    "comments": 5,
+    "views": 116,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/3465"
+  },
+  {
+    "id": 3461,
+    "date": "2024-03-01",
+    "board": "회원간 중고 장터",
+    "title": "윔미니 네트워크 플레이 동글",
+    "comments": 0,
+    "views": 21,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/3461"
+  },
+  {
+    "id": 3414,
+    "date": "2024-02-24",
+    "board": "자유게시판 [자유롭게]",
+    "title": "샵을 이용하는 이유는?",
+    "comments": 16,
+    "views": 181,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/3414"
+  },
+  {
+    "id": 3413,
+    "date": "2024-02-24",
+    "board": "모두의 오디오 이야기",
+    "title": "아침의 FM",
+    "comments": 16,
+    "views": 136,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/3413"
+  },
+  {
+    "id": 3370,
+    "date": "2024-02-18",
+    "board": "자유게시판 [자유롭게]",
+    "title": "티코로 일본가기",
+    "comments": 5,
+    "views": 53,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/3370"
+  },
+  {
+    "id": 3357,
+    "date": "2024-02-17",
+    "board": "회원간 중고 장터",
+    "title": "프로악 1s 판매",
+    "comments": 1,
+    "views": 65,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/3357"
+  },
+  {
+    "id": 3335,
+    "date": "2024-02-15",
+    "board": "회원간 중고 장터",
+    "title": "토템 마니2 구합니다",
+    "comments": 2,
+    "views": 63,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/3335"
+  },
+  {
+    "id": 3306,
+    "date": "2024-02-11",
+    "board": "비청 동영상",
+    "title": "르클레르의 플루트 소나타",
+    "comments": 13,
+    "views": 64,
+    "likes": 5,
+    "url": "https://cafe.naver.com/audiodio/3306"
+  },
+  {
+    "id": 3299,
+    "date": "2024-02-10",
+    "board": "자유게시판 [자유롭게]",
+    "title": "연안부두",
+    "comments": 9,
+    "views": 78,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/3299"
+  },
+  {
+    "id": 3292,
+    "date": "2024-02-09",
+    "board": "모두의 오디오 이야기",
+    "title": "현재 랙 상황",
+    "comments": 19,
+    "views": 230,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/3292"
+  },
+  {
+    "id": 3265,
+    "date": "2024-02-04",
+    "board": "모두의 오디오 이야기",
+    "title": "공들인 시디의 소리",
+    "comments": 11,
+    "views": 108,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/3265"
+  },
+  {
+    "id": 3263,
+    "date": "2024-02-03",
+    "board": "회원간 중고 장터",
+    "title": "클래식 sacd&cd 판매",
+    "comments": 0,
+    "views": 19,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/3263"
+  },
+  {
+    "id": 3239,
+    "date": "2024-01-30",
+    "board": "회원간 중고 장터",
+    "title": "캠브리지 인티 p55 판매",
+    "comments": 5,
+    "views": 171,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/3239"
+  },
+  {
+    "id": 3199,
+    "date": "2024-01-21",
+    "board": "모두의 음악 이야기",
+    "title": "당신의 첫 번째 재즈 음반 12장",
+    "comments": 10,
+    "views": 99,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/3199"
+  },
+  {
+    "id": 3195,
+    "date": "2024-01-20",
+    "board": "모두의 음악 이야기",
+    "title": "윔미니 고급스럽게 하기",
+    "comments": 13,
+    "views": 150,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/3195"
+  },
+  {
+    "id": 3170,
+    "date": "2024-01-13",
+    "board": "사는 이야기 ",
+    "title": "이사했습니다.",
+    "comments": 31,
+    "views": 176,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/3170"
+  },
+  {
+    "id": 3138,
+    "date": "2024-01-06",
+    "board": "회원간 중고 장터",
+    "title": "애드컴 gfp-750 프리",
+    "comments": 4,
+    "views": 99,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/3138"
+  },
+  {
+    "id": 3119,
+    "date": "2024-01-03",
+    "board": "모두의 음악 이야기",
+    "title": "스트리밍 서비스 이야기",
+    "comments": 17,
+    "views": 120,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/3119"
+  },
+  {
+    "id": 3066,
+    "date": "2023-12-23",
+    "board": "모두의 음악 이야기",
+    "title": "새벽에 듣는 음악",
+    "comments": 8,
+    "views": 50,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/3066"
+  },
+  {
+    "id": 3059,
+    "date": "2023-12-22",
+    "board": "모두의 음악 이야기",
+    "title": "넷플릭스 <마에스트로>",
+    "comments": 13,
+    "views": 86,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/3059"
+  },
+  {
+    "id": 3055,
+    "date": "2023-12-21",
+    "board": "회원간 중고 장터",
+    "title": "소니 cdp 리모콘",
+    "comments": 0,
+    "views": 24,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/3055"
+  },
+  {
+    "id": 3025,
+    "date": "2023-12-13",
+    "board": "모두의 오디오 이야기",
+    "title": "겨울엔 A클래스",
+    "comments": 25,
+    "views": 280,
+    "likes": 7,
+    "url": "https://cafe.naver.com/audiodio/3025"
+  },
+  {
+    "id": 2985,
+    "date": "2023-12-03",
+    "board": "모두의 음악 이야기",
+    "title": "폴리니의 히든 콘체르토",
+    "comments": 7,
+    "views": 55,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/2985"
+  },
+  {
+    "id": 2955,
+    "date": "2023-11-29",
+    "board": "모두의 음악 이야기",
+    "title": "브루크너 교향곡 전집 추천",
+    "comments": 15,
+    "views": 120,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/2955"
+  },
+  {
+    "id": 2937,
+    "date": "2023-11-28",
+    "board": "모두의 오디오 이야기",
+    "title": "하만이 룬을 샀네요",
+    "comments": 12,
+    "views": 101,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/2937"
+  },
+  {
+    "id": 2916,
+    "date": "2023-11-23",
+    "board": "모두의 오디오 이야기",
+    "title": "아침의 시카고",
+    "comments": 16,
+    "views": 119,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/2916"
+  },
+  {
+    "id": 2876,
+    "date": "2023-11-16",
+    "board": "모두의 오디오 이야기",
+    "title": "공들인 cd의 소리",
+    "comments": 13,
+    "views": 166,
+    "likes": 5,
+    "url": "https://cafe.naver.com/audiodio/2876"
+  },
+  {
+    "id": 2854,
+    "date": "2023-11-13",
+    "board": "모두의 오디오 이야기",
+    "title": "웨스턴 시스템",
+    "comments": 16,
+    "views": 153,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/2854"
+  },
+  {
+    "id": 2791,
+    "date": "2023-11-05",
+    "board": "자유게시판 [자유롭게]",
+    "title": "주말부부 정리하고 올라왔습니다",
+    "comments": 20,
+    "views": 113,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/2791"
+  },
+  {
+    "id": 2789,
+    "date": "2023-11-04",
+    "board": "모두의 기기 리뷰",
+    "title": "소닉프론티어 CDT T3 - 혁신으로 일군 최고의 소리",
+    "comments": 19,
+    "views": 242,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/2789"
+  },
+  {
+    "id": 2720,
+    "date": "2023-10-29",
+    "board": "회원간 중고 장터",
+    "title": "데논 dcd-1650 cdp ",
+    "comments": 0,
+    "views": 62,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/2720"
+  },
+  {
+    "id": 2700,
+    "date": "2023-10-24",
+    "board": "자유게시판 [자유롭게]",
+    "title": "wiim mini 불량 시리즈의 마무리 ",
+    "comments": 12,
+    "views": 46,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/2700"
+  },
+  {
+    "id": 2658,
+    "date": "2023-10-11",
+    "board": "모두의 오디오 이야기",
+    "title": "wiim mini 뜯어보기 (부제:뽑기 운) ",
+    "comments": 7,
+    "views": 134,
+    "likes": 5,
+    "url": "https://cafe.naver.com/audiodio/2658"
+  },
+  {
+    "id": 2652,
+    "date": "2023-10-09",
+    "board": "모두의 음악 이야기",
+    "title": "say plays say",
+    "comments": 2,
+    "views": 41,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/2652"
+  },
+  {
+    "id": 2630,
+    "date": "2023-09-25",
+    "board": "비청 동영상",
+    "title": "캠브리지 트리니티 ",
+    "comments": 2,
+    "views": 112,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/2630"
+  },
+  {
+    "id": 2627,
+    "date": "2023-09-25",
+    "board": "자유게시판 [자유롭게]",
+    "title": "콩코드 타고 일본가기",
+    "comments": 11,
+    "views": 153,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/2627"
+  },
+  {
+    "id": 2614,
+    "date": "2023-09-20",
+    "board": "비청 동영상",
+    "title": "린 dms+캠브리지 c75/a75 ",
+    "comments": 5,
+    "views": 173,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/2614"
+  },
+  {
+    "id": 2612,
+    "date": "2023-09-19",
+    "board": "모두의 오디오 이야기",
+    "title": "리모콘이 없으신가요? 걱정마세요",
+    "comments": 11,
+    "views": 141,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/2612"
+  },
+  {
+    "id": 2609,
+    "date": "2023-09-17",
+    "board": "비청 동영상",
+    "title": "sa1 녹음 영상 ",
+    "comments": 7,
+    "views": 143,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/2609"
+  },
+  {
+    "id": 2607,
+    "date": "2023-09-17",
+    "board": "자유게시판 [자유롭게]",
+    "title": "SA1의 저력 ",
+    "comments": 17,
+    "views": 303,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/2607"
+  },
+  {
+    "id": 2593,
+    "date": "2023-09-11",
+    "board": "자유게시판 [자유롭게]",
+    "title": "캠브리지 트리니티 ",
+    "comments": 8,
+    "views": 141,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/2593"
+  },
+  {
+    "id": 2574,
+    "date": "2023-09-06",
+    "board": "자유게시판 [자유롭게]",
+    "title": "풀 그란디오소 시스템과 괴벨 청음하고 왔습니다. ",
+    "comments": 15,
+    "views": 106,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/2574"
+  },
+  {
+    "id": 2573,
+    "date": "2023-09-05",
+    "board": "모두의 기기 리뷰",
+    "title": "그 치열한 중립으로의 전진 - ESOTERIC P-03 D-03",
+    "comments": 17,
+    "views": 202,
+    "likes": 7,
+    "url": "https://cafe.naver.com/audiodio/2573"
+  },
+  {
+    "id": 2544,
+    "date": "2023-08-28",
+    "board": "모두의 오디오 이야기",
+    "title": "아큐페이즈 dp-720을 들였습니다. ",
+    "comments": 20,
+    "views": 284,
+    "likes": 5,
+    "url": "https://cafe.naver.com/audiodio/2544"
+  },
+  {
+    "id": 2516,
+    "date": "2023-08-18",
+    "board": "자유게시판 [자유롭게]",
+    "title": "아침저녁은 선선하네요~^^ ",
+    "comments": 11,
+    "views": 41,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/2516"
+  },
+  {
+    "id": 2513,
+    "date": "2023-08-17",
+    "board": "회원간 중고 장터",
+    "title": "에소테릭 K-03Xs sacdp",
+    "comments": 0,
+    "views": 46,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/2513"
+  },
+  {
+    "id": 2507,
+    "date": "2023-08-14",
+    "board": "비청 동영상",
+    "title": "신명나는 ar2와 아트 블래키 ",
+    "comments": 9,
+    "views": 121,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/2507"
+  },
+  {
+    "id": 2484,
+    "date": "2023-08-09",
+    "board": "회원간 중고 장터",
+    "title": "클래식 수입 음반 5장 일괄(인하) ",
+    "comments": 0,
+    "views": 17,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/2484"
+  },
+  {
+    "id": 2477,
+    "date": "2023-08-06",
+    "board": "모두의 기기 리뷰",
+    "title": "다인 1.3 vs 1.3se -나를 매혹하는 최고의 북쉘프-",
+    "comments": 16,
+    "views": 329,
+    "likes": 6,
+    "url": "https://cafe.naver.com/audiodio/2477"
+  },
+  {
+    "id": 2449,
+    "date": "2023-07-24",
+    "board": "회원간 중고 장터",
+    "title": "헤이브룩 HB2 ",
+    "comments": 0,
+    "views": 135,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/2449"
+  },
+  {
+    "id": 2447,
+    "date": "2023-07-23",
+    "board": "회원간 중고 장터",
+    "title": "다인 컨투어 1.3 판매",
+    "comments": 3,
+    "views": 68,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/2447"
+  },
+  {
+    "id": 2423,
+    "date": "2023-07-15",
+    "board": "회원간 중고 장터",
+    "title": "파이오니아 SX-737 리시버 ",
+    "comments": 0,
+    "views": 44,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/2423"
+  },
+  {
+    "id": 2389,
+    "date": "2023-07-05",
+    "board": "모두의 오디오 이야기",
+    "title": "튜너를 들였습니다 ",
+    "comments": 10,
+    "views": 167,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/2389"
+  },
+  {
+    "id": 2379,
+    "date": "2023-07-03",
+    "board": "모두의 오디오 이야기",
+    "title": "ATC 20T와 첼로 ",
+    "comments": 8,
+    "views": 254,
+    "likes": 7,
+    "url": "https://cafe.naver.com/audiodio/2379"
+  },
+  {
+    "id": 2367,
+    "date": "2023-07-01",
+    "board": "자유게시판 [자유롭게]",
+    "title": "토요일 오후 음악을 듣고 있습니다",
+    "comments": 19,
+    "views": 125,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/2367"
+  },
+  {
+    "id": 2362,
+    "date": "2023-06-29",
+    "board": "모두의 기기 리뷰",
+    "title": "YAMAHA-NS1000M -  스피커로 변한 피아노",
+    "comments": 24,
+    "views": 403,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/2362"
+  },
+  {
+    "id": 2338,
+    "date": "2023-06-27",
+    "board": "모두의 오디오 이야기",
+    "title": "최근 보낸 친구들 리뷰 예정 ",
+    "comments": 11,
+    "views": 116,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/2338"
+  },
+  {
+    "id": 2309,
+    "date": "2023-06-19",
+    "board": "비청 동영상",
+    "title": "다인 1.3으로 듣는 비올론첼로 피콜로 ",
+    "comments": 7,
+    "views": 107,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/2309"
+  },
+  {
+    "id": 2303,
+    "date": "2023-06-18",
+    "board": "비청 동영상",
+    "title": "다인 1.3으로 듣는 바로크 ",
+    "comments": 23,
+    "views": 100,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/2303"
+  },
+  {
+    "id": 2302,
+    "date": "2023-06-18",
+    "board": "모두의 음악 이야기",
+    "title": "Al di Meola <The infinite desire> ",
+    "comments": 9,
+    "views": 32,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/2302"
+  },
+  {
+    "id": 2300,
+    "date": "2023-06-18",
+    "board": "자유게시판 [자유롭게]",
+    "title": "오디오 정리하기 ",
+    "comments": 22,
+    "views": 402,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/2300"
+  },
+  {
+    "id": 2298,
+    "date": "2023-06-16",
+    "board": "모두의 오디오 이야기",
+    "title": "추억의 md",
+    "comments": 10,
+    "views": 76,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/2298"
+  },
+  {
+    "id": 2271,
+    "date": "2023-06-07",
+    "board": "비청 동영상",
+    "title": "ATC SCM 20T 비청 영상",
+    "comments": 18,
+    "views": 238,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/2271"
+  },
+  {
+    "id": 2267,
+    "date": "2023-06-07",
+    "board": "모두의 기기 리뷰",
+    "title": "ATC SCM7 Ver.2 - 작은 캐비넷에 압축된 ATC의 유전자 -",
+    "comments": 14,
+    "views": 275,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/2267"
+  },
+  {
+    "id": 2259,
+    "date": "2023-06-04",
+    "board": "모두의 오디오 이야기",
+    "title": "급 ATC 20t 영입",
+    "comments": 15,
+    "views": 170,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/2259"
+  },
+  {
+    "id": 2237,
+    "date": "2023-05-29",
+    "board": "모두의 음악 이야기",
+    "title": "베토벤 피협 전집(바렌보임/베를린 필)",
+    "comments": 5,
+    "views": 55,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/2237"
+  },
+  {
+    "id": 2236,
+    "date": "2023-05-29",
+    "board": "비청 동영상",
+    "title": "셰헤라자데 ",
+    "comments": 5,
+    "views": 67,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/2236"
+  },
+  {
+    "id": 2233,
+    "date": "2023-05-29",
+    "board": "모두의 오디오 이야기",
+    "title": "여름 준비 ",
+    "comments": 11,
+    "views": 96,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/2233"
+  },
+  {
+    "id": 2228,
+    "date": "2023-05-27",
+    "board": "모두의 오디오 이야기",
+    "title": "삼성의 하이엔드 오디오 엠퍼러 ",
+    "comments": 7,
+    "views": 200,
+    "likes": 6,
+    "url": "https://cafe.naver.com/audiodio/2228"
+  },
+  {
+    "id": 2211,
+    "date": "2023-05-21",
+    "board": "모두의 기기 리뷰",
+    "title": "에소테릭 K-03 - 진정한 상급기로의 도약 -",
+    "comments": 10,
+    "views": 283,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/2211"
+  },
+  {
+    "id": 2210,
+    "date": "2023-05-21",
+    "board": "비청 동영상",
+    "title": "AR2와 캠텍 8000t 튜너 ",
+    "comments": 4,
+    "views": 54,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/2210"
+  },
+  {
+    "id": 2209,
+    "date": "2023-05-21",
+    "board": "비청 동영상",
+    "title": "파이오니아 sx-737과 bc2",
+    "comments": 12,
+    "views": 176,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/2209"
+  },
+  {
+    "id": 2197,
+    "date": "2023-05-19",
+    "board": "회원간 중고 장터",
+    "title": "티악 UD-701N과 CG10M 클럭(인하)",
+    "comments": 1,
+    "views": 163,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/2197"
+  },
+  {
+    "id": 2194,
+    "date": "2023-05-19",
+    "board": "모두의 오디오 이야기",
+    "title": "캠브리지 cd2 이야기 -중-",
+    "comments": 5,
+    "views": 57,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/2194"
+  },
+  {
+    "id": 2189,
+    "date": "2023-05-17",
+    "board": "모두의 오디오 이야기",
+    "title": "여러분이라면",
+    "comments": 10,
+    "views": 189,
+    "likes": 5,
+    "url": "https://cafe.naver.com/audiodio/2189"
+  },
+  {
+    "id": 2171,
+    "date": "2023-05-15",
+    "board": "비청 동영상",
+    "title": "다인 1.3으로 듣는 바흐 ",
+    "comments": 18,
+    "views": 86,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/2171"
+  },
+  {
+    "id": 2164,
+    "date": "2023-05-14",
+    "board": "회원간 중고 장터",
+    "title": "ATC SCM 7 Ver.2",
+    "comments": 2,
+    "views": 59,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/2164"
+  },
+  {
+    "id": 2161,
+    "date": "2023-05-14",
+    "board": "회원간 음반 장터",
+    "title": "클래식 cd 일괄 판매",
+    "comments": 0,
+    "views": 29,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/2161"
+  },
+  {
+    "id": 2155,
+    "date": "2023-05-12",
+    "board": "비청 동영상",
+    "title": "알프레드 브렌델 슈베르트 전집",
+    "comments": 5,
+    "views": 70,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/2155"
+  },
+  {
+    "id": 2153,
+    "date": "2023-05-12",
+    "board": "사는 이야기 ",
+    "title": "네고의 기술 ",
+    "comments": 15,
+    "views": 108,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/2153"
+  },
+  {
+    "id": 2136,
+    "date": "2023-05-07",
+    "board": "사는 이야기 ",
+    "title": "생각이 많았던 연휴 ",
+    "comments": 21,
+    "views": 135,
+    "likes": 5,
+    "url": "https://cafe.naver.com/audiodio/2136"
+  },
+  {
+    "id": 2129,
+    "date": "2023-05-06",
+    "board": "비청 동영상",
+    "title": "구노의 소박한 미사곡 ",
+    "comments": 5,
+    "views": 49,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/2129"
+  },
+  {
+    "id": 2113,
+    "date": "2023-05-03",
+    "board": "회원간 중고 장터",
+    "title": "캠텍(오디오랩 독일 oem) 8000t 튜너(가격 인하)",
+    "comments": 0,
+    "views": 35,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/2113"
+  },
+  {
+    "id": 2108,
+    "date": "2023-05-01",
+    "board": "모두의 기기 리뷰",
+    "title": "캠브리지 구형 인티 P35-P40-P55 스탠 커티스의 걸작",
+    "comments": 15,
+    "views": 255,
+    "likes": 5,
+    "url": "https://cafe.naver.com/audiodio/2108"
+  },
+  {
+    "id": 2105,
+    "date": "2023-05-01",
+    "board": "모두의 오디오 이야기",
+    "title": "캠브리지 P40 무사히 안착 ",
+    "comments": 16,
+    "views": 106,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/2105"
+  },
+  {
+    "id": 2101,
+    "date": "2023-04-30",
+    "board": "모두의 음악 이야기",
+    "title": "주말의 선곡 -얀손스/차이코프스키",
+    "comments": 8,
+    "views": 43,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/2101"
+  },
+  {
+    "id": 2094,
+    "date": "2023-04-29",
+    "board": "모두의 음악 이야기",
+    "title": "주말의 선곡 ",
+    "comments": 8,
+    "views": 40,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/2094"
+  },
+  {
+    "id": 2082,
+    "date": "2023-04-25",
+    "board": "모두의 기기 리뷰",
+    "title": "첫사랑 Sugden A21a S2 인티 앰프",
+    "comments": 25,
+    "views": 426,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/2082"
+  },
+  {
+    "id": 2079,
+    "date": "2023-04-24",
+    "board": "회원간 중고 장터",
+    "title": "캠텍 8000t(오디오랩 독일 oem) 튜너 ",
+    "comments": 0,
+    "views": 51,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/2079"
+  },
+  {
+    "id": 2072,
+    "date": "2023-04-23",
+    "board": "모두의 음악 이야기",
+    "title": "야니그로가 연주하는 무반주 첼로 조곡",
+    "comments": 9,
+    "views": 42,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/2072"
+  },
+  {
+    "id": 2071,
+    "date": "2023-04-23",
+    "board": "모두의 오디오 이야기",
+    "title": "댐핑이 되는 소리",
+    "comments": 24,
+    "views": 153,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/2071"
+  },
+  {
+    "id": 2065,
+    "date": "2023-04-21",
+    "board": "자유게시판 [자유롭게]",
+    "title": "어떤 오디오 카페에 불어닥치는 위기감 ",
+    "comments": 15,
+    "views": 211,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/2065"
+  },
+  {
+    "id": 2052,
+    "date": "2023-04-17",
+    "board": "모두의 음악 이야기",
+    "title": "Keith Jarrett <Sun Bear Concert>",
+    "comments": 11,
+    "views": 60,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/2052"
+  },
+  {
+    "id": 2043,
+    "date": "2023-04-12",
+    "board": "자유게시판 [자유롭게]",
+    "title": "알라딘 수입음반 할인전",
+    "comments": 13,
+    "views": 112,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/2043"
+  },
+  {
+    "id": 2041,
+    "date": "2023-04-12",
+    "board": "자유게시판 [자유롭게]",
+    "title": "서브를 또 들였습니다",
+    "comments": 16,
+    "views": 233,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/2041"
+  },
+  {
+    "id": 2034,
+    "date": "2023-04-09",
+    "board": "모두의 기기 리뷰",
+    "title": "하이엔드 CDP의 새로운 차원 - WADIA 16",
+    "comments": 18,
+    "views": 419,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/2034"
+  },
+  {
+    "id": 2032,
+    "date": "2023-04-09",
+    "board": "자유게시판 [자유롭게]",
+    "title": "차분하게 음악에 집중하는 시간",
+    "comments": 18,
+    "views": 141,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/2032"
+  },
+  {
+    "id": 2020,
+    "date": "2023-04-05",
+    "board": "자유게시판 [자유롭게]",
+    "title": "비오는 날의 선곡 ",
+    "comments": 9,
+    "views": 60,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/2020"
+  },
+  {
+    "id": 2017,
+    "date": "2023-04-04",
+    "board": "모두의 기기 리뷰",
+    "title": "극한의 예리함 - 마크 레빈슨 390SL CDP",
+    "comments": 21,
+    "views": 364,
+    "likes": 8,
+    "url": "https://cafe.naver.com/audiodio/2017"
+  },
+  {
+    "id": 2001,
+    "date": "2023-04-01",
+    "board": "자유게시판 [자유롭게]",
+    "title": "200언더 cdp 추천(isunamana님 요청) ",
+    "comments": 20,
+    "views": 330,
+    "likes": 5,
+    "url": "https://cafe.naver.com/audiodio/2001"
+  },
+  {
+    "id": 1985,
+    "date": "2023-03-28",
+    "board": "모두의 기기 리뷰",
+    "title": "스펙트랄의 중상급 파워앰프 DMA-150 S2",
+    "comments": 23,
+    "views": 250,
+    "likes": 5,
+    "url": "https://cafe.naver.com/audiodio/1985"
+  },
+  {
+    "id": 1966,
+    "date": "2023-03-24",
+    "board": "모두의 오디오 이야기",
+    "title": "익산 오디오샵 <라 뮈지크>",
+    "comments": 13,
+    "views": 281,
+    "likes": 6,
+    "url": "https://cafe.naver.com/audiodio/1966"
+  },
+  {
+    "id": 1950,
+    "date": "2023-03-21",
+    "board": "모두의 오디오 이야기",
+    "title": "티악 UD-701N과 CG10M",
+    "comments": 11,
+    "views": 54,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/1950"
+  },
+  {
+    "id": 1919,
+    "date": "2023-03-15",
+    "board": "모두의 오디오 이야기",
+    "title": "audiolab 8000t vs camtech 8000t",
+    "comments": 15,
+    "views": 151,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/1919"
+  },
+  {
+    "id": 1918,
+    "date": "2023-03-15",
+    "board": "모두의 오디오 이야기",
+    "title": "camtech 8000t",
+    "comments": 8,
+    "views": 73,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/1918"
+  },
+  {
+    "id": 1906,
+    "date": "2023-03-14",
+    "board": "비청 동영상",
+    "title": "ATC scm7 ver.2 + avi s21 mi",
+    "comments": 17,
+    "views": 192,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/1906"
+  },
+  {
+    "id": 1897,
+    "date": "2023-03-12",
+    "board": "모두의 기기 리뷰",
+    "title": "그리폰 라인스테이지 vs XT-MC 프리",
+    "comments": 17,
+    "views": 328,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/1897"
+  },
+  {
+    "id": 1864,
+    "date": "2023-03-08",
+    "board": "비청 동영상",
+    "title": "mbl 311 소편성과 대편성의 예 ",
+    "comments": 5,
+    "views": 70,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/1864"
+  },
+  {
+    "id": 1863,
+    "date": "2023-03-07",
+    "board": "자유게시판 [자유롭게]",
+    "title": "나가기 전의 증후군",
+    "comments": 17,
+    "views": 115,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/1863"
+  },
+  {
+    "id": 1857,
+    "date": "2023-03-05",
+    "board": "회원간 중고 장터",
+    "title": "TDL new compact 북쉘프 판매 ",
+    "comments": 0,
+    "views": 35,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/1857"
+  },
+  {
+    "id": 1855,
+    "date": "2023-03-04",
+    "board": "모두의 오디오 이야기",
+    "title": "오랫동안 보유 중인 MBL 311",
+    "comments": 21,
+    "views": 206,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/1855"
+  },
+  {
+    "id": 1848,
+    "date": "2023-03-02",
+    "board": "회원간 음반 장터",
+    "title": "클래식/재즈(sacd/cd) ",
+    "comments": 0,
+    "views": 13,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/1848"
+  },
+  {
+    "id": 1827,
+    "date": "2023-02-18",
+    "board": "비청 동영상",
+    "title": "소닉프론티어 sfl-2 수리 기념 ",
+    "comments": 12,
+    "views": 153,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/1827"
+  },
+  {
+    "id": 1825,
+    "date": "2023-02-17",
+    "board": "자유게시판 [자유롭게]",
+    "title": "블로그 글 도용 사건 ",
+    "comments": 11,
+    "views": 94,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/1825"
+  },
+  {
+    "id": 1798,
+    "date": "2023-02-01",
+    "board": "모두의 오디오 이야기",
+    "title": "수리의 번거로움 ",
+    "comments": 14,
+    "views": 153,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/1798"
+  },
+  {
+    "id": 1788,
+    "date": "2023-01-26",
+    "board": "모두의 음악 이야기",
+    "title": "박규희 <SAUDADE>",
+    "comments": 12,
+    "views": 81,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/1788"
+  },
+  {
+    "id": 1775,
+    "date": "2023-01-16",
+    "board": "모두의 오디오 이야기",
+    "title": "풍윤함의 미학 Snell Type E III +Cyrus 1",
+    "comments": 10,
+    "views": 191,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/1775"
+  },
+  {
+    "id": 1764,
+    "date": "2023-01-09",
+    "board": "모두의 음악 이야기",
+    "title": "키스 재릿 :rarum",
+    "comments": 6,
+    "views": 60,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/1764"
+  },
+  {
+    "id": 1734,
+    "date": "2022-12-19",
+    "board": "모두의 오디오 이야기",
+    "title": "재미있고 귀찮은 서서서브 시스템 ",
+    "comments": 6,
+    "views": 96,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/1734"
+  },
+  {
+    "id": 1719,
+    "date": "2022-12-11",
+    "board": "모두의 오디오 이야기",
+    "title": "AR cambridge P35",
+    "comments": 9,
+    "views": 131,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/1719"
+  },
+  {
+    "id": 1715,
+    "date": "2022-12-09",
+    "board": "자유게시판 [자유롭게]",
+    "title": "구형 데논 cdp 리모콘 구입",
+    "comments": 5,
+    "views": 39,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/1715"
+  },
+  {
+    "id": 1699,
+    "date": "2022-11-27",
+    "board": "자유게시판 [자유롭게]",
+    "title": "새로들인 식구들 ",
+    "comments": 6,
+    "views": 131,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/1699"
+  },
+  {
+    "id": 1683,
+    "date": "2022-11-12",
+    "board": "자유게시판 [자유롭게]",
+    "title": "오랜만에 꺼내본 DSLR",
+    "comments": 16,
+    "views": 121,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/1683"
+  },
+  {
+    "id": 1675,
+    "date": "2022-11-03",
+    "board": "모두의 오디오 이야기",
+    "title": "모니터오디오 PL100",
+    "comments": 8,
+    "views": 219,
+    "likes": 5,
+    "url": "https://cafe.naver.com/audiodio/1675"
+  },
+  {
+    "id": 1671,
+    "date": "2022-11-01",
+    "board": "모두의 오디오 이야기",
+    "title": "야마하 NS-1000M 영입",
+    "comments": 11,
+    "views": 227,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/1671"
+  },
+  {
+    "id": 1665,
+    "date": "2022-10-27",
+    "board": "모두의 오디오 이야기",
+    "title": "데논 구형 시디피 영입",
+    "comments": 7,
+    "views": 205,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/1665"
+  },
+  {
+    "id": 1659,
+    "date": "2022-10-25",
+    "board": "자유게시판 [자유롭게]",
+    "title": "행운의 동전 두 개",
+    "comments": 10,
+    "views": 37,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/1659"
+  },
+  {
+    "id": 1653,
+    "date": "2022-10-20",
+    "board": "모두의 오디오 이야기",
+    "title": "메인 시스템의 변경",
+    "comments": 13,
+    "views": 339,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/1653"
+  },
+  {
+    "id": 1648,
+    "date": "2022-10-18",
+    "board": "모두의 오디오 이야기",
+    "title": "연속 두 번의 거래를 허탕치며 느낀점.... (몇 가지 시사점)",
+    "comments": 21,
+    "views": 128,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/1648"
+  },
+  {
+    "id": 1645,
+    "date": "2022-10-18",
+    "board": "회원간 중고 장터",
+    "title": "TDL new compact와 에소테릭 K-03",
+    "comments": 1,
+    "views": 47,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/1645"
+  },
+  {
+    "id": 1631,
+    "date": "2022-10-12",
+    "board": "모두의 오디오 이야기",
+    "title": "빡센 하루를 보내고 ",
+    "comments": 6,
+    "views": 45,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/1631"
+  },
+  {
+    "id": 1607,
+    "date": "2022-10-03",
+    "board": "모두의 오디오 이야기",
+    "title": "1차 과업을 마치고 ",
+    "comments": 14,
+    "views": 124,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/1607"
+  },
+  {
+    "id": 1604,
+    "date": "2022-10-01",
+    "board": "회원간 중고 장터",
+    "title": "오디오리서치 레퍼런스3, 에소테릭 K-03 ",
+    "comments": 11,
+    "views": 58,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/1604"
+  },
+  {
+    "id": 1600,
+    "date": "2022-10-01",
+    "board": "자유게시판 [자유롭게]",
+    "title": "전지전능한 오디오신을 만났네요",
+    "comments": 15,
+    "views": 230,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/1600"
+  },
+  {
+    "id": 1593,
+    "date": "2022-09-28",
+    "board": "모두의 음악 이야기",
+    "title": "오랜만에 공연 다녀왔습니다(양성원, 엔리코 파체)",
+    "comments": 8,
+    "views": 82,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/1593"
+  },
+  {
+    "id": 1586,
+    "date": "2022-09-26",
+    "board": "자유게시판 [자유롭게]",
+    "title": "산책 나갔다가…",
+    "comments": 10,
+    "views": 56,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/1586"
+  },
+  {
+    "id": 1585,
+    "date": "2022-09-26",
+    "board": "모두의 오디오 이야기",
+    "title": "린 DMS 아이소바릭 테스트 중 ",
+    "comments": 14,
+    "views": 188,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/1585"
+  },
+  {
+    "id": 1575,
+    "date": "2022-09-20",
+    "board": "모두의 오디오 이야기",
+    "title": "린 아이소바릭 운용을 향한 지리한 여정",
+    "comments": 15,
+    "views": 113,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/1575"
+  },
+  {
+    "id": 1554,
+    "date": "2022-09-14",
+    "board": "모두의 오디오 이야기",
+    "title": "린 아이소바릭 PDMS 영입기 ",
+    "comments": 15,
+    "views": 205,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/1554"
+  },
+  {
+    "id": 1549,
+    "date": "2022-09-09",
+    "board": "사는 이야기 ",
+    "title": "회원 여러분 즐거운 명절 되세요",
+    "comments": 10,
+    "views": 28,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/1549"
+  },
+  {
+    "id": 1542,
+    "date": "2022-09-05",
+    "board": "회원간 중고 장터",
+    "title": "야마하 GT-CD2 판매 ",
+    "comments": 4,
+    "views": 77,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/1542"
+  },
+  {
+    "id": 1525,
+    "date": "2022-08-22",
+    "board": "사는 이야기 ",
+    "title": "브래드 필트 회원님 부고 소식 ㅠㅠ ",
+    "comments": 10,
+    "views": 84,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/1525"
+  },
+  {
+    "id": 1519,
+    "date": "2022-08-17",
+    "board": "사는 이야기 ",
+    "title": "국립항공박물관",
+    "comments": 8,
+    "views": 49,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/1519"
+  },
+  {
+    "id": 1516,
+    "date": "2022-08-17",
+    "board": "회원간 중고 장터",
+    "title": "머큐리 리빙 프레즌스 3집 6LP box",
+    "comments": 0,
+    "views": 13,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/1516"
+  },
+  {
+    "id": 1497,
+    "date": "2022-07-26",
+    "board": "자유게시판 [자유롭게]",
+    "title": "요즘은 음악을 안듣습니다 ",
+    "comments": 12,
+    "views": 93,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/1497"
+  },
+  {
+    "id": 1487,
+    "date": "2022-07-17",
+    "board": "자유게시판 [자유롭게]",
+    "title": "닌텐도 스위치 막차 탑승 ",
+    "comments": 7,
+    "views": 62,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/1487"
+  },
+  {
+    "id": 1441,
+    "date": "2022-06-22",
+    "board": "모두의 오디오 이야기",
+    "title": "행복한 고민",
+    "comments": 6,
+    "views": 57,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/1441"
+  },
+  {
+    "id": 1435,
+    "date": "2022-06-20",
+    "board": "모두의 오디오 이야기",
+    "title": "바빴던 요즘",
+    "comments": 8,
+    "views": 40,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/1435"
+  },
+  {
+    "id": 1415,
+    "date": "2022-05-27",
+    "board": "모두의 오디오 이야기",
+    "title": "티악 UD-701N과 CG10M",
+    "comments": 7,
+    "views": 53,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/1415"
+  },
+  {
+    "id": 1381,
+    "date": "2022-04-22",
+    "board": "모두의 오디오 이야기",
+    "title": "dac의 성능 이야기",
+    "comments": 13,
+    "views": 390,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/1381"
+  },
+  {
+    "id": 1361,
+    "date": "2022-04-14",
+    "board": "모두의 오디오 이야기",
+    "title": "너무 맘에 드는 서브 시스템 ",
+    "comments": 16,
+    "views": 200,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/1361"
+  },
+  {
+    "id": 1339,
+    "date": "2022-04-03",
+    "board": "회원간 중고 장터",
+    "title": "mbl 1431 cdp ",
+    "comments": 0,
+    "views": 69,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/1339"
+  },
+  {
+    "id": 1324,
+    "date": "2022-03-28",
+    "board": "모두의 기기 리뷰",
+    "title": "에소테릭 K-07과 K-05을 사용하며 느낌점 ",
+    "comments": 6,
+    "views": 370,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/1324"
+  },
+  {
+    "id": 1304,
+    "date": "2022-03-17",
+    "board": "회원간 중고 장터",
+    "title": "클래식 라이센스 LP",
+    "comments": 2,
+    "views": 43,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/1304"
+  },
+  {
+    "id": 1300,
+    "date": "2022-03-15",
+    "board": "회원간 중고 장터",
+    "title": "pad 뮤세우스 xlr 케이블과 베누스타스 동축 ",
+    "comments": 4,
+    "views": 57,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/1300"
+  },
+  {
+    "id": 1280,
+    "date": "2022-03-02",
+    "board": "회원간 중고 장터",
+    "title": "티악 CG-10M 클럭과 특주 bcn 케이블 ",
+    "comments": 1,
+    "views": 48,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/1280"
+  },
+  {
+    "id": 1276,
+    "date": "2022-03-01",
+    "board": "모두의 오디오 이야기",
+    "title": "튜너 영점 맞추기 ",
+    "comments": 4,
+    "views": 65,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/1276"
+  },
+  {
+    "id": 1271,
+    "date": "2022-02-26",
+    "board": "모두의 오디오 이야기",
+    "title": "수리를 맡기고…",
+    "comments": 7,
+    "views": 128,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/1271"
+  },
+  {
+    "id": 1264,
+    "date": "2022-02-21",
+    "board": "모두의 음악 이야기",
+    "title": "슈만이라는 수수께끼",
+    "comments": 5,
+    "views": 94,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/1264"
+  },
+  {
+    "id": 1248,
+    "date": "2022-02-15",
+    "board": "모두의 음악 이야기",
+    "title": "LP와 CD의 인상 변화 ",
+    "comments": 10,
+    "views": 86,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/1248"
+  },
+  {
+    "id": 1247,
+    "date": "2022-02-14",
+    "board": "모두의 오디오 이야기",
+    "title": "당근의 편리함",
+    "comments": 3,
+    "views": 76,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/1247"
+  },
+  {
+    "id": 1227,
+    "date": "2022-02-02",
+    "board": "모두의 오디오 이야기",
+    "title": "두 번째 서브 시스템 ",
+    "comments": 11,
+    "views": 163,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/1227"
+  },
+  {
+    "id": 1212,
+    "date": "2022-01-24",
+    "board": "모두의 오디오 이야기",
+    "title": "컨디션이 안좋을때 듣는 음악",
+    "comments": 10,
+    "views": 85,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/1212"
+  },
+  {
+    "id": 1203,
+    "date": "2022-01-18",
+    "board": "모두의 오디오 이야기",
+    "title": "TDL new compact ",
+    "comments": 21,
+    "views": 243,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/1203"
+  },
+  {
+    "id": 1156,
+    "date": "2021-11-30",
+    "board": "모두의 오디오 이야기",
+    "title": "기기의 변화",
+    "comments": 9,
+    "views": 192,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/1156"
+  },
+  {
+    "id": 1150,
+    "date": "2021-11-29",
+    "board": "회원간 중고 장터",
+    "title": "와디아 850(최종 인하)",
+    "comments": 0,
+    "views": 204,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/1150"
+  },
+  {
+    "id": 1127,
+    "date": "2021-10-23",
+    "board": "회원간 중고 장터",
+    "title": "아르젠토 세레니티 시그니처 순은 인터(xlr)",
+    "comments": 0,
+    "views": 57,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/1127"
+  },
+  {
+    "id": 1106,
+    "date": "2021-09-10",
+    "board": "모두의 기기 리뷰",
+    "title": "그리폰 안틸레온 ",
+    "comments": 8,
+    "views": 393,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/1106"
+  },
+  {
+    "id": 1102,
+    "date": "2021-09-06",
+    "board": "모두의 오디오 이야기",
+    "title": "스탠더드 오디오 방문기 ",
+    "comments": 13,
+    "views": 445,
+    "likes": 9,
+    "url": "https://cafe.naver.com/audiodio/1102"
+  },
+  {
+    "id": 1095,
+    "date": "2021-09-01",
+    "board": "모두의 기기 리뷰",
+    "title": "오디오리서치 VT100 mk2 ",
+    "comments": 9,
+    "views": 437,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/1095"
+  },
+  {
+    "id": 1094,
+    "date": "2021-08-31",
+    "board": "모두의 기기 리뷰",
+    "title": "BAT VK-50SE vs VK-51SE",
+    "comments": 6,
+    "views": 255,
+    "likes": 5,
+    "url": "https://cafe.naver.com/audiodio/1094"
+  },
+  {
+    "id": 1072,
+    "date": "2021-08-08",
+    "board": "모두의 오디오 이야기",
+    "title": "그간 격조했습니다 ",
+    "comments": 6,
+    "views": 136,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/1072"
+  },
+  {
+    "id": 1067,
+    "date": "2021-08-01",
+    "board": "회원간 중고 장터",
+    "title": "오디오리서치 VT100 mk2 ",
+    "comments": 0,
+    "views": 128,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/1067"
+  },
+  {
+    "id": 1044,
+    "date": "2021-07-07",
+    "board": "모두의 오디오 이야기",
+    "title": "피셔 390 ",
+    "comments": 12,
+    "views": 143,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/1044"
+  },
+  {
+    "id": 1033,
+    "date": "2021-06-28",
+    "board": "모두의 오디오 이야기",
+    "title": "오랜만에 음악과 함께 행복한 시간을… ",
+    "comments": 14,
+    "views": 108,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/1033"
+  },
+  {
+    "id": 1021,
+    "date": "2021-06-15",
+    "board": "회원간 중고 장터",
+    "title": "THE+RADIO",
+    "comments": 0,
+    "views": 76,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/1021"
+  },
+  {
+    "id": 1016,
+    "date": "2021-06-10",
+    "board": "회원간 중고 장터",
+    "title": "소닉프론티어 t3 cdt 판매 ",
+    "comments": 0,
+    "views": 109,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/1016"
+  },
+  {
+    "id": 1005,
+    "date": "2021-05-29",
+    "board": "회원간 중고 장터",
+    "title": "아쿠아 어쿠스틱 라스칼라 mk2 dac ",
+    "comments": 0,
+    "views": 110,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/1005"
+  },
+  {
+    "id": 999,
+    "date": "2021-05-28",
+    "board": "모두의 오디오 이야기",
+    "title": "덕후의 케이스 갈이",
+    "comments": 3,
+    "views": 53,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/999"
+  },
+  {
+    "id": 995,
+    "date": "2021-05-21",
+    "board": "모두의 오디오 이야기",
+    "title": "오디오 근황 ",
+    "comments": 8,
+    "views": 253,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/995"
+  },
+  {
+    "id": 969,
+    "date": "2021-04-26",
+    "board": "모두의 오디오 이야기",
+    "title": "오디오를 하며 깨달은 점 몇가지 ",
+    "comments": 6,
+    "views": 170,
+    "likes": 4,
+    "url": "https://cafe.naver.com/audiodio/969"
+  },
+  {
+    "id": 961,
+    "date": "2021-04-23",
+    "board": "자유게시판 [자유롭게]",
+    "title": "MBL의 추억 ",
+    "comments": 2,
+    "views": 75,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/961"
+  },
+  {
+    "id": 948,
+    "date": "2021-04-15",
+    "board": "모두의 음악 이야기",
+    "title": "스포티파이로 갈아탔습니다. ",
+    "comments": 8,
+    "views": 85,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/948"
+  },
+  {
+    "id": 946,
+    "date": "2021-04-14",
+    "board": "회원간 중고 장터",
+    "title": "클래식 음반 판매 ",
+    "comments": 0,
+    "views": 25,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/946"
+  },
+  {
+    "id": 945,
+    "date": "2021-04-13",
+    "board": "회원간 중고 장터",
+    "title": "태광 TCD-2 cdp 판매 ",
+    "comments": 0,
+    "views": 65,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/945"
+  },
+  {
+    "id": 944,
+    "date": "2021-04-13",
+    "board": "모두의 오디오 이야기",
+    "title": "층간 소음...쉽지 않은 문제 ",
+    "comments": 16,
+    "views": 120,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/944"
+  },
+  {
+    "id": 934,
+    "date": "2021-04-08",
+    "board": "모두의 오디오 이야기",
+    "title": "진공관 초단관 교체기",
+    "comments": 8,
+    "views": 75,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/934"
+  },
+  {
+    "id": 928,
+    "date": "2021-04-06",
+    "board": "비청 동영상",
+    "title": "현재 오디오 ",
+    "comments": 21,
+    "views": 265,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/928"
+  },
+  {
+    "id": 909,
+    "date": "2021-03-29",
+    "board": "회원간 음반 장터",
+    "title": "칼 리히터 바흐 칸타타 녹음 전집(26cd)",
+    "comments": 0,
+    "views": 30,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/909"
+  },
+  {
+    "id": 895,
+    "date": "2021-03-21",
+    "board": "모두의 기기 리뷰",
+    "title": "마크레빈슨 no.390sl ",
+    "comments": 3,
+    "views": 278,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/895"
+  },
+  {
+    "id": 891,
+    "date": "2021-03-19",
+    "board": "회원간 음반 장터",
+    "title": "클래식 음반 일괄 판매 ",
+    "comments": 0,
+    "views": 39,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/891"
+  },
+  {
+    "id": 886,
+    "date": "2021-03-16",
+    "board": "모두의 기기 리뷰",
+    "title": "누프라임 CDT-8 PRO",
+    "comments": 9,
+    "views": 163,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/886"
+  },
+  {
+    "id": 874,
+    "date": "2021-03-05",
+    "board": "모두의 오디오 이야기",
+    "title": "서브 튜너 ",
+    "comments": 6,
+    "views": 91,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/874"
+  },
+  {
+    "id": 851,
+    "date": "2021-02-09",
+    "board": "모두의 오디오 이야기",
+    "title": "현재 제 오디오 상황",
+    "comments": 17,
+    "views": 329,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/851"
+  },
+  {
+    "id": 847,
+    "date": "2021-02-08",
+    "board": "모두의 오디오 이야기",
+    "title": "낯선 사람에게 오디오 질문을 할 땐",
+    "comments": 17,
+    "views": 114,
+    "likes": 3,
+    "url": "https://cafe.naver.com/audiodio/847"
+  },
+  {
+    "id": 829,
+    "date": "2021-01-17",
+    "board": "모두의 오디오 이야기",
+    "title": "에소테릭으로 듣는 에소테릭 ",
+    "comments": 4,
+    "views": 104,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/829"
+  },
+  {
+    "id": 823,
+    "date": "2021-01-12",
+    "board": "모두의 음악 이야기",
+    "title": "알란 파슨스 프로젝트 ",
+    "comments": 4,
+    "views": 62,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/823"
+  },
+  {
+    "id": 820,
+    "date": "2021-01-10",
+    "board": "모두의 오디오 이야기",
+    "title": "EXIMUS SA-10을 보내며 ",
+    "comments": 1,
+    "views": 169,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/820"
+  },
+  {
+    "id": 816,
+    "date": "2021-01-09",
+    "board": "회원간 중고 장터",
+    "title": "다인 1.8mk2, cdp, dac, sms스탠드 ",
+    "comments": 3,
+    "views": 178,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/816"
+  },
+  {
+    "id": 787,
+    "date": "2020-12-11",
+    "board": "회원간 중고 장터",
+    "title": "하베스 컴팩트 7es2 (완료)",
+    "comments": 2,
+    "views": 109,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/787"
+  },
+  {
+    "id": 782,
+    "date": "2020-12-08",
+    "board": "모두의 오디오 이야기",
+    "title": "다인 컨투어 1.8 mk2 영입",
+    "comments": 6,
+    "views": 306,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/782"
+  },
+  {
+    "id": 768,
+    "date": "2020-11-27",
+    "board": "모두의 오디오 이야기",
+    "title": "모니터오디오 스튜디오6 인계",
+    "comments": 4,
+    "views": 165,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/768"
+  },
+  {
+    "id": 728,
+    "date": "2020-11-03",
+    "board": "모두의 음악 이야기",
+    "title": "부다페스트 콘서트 ",
+    "comments": 6,
+    "views": 57,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/728"
+  },
+  {
+    "id": 704,
+    "date": "2020-10-14",
+    "board": "모두의 오디오 이야기",
+    "title": "오디오 정체기",
+    "comments": 5,
+    "views": 84,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/704"
+  },
+  {
+    "id": 701,
+    "date": "2020-10-11",
+    "board": "자유게시판 [자유롭게]",
+    "title": "환상적인 경험 ",
+    "comments": 2,
+    "views": 71,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/701"
+  },
+  {
+    "id": 696,
+    "date": "2020-10-05",
+    "board": "모두의 오디오 이야기",
+    "title": "긴 휴가를 마치고 ",
+    "comments": 5,
+    "views": 35,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/696"
+  },
+  {
+    "id": 689,
+    "date": "2020-09-17",
+    "board": "모두의 오디오 이야기",
+    "title": "오늘 둘째가 세상에 나왔습니다 ",
+    "comments": 18,
+    "views": 79,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/689"
+  },
+  {
+    "id": 687,
+    "date": "2020-09-15",
+    "board": "비청 동영상",
+    "title": "하베스 7es2+뮤지컬 피델리티 P173/P180",
+    "comments": 6,
+    "views": 213,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/687"
+  },
+  {
+    "id": 683,
+    "date": "2020-09-14",
+    "board": "모두의 오디오 이야기",
+    "title": "새로운 시스템 ",
+    "comments": 12,
+    "views": 360,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/683"
+  },
+  {
+    "id": 681,
+    "date": "2020-09-12",
+    "board": "회원간 중고 장터",
+    "title": "누프라임 cdt 8 pro ",
+    "comments": 0,
+    "views": 56,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/681"
+  },
+  {
+    "id": 675,
+    "date": "2020-09-08",
+    "board": "모두의 오디오 이야기",
+    "title": "시스템을 또 바꿨습니다 ",
+    "comments": 7,
+    "views": 136,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/675"
+  },
+  {
+    "id": 665,
+    "date": "2020-09-01",
+    "board": "모두의 오디오 이야기",
+    "title": "어제 스피커 옮기다가 발을 다쳤습니다. ",
+    "comments": 2,
+    "views": 56,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/665"
+  },
+  {
+    "id": 663,
+    "date": "2020-09-01",
+    "board": "모두의 오디오 이야기",
+    "title": "좋아하는 노래가 라디오에서 나오면 ",
+    "comments": 2,
+    "views": 47,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/663"
+  },
+  {
+    "id": 660,
+    "date": "2020-08-25",
+    "board": "모두의 오디오 이야기",
+    "title": "틸 2.3aw 영입",
+    "comments": 8,
+    "views": 238,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/660"
+  },
+  {
+    "id": 653,
+    "date": "2020-08-18",
+    "board": "회원간 중고 장터",
+    "title": "와디아860(판매완료)",
+    "comments": 0,
+    "views": 124,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/653"
+  },
+  {
+    "id": 647,
+    "date": "2020-08-10",
+    "board": "회원간 중고 장터",
+    "title": "와디아 860 cdp ",
+    "comments": 0,
+    "views": 175,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/647"
+  },
+  {
+    "id": 641,
+    "date": "2020-08-06",
+    "board": "모두의 음악 이야기",
+    "title": "나에게 큰 영향을 준 10장의 음반",
+    "comments": 8,
+    "views": 70,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/641"
+  },
+  {
+    "id": 631,
+    "date": "2020-08-03",
+    "board": "자유게시판 [자유롭게]",
+    "title": "21사운드 방문기 ",
+    "comments": 6,
+    "views": 214,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/631"
+  },
+  {
+    "id": 618,
+    "date": "2020-07-26",
+    "board": "자유게시판 [자유롭게]",
+    "title": "답동성당 ",
+    "comments": 4,
+    "views": 38,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/618"
+  },
+  {
+    "id": 610,
+    "date": "2020-07-20",
+    "board": "모두의 오디오 이야기",
+    "title": "엑시머스 sa10 sacdp 픽업교체기",
+    "comments": 8,
+    "views": 114,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/610"
+  },
+  {
+    "id": 606,
+    "date": "2020-07-16",
+    "board": "모두의 음악 이야기",
+    "title": "전집 또 지르기",
+    "comments": 5,
+    "views": 59,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/606"
+  },
+  {
+    "id": 604,
+    "date": "2020-07-16",
+    "board": "모두의 음악 이야기",
+    "title": "전집의 홍수 속에서 음악 듣기",
+    "comments": 3,
+    "views": 34,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/604"
+  },
+  {
+    "id": 601,
+    "date": "2020-07-13",
+    "board": "모두의 음악 이야기",
+    "title": "팻 메스니 ‘secret story’ ",
+    "comments": 5,
+    "views": 45,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/601"
+  },
+  {
+    "id": 596,
+    "date": "2020-07-07",
+    "board": "모두의 오디오 이야기",
+    "title": "Spendor SP100 소리 만들기 - 최종 ",
+    "comments": 16,
+    "views": 272,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/596"
+  },
+  {
+    "id": 592,
+    "date": "2020-07-06",
+    "board": "모두의 오디오 이야기",
+    "title": "Spendor SP100 소리 만들기 - 2",
+    "comments": 10,
+    "views": 139,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/592"
+  },
+  {
+    "id": 589,
+    "date": "2020-07-05",
+    "board": "모두의 오디오 이야기",
+    "title": "Spendor SP100 소리 만들기 - 1 ",
+    "comments": 2,
+    "views": 63,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/589"
+  },
+  {
+    "id": 582,
+    "date": "2020-06-30",
+    "board": "모두의 오디오 이야기",
+    "title": "매지코 s1 떠나다 ",
+    "comments": 8,
+    "views": 259,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/582"
+  },
+  {
+    "id": 580,
+    "date": "2020-06-29",
+    "board": "비청 동영상",
+    "title": "AR과 리시버로 듣는 만토바니 오케스트라 ",
+    "comments": 2,
+    "views": 49,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/580"
+  },
+  {
+    "id": 572,
+    "date": "2020-06-23",
+    "board": "사는 이야기 ",
+    "title": "내 추억의 8할은 mdp",
+    "comments": 1,
+    "views": 41,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/572"
+  },
+  {
+    "id": 564,
+    "date": "2020-06-18",
+    "board": "모두의 음악 이야기",
+    "title": "라흐마니노프 피협 2번 ",
+    "comments": 9,
+    "views": 54,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/564"
+  },
+  {
+    "id": 552,
+    "date": "2020-06-13",
+    "board": "사는 이야기 ",
+    "title": "인천 노포 동방식당 ",
+    "comments": 14,
+    "views": 213,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/552"
+  },
+  {
+    "id": 549,
+    "date": "2020-06-10",
+    "board": "비청 동영상",
+    "title": "매지코로 듣는 포레 ",
+    "comments": 6,
+    "views": 73,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/549"
+  },
+  {
+    "id": 546,
+    "date": "2020-06-09",
+    "board": "자유게시판 [자유롭게]",
+    "title": "캐런 앤, 애저 레이 ",
+    "comments": 6,
+    "views": 28,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/546"
+  },
+  {
+    "id": 544,
+    "date": "2020-06-07",
+    "board": "모두의 오디오 이야기",
+    "title": "판갈이 완료 ",
+    "comments": 8,
+    "views": 142,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/544"
+  },
+  {
+    "id": 533,
+    "date": "2020-06-01",
+    "board": "자유게시판 [자유롭게]",
+    "title": "LP12와 바로크 ",
+    "comments": 3,
+    "views": 69,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/533"
+  },
+  {
+    "id": 522,
+    "date": "2020-05-27",
+    "board": "자유게시판 [자유롭게]",
+    "title": "자체 장터 금지령",
+    "comments": 19,
+    "views": 215,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/522"
+  },
+  {
+    "id": 519,
+    "date": "2020-05-27",
+    "board": "모두의 음악 이야기",
+    "title": "프리드리히 굴다의 초기 방송 녹음 ",
+    "comments": 2,
+    "views": 25,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/519"
+  },
+  {
+    "id": 511,
+    "date": "2020-05-24",
+    "board": "모두의 음악 이야기",
+    "title": "시벨리우스의 극부수 음악/피에타리 인키넨 ",
+    "comments": 12,
+    "views": 40,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/511"
+  },
+  {
+    "id": 497,
+    "date": "2020-05-18",
+    "board": "자유게시판 [자유롭게]",
+    "title": "편안한 마음으로 오랜만에 음악감상 ",
+    "comments": 5,
+    "views": 110,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/497"
+  },
+  {
+    "id": 496,
+    "date": "2020-05-18",
+    "board": "자유게시판 [자유롭게]",
+    "title": "광주여 영원하라",
+    "comments": 2,
+    "views": 54,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/496"
+  },
+  {
+    "id": 478,
+    "date": "2020-05-12",
+    "board": "자유게시판 [자유롭게]",
+    "title": "와싸다에 ncdv s2가 나왔네요",
+    "comments": 11,
+    "views": 218,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/478"
+  },
+  {
+    "id": 477,
+    "date": "2020-05-12",
+    "board": "자유게시판 [자유롭게]",
+    "title": "튜너의 소리 ",
+    "comments": 2,
+    "views": 55,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/477"
+  },
+  {
+    "id": 475,
+    "date": "2020-05-12",
+    "board": "회원간 중고 장터",
+    "title": "별꽃 턴테이블 최종 인하 ",
+    "comments": 0,
+    "views": 67,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/475"
+  },
+  {
+    "id": 474,
+    "date": "2020-05-11",
+    "board": "자유게시판 [자유롭게]",
+    "title": "오디오 방향을 바꾸고 랙을 구입했습니다. ",
+    "comments": 11,
+    "views": 123,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/474"
+  },
+  {
+    "id": 453,
+    "date": "2020-05-05",
+    "board": "자유게시판 [자유롭게]",
+    "title": "음악 많이 들은 하루 ",
+    "comments": 7,
+    "views": 83,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/453"
+  },
+  {
+    "id": 450,
+    "date": "2020-05-05",
+    "board": "회원간 중고 장터",
+    "title": "(예약중)DEXA NewclassD ncdv S2 파워 판매 ",
+    "comments": 0,
+    "views": 333,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/450"
+  },
+  {
+    "id": 441,
+    "date": "2020-05-03",
+    "board": "모두의 오디오 이야기",
+    "title": "완전체 출격",
+    "comments": 17,
+    "views": 104,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/441"
+  },
+  {
+    "id": 439,
+    "date": "2020-05-02",
+    "board": "자유게시판 [자유롭게]",
+    "title": "부모님 댁의 오디오 ",
+    "comments": 3,
+    "views": 97,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/439"
+  },
+  {
+    "id": 434,
+    "date": "2020-05-02",
+    "board": "자유게시판 [자유롭게]",
+    "title": "자동차 가죽 시트 수선하러 왔습니다.",
+    "comments": 8,
+    "views": 165,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/434"
+  },
+  {
+    "id": 428,
+    "date": "2020-04-30",
+    "board": "모두의 오디오 이야기",
+    "title": "익산의 음감실 라 뮈지크 방문기",
+    "comments": 8,
+    "views": 112,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/428"
+  },
+  {
+    "id": 426,
+    "date": "2020-04-30",
+    "board": "회원간 중고 장터",
+    "title": "스펙트랄 dmc-10 델타 ",
+    "comments": 1,
+    "views": 134,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/426"
+  },
+  {
+    "id": 420,
+    "date": "2020-04-28",
+    "board": "회원간 중고 장터",
+    "title": "에소테릭 K-07 sacdp ",
+    "comments": 0,
+    "views": 55,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/420"
+  },
+  {
+    "id": 418,
+    "date": "2020-04-27",
+    "board": "모두의 음악 이야기",
+    "title": "카라얀 audite 에디션 ",
+    "comments": 5,
+    "views": 42,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/418"
+  },
+  {
+    "id": 414,
+    "date": "2020-04-26",
+    "board": "모두의 오디오 이야기",
+    "title": "만족스러운 서브 시스템 ",
+    "comments": 5,
+    "views": 74,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/414"
+  },
+  {
+    "id": 397,
+    "date": "2020-04-23",
+    "board": "모두의 음악 이야기",
+    "title": "헤르베르트 블롬슈테트가 지휘하는 모차르트 ",
+    "comments": 4,
+    "views": 49,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/397"
+  },
+  {
+    "id": 396,
+    "date": "2020-04-23",
+    "board": "모두의 오디오 이야기",
+    "title": "하또그 슈즈 수령 ",
+    "comments": 8,
+    "views": 75,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/396"
+  },
+  {
+    "id": 392,
+    "date": "2020-04-22",
+    "board": "모두의 오디오 이야기",
+    "title": "어둠 속의 오디오 ",
+    "comments": 3,
+    "views": 30,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/392"
+  },
+  {
+    "id": 382,
+    "date": "2020-04-22",
+    "board": "회원간 음반 장터",
+    "title": "루세가 연주한 르와예(royer) 클라브생 작품집 ",
+    "comments": 0,
+    "views": 32,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/382"
+  },
+  {
+    "id": 381,
+    "date": "2020-04-21",
+    "board": "모두의 오디오 이야기",
+    "title": "신부님의 오디오 ",
+    "comments": 4,
+    "views": 61,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/381"
+  },
+  {
+    "id": 374,
+    "date": "2020-04-21",
+    "board": "모두의 오디오 이야기",
+    "title": "서그덴 a21 s2와 로저스 pm510a",
+    "comments": 9,
+    "views": 162,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/374"
+  },
+  {
+    "id": 371,
+    "date": "2020-04-20",
+    "board": "모두의 음악 이야기",
+    "title": "지휘자 데이비드 진먼의 다이어리 ",
+    "comments": 7,
+    "views": 43,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/371"
+  },
+  {
+    "id": 366,
+    "date": "2020-04-18",
+    "board": "모두의 오디오 이야기",
+    "title": "인천 서브 시스템 안착",
+    "comments": 7,
+    "views": 134,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/366"
+  },
+  {
+    "id": 360,
+    "date": "2020-04-17",
+    "board": "모두의 음악 이야기",
+    "title": "김선욱의 베토벤 3대 소나타 ",
+    "comments": 4,
+    "views": 35,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/360"
+  },
+  {
+    "id": 359,
+    "date": "2020-04-17",
+    "board": "모두의 오디오 이야기",
+    "title": "B&W 매트릭스 801-3과 아큐페이즈 e-260",
+    "comments": 2,
+    "views": 420,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/359"
+  },
+  {
+    "id": 358,
+    "date": "2020-04-15",
+    "board": "모두의 오디오 이야기",
+    "title": "오디오 세팅이 점점 완성되어 갑니다",
+    "comments": 8,
+    "views": 94,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/358"
+  },
+  {
+    "id": 354,
+    "date": "2020-04-13",
+    "board": "비청 동영상",
+    "title": "프로악 리스폰스 2.5와 럭스만 509s",
+    "comments": 5,
+    "views": 285,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/354"
+  },
+  {
+    "id": 349,
+    "date": "2020-04-09",
+    "board": "비청 동영상",
+    "title": "매지코s1과 ncdx-e로 듣는 메트너 ",
+    "comments": 7,
+    "views": 93,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/349"
+  },
+  {
+    "id": 348,
+    "date": "2020-04-09",
+    "board": "자유게시판 [자유롭게]",
+    "title": "오디오 무식자의 어처구니 없는 실수 ",
+    "comments": 7,
+    "views": 93,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/348"
+  },
+  {
+    "id": 342,
+    "date": "2020-04-07",
+    "board": "자유게시판 [자유롭게]",
+    "title": "접이식 대차 구입(오디오 애호가의 필수품)",
+    "comments": 7,
+    "views": 44,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/342"
+  },
+  {
+    "id": 335,
+    "date": "2020-04-06",
+    "board": "모두의 오디오 이야기",
+    "title": "801-3의 빈자리 ",
+    "comments": 6,
+    "views": 105,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/335"
+  },
+  {
+    "id": 334,
+    "date": "2020-04-05",
+    "board": "자유게시판 [자유롭게]",
+    "title": "신고합니다 ",
+    "comments": 10,
+    "views": 75,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/334"
+  },
+  {
+    "id": 324,
+    "date": "2020-04-02",
+    "board": "비청 동영상",
+    "title": "쿼드33/303과 모니터오디오 스튜디오2",
+    "comments": 19,
+    "views": 209,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/324"
+  },
+  {
+    "id": 314,
+    "date": "2020-03-30",
+    "board": "모두의 음악 이야기",
+    "title": "하지메 미조구치의 yours; tears ",
+    "comments": 6,
+    "views": 45,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/314"
+  },
+  {
+    "id": 307,
+    "date": "2020-03-27",
+    "board": "모두의 오디오 이야기",
+    "title": "쿼드에 셀레스천 물리기 ",
+    "comments": 9,
+    "views": 106,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/307"
+  },
+  {
+    "id": 302,
+    "date": "2020-03-26",
+    "board": "모두의 음악 이야기",
+    "title": "Vikingur Olafsson play Bach ",
+    "comments": 7,
+    "views": 88,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/302"
+  },
+  {
+    "id": 296,
+    "date": "2020-03-25",
+    "board": "모두의 음악 이야기",
+    "title": "페데리코 몸포우 <Musica callada, 침묵의 음악>",
+    "comments": 4,
+    "views": 59,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/296"
+  },
+  {
+    "id": 295,
+    "date": "2020-03-25",
+    "board": "모두의 오디오 이야기",
+    "title": "MBL 4004 프리 vs 포논 프리 ",
+    "comments": 14,
+    "views": 416,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/295"
+  },
+  {
+    "id": 293,
+    "date": "2020-03-24",
+    "board": "자유게시판 [자유롭게]",
+    "title": "요즘 근황",
+    "comments": 7,
+    "views": 121,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/293"
+  },
+  {
+    "id": 291,
+    "date": "2020-03-23",
+    "board": "모두의 오디오 이야기",
+    "title": "와트퍼피 구입 실패기 -구입자 관점-",
+    "comments": 16,
+    "views": 184,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/291"
+  },
+  {
+    "id": 283,
+    "date": "2020-03-19",
+    "board": "자유게시판 [자유롭게]",
+    "title": "판갈이 중입니다",
+    "comments": 6,
+    "views": 111,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/283"
+  },
+  {
+    "id": 277,
+    "date": "2020-03-17",
+    "board": "회원간 중고 장터",
+    "title": "PMC OB1i 판매합니다. ",
+    "comments": 3,
+    "views": 101,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/277"
+  },
+  {
+    "id": 270,
+    "date": "2020-03-15",
+    "board": "추천 음악/영상",
+    "title": "팡크라스 르와예 ",
+    "comments": 5,
+    "views": 47,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/270"
+  },
+  {
+    "id": 268,
+    "date": "2020-03-15",
+    "board": "추천 음악/영상",
+    "title": "오디오파일을 위한 클래식 음반 추천 1",
+    "comments": 5,
+    "views": 125,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/268"
+  },
+  {
+    "id": 261,
+    "date": "2020-03-11",
+    "board": "자유게시판 [자유롭게]",
+    "title": "MBL4004A 앰프에 대한 미국 평론가의 평가 ",
+    "comments": 4,
+    "views": 65,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/261"
+  },
+  {
+    "id": 260,
+    "date": "2020-03-11",
+    "board": "자유게시판 [자유롭게]",
+    "title": "급 mbl4004a 프리앰프 영입 ",
+    "comments": 10,
+    "views": 126,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/260"
+  },
+  {
+    "id": 247,
+    "date": "2020-03-07",
+    "board": "모두의 기기 리뷰",
+    "title": "뮤지컬피델리티 P173/P180 그리고 마크레빈슨, 스펙트랄",
+    "comments": 7,
+    "views": 332,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/247"
+  },
+  {
+    "id": 246,
+    "date": "2020-03-07",
+    "board": "모두의 오디오 이야기",
+    "title": "뮤지컬 피델리티와 마크, 스펙트랄 등 비교 예정",
+    "comments": 3,
+    "views": 85,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/246"
+  },
+  {
+    "id": 245,
+    "date": "2020-03-06",
+    "board": "비청 동영상",
+    "title": "아침의 바흐 ",
+    "comments": 14,
+    "views": 122,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/245"
+  },
+  {
+    "id": 232,
+    "date": "2020-02-28",
+    "board": "자유게시판 [자유롭게]",
+    "title": "금요일 밤의 음악감상",
+    "comments": 13,
+    "views": 43,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/232"
+  },
+  {
+    "id": 222,
+    "date": "2020-02-23",
+    "board": "모두의 오디오 이야기",
+    "title": "서브 시스템의 메인화 ",
+    "comments": 6,
+    "views": 107,
+    "likes": 2,
+    "url": "https://cafe.naver.com/audiodio/222"
+  },
+  {
+    "id": 214,
+    "date": "2020-02-21",
+    "board": "모두의 오디오 이야기",
+    "title": "마크 레빈슨 390sl 영입했습니다. ",
+    "comments": 9,
+    "views": 97,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/214"
+  },
+  {
+    "id": 212,
+    "date": "2020-02-18",
+    "board": "모두의 오디오 이야기",
+    "title": "야마하 GT-CD2 ",
+    "comments": 11,
+    "views": 202,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/212"
+  },
+  {
+    "id": 211,
+    "date": "2020-02-17",
+    "board": "회원간 중고 장터",
+    "title": "야마하 GT-CD2 판매 ",
+    "comments": 17,
+    "views": 100,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/211"
+  },
+  {
+    "id": 204,
+    "date": "2020-02-11",
+    "board": "비청 동영상",
+    "title": "B&W matrix 801-3과 ncdx-e+포논 프리 조합",
+    "comments": 12,
+    "views": 225,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/204"
+  },
+  {
+    "id": 178,
+    "date": "2020-01-22",
+    "board": "모두의 오디오 이야기",
+    "title": "프라이메어 a33.2의 뒷모습 ",
+    "comments": 1,
+    "views": 93,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/178"
+  },
+  {
+    "id": 173,
+    "date": "2020-01-17",
+    "board": "모두의 오디오 이야기",
+    "title": "긴 여행의 종착점(B&W 801-3 matrix) ",
+    "comments": 6,
+    "views": 318,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/173"
+  },
+  {
+    "id": 161,
+    "date": "2020-01-12",
+    "board": "회원간 중고 장터",
+    "title": "프라이메어 a33.2 파워앰프 판매 ",
+    "comments": 0,
+    "views": 63,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/161"
+  },
+  {
+    "id": 160,
+    "date": "2020-01-12",
+    "board": "회원간 중고 장터",
+    "title": "네오복스 오이스트라흐 mk1 xlr 케이블 ",
+    "comments": 0,
+    "views": 36,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/160"
+  },
+  {
+    "id": 159,
+    "date": "2020-01-12",
+    "board": "자유게시판 [자유롭게]",
+    "title": "오디오를 하며 겪었던 인상적인 일",
+    "comments": 9,
+    "views": 142,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/159"
+  },
+  {
+    "id": 124,
+    "date": "2019-12-13",
+    "board": "회원간 중고 장터",
+    "title": "와디아23 cdp 판매",
+    "comments": 0,
+    "views": 64,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/124"
+  },
+  {
+    "id": 117,
+    "date": "2019-12-08",
+    "board": "자유게시판 [자유롭게]",
+    "title": "진정한 하이엔드의 길에 입문했습니다. ",
+    "comments": 5,
+    "views": 131,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/117"
+  },
+  {
+    "id": 111,
+    "date": "2019-12-04",
+    "board": "회원간 중고 장터",
+    "title": "스텔로 ai700u 인티앰프",
+    "comments": 0,
+    "views": 89,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/111"
+  },
+  {
+    "id": 93,
+    "date": "2019-11-17",
+    "board": "자유게시판 [자유롭게]",
+    "title": "최근의 시스템 ",
+    "comments": 2,
+    "views": 186,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/93"
+  },
+  {
+    "id": 78,
+    "date": "2019-10-26",
+    "board": "모두의 오디오 이야기",
+    "title": "잠깐 경험했던 로더 풀레인지의 아름다운 소리 ",
+    "comments": 2,
+    "views": 186,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/78"
+  },
+  {
+    "id": 72,
+    "date": "2019-10-23",
+    "board": "회원간 중고 장터",
+    "title": "로더 바이코20(현대사운드 정품) ",
+    "comments": 2,
+    "views": 38,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/72"
+  },
+  {
+    "id": 66,
+    "date": "2019-10-14",
+    "board": "자유게시판 [자유롭게]",
+    "title": "건강",
+    "comments": 3,
+    "views": 14,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/66"
+  },
+  {
+    "id": 46,
+    "date": "2019-09-15",
+    "board": "모두의 오디오 이야기",
+    "title": "오디오사용기-뮤지컬피델리티A100-X",
+    "comments": 8,
+    "views": 322,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/46"
+  },
+  {
+    "id": 38,
+    "date": "2019-09-09",
+    "board": "자유게시판 [자유롭게]",
+    "title": "카페 활성화를 위한 스스로의 약속 ",
+    "comments": 3,
+    "views": 47,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/38"
+  },
+  {
+    "id": 37,
+    "date": "2019-09-09",
+    "board": "모두의 오디오 이야기",
+    "title": "오디오사용기- 네임 네이트2",
+    "comments": 1,
+    "views": 165,
+    "likes": 1,
+    "url": "https://cafe.naver.com/audiodio/37"
+  },
+  {
+    "id": 33,
+    "date": "2019-09-03",
+    "board": "회원간 중고 장터",
+    "title": "실바웰드 진공관 인티 swt-40(6bq5)",
+    "comments": 3,
+    "views": 65,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/33"
+  },
+  {
+    "id": 29,
+    "date": "2019-08-28",
+    "board": "모두의 오디오 이야기",
+    "title": "오디오사용기-메리디언G06",
+    "comments": 3,
+    "views": 135,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/29"
+  },
+  {
+    "id": 23,
+    "date": "2019-08-22",
+    "board": "모두의 오디오 이야기",
+    "title": "오디오사용기-크렐S-300i",
+    "comments": 1,
+    "views": 242,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/23"
+  },
+  {
+    "id": 17,
+    "date": "2019-08-21",
+    "board": "모두의 오디오 이야기",
+    "title": "오디오 사용기-스펜더 BC1 블루알리코",
+    "comments": 1,
+    "views": 241,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/17"
+  },
+  {
+    "id": 16,
+    "date": "2019-08-20",
+    "board": "자유게시판 [자유롭게]",
+    "title": "3일의 출장을 마치고 듣는 음악",
+    "comments": 4,
+    "views": 94,
+    "likes": 0,
+    "url": "https://cafe.naver.com/audiodio/16"
+  }
+]
+  </script>
+
+  <script type="text/babel">
+    // ========================================
+    // React Hooks
+    // ========================================
+    const { useState, useEffect, useMemo, useCallback, useContext, createContext } = React;
+
+    // ========================================
+    // 📊 Data — 수집 원본 404건을 그대로 내장
+    // ========================================
+    const RAW = JSON.parse(document.getElementById('articles-data').textContent);
+    const ARTICLES = RAW.map(a => ({ ...a, board: a.board.trim() }));
+
+    const CAFE = {
+      name: '모두의 오디오',
+      slug: 'audiodio',
+      url: 'https://cafe.naver.com/audiodio',
+      cafeId: '29796463',
+      opened: '2019.06.24.',
+      manager: '와피',
+      grade: '잎새5단계',
+      members: '2,456명',
+      totalPosts: '5,517건',
+      nickname: '범스파파',
+      memberGrade: 'VIP회원',
+      maskedId: 'flor****',
+      profileUrl: 'https://cafe.naver.com/f-e/cafes/29796463/members/m2aZj4sxCuS3IIgKXkqKiW6l0Itb5vJkS9PfzrlH6N0',
+      visits: '12,679회',
+      subscribers: '20명',
+      collectedAt: '2026-09-01',
+    };
+
+    const BOARD_META = {
+      '모두의 오디오 이야기':  { color: '#f59e0b', badge: 'bg-amber-500/15 text-amber-300 ring-amber-500/30' },
+      '회원간 중고 장터':      { color: '#10b981', badge: 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/30' },
+      '자유게시판 [자유롭게]': { color: '#38bdf8', badge: 'bg-sky-500/15 text-sky-300 ring-sky-500/30' },
+      '모두의 음악 이야기':    { color: '#a78bfa', badge: 'bg-violet-500/15 text-violet-300 ring-violet-500/30' },
+      '비청 동영상':           { color: '#fb7185', badge: 'bg-rose-500/15 text-rose-300 ring-rose-500/30' },
+      '모두의 기기 리뷰':      { color: '#22d3ee', badge: 'bg-cyan-500/15 text-cyan-300 ring-cyan-500/30' },
+      '사는 이야기':           { color: '#a3e635', badge: 'bg-lime-500/15 text-lime-300 ring-lime-500/30' },
+      '회원간 음반 장터':      { color: '#2dd4bf', badge: 'bg-teal-500/15 text-teal-300 ring-teal-500/30' },
+      '추천 음악/영상':        { color: '#818cf8', badge: 'bg-indigo-500/15 text-indigo-300 ring-indigo-500/30' },
+    };
+    const FALLBACK_META = { color: '#94a3b8', badge: 'bg-slate-500/15 text-slate-300 ring-slate-500/30' };
+    const boardMeta = (b) => BOARD_META[b] || FALLBACK_META;
+
+    // --- 파생 통계 (데이터가 정적이므로 모듈 로드 시 1회만 계산) ---
+    const nf = (n) => n.toLocaleString('ko-KR');
+    const sumBy = (arr, key) => arr.reduce((acc, a) => acc + (a[key] || 0), 0);
+
+    const TOTAL = ARTICLES.length;
+    const TOTAL_VIEWS = sumBy(ARTICLES, 'views');
+    const TOTAL_COMMENTS = sumBy(ARTICLES, 'comments');
+    const TOTAL_LIKES = sumBy(ARTICLES, 'likes');
+    const SORTED_DATES = ARTICLES.map(a => a.date).sort();
+    const FIRST_DATE = SORTED_DATES[0];
+    const LAST_DATE = SORTED_DATES[SORTED_DATES.length - 1];
+
+    const groupBy = (keyFn) => {
+      const map = new Map();
+      ARTICLES.forEach(a => {
+        const k = keyFn(a);
+        const cur = map.get(k) || { key: k, count: 0, views: 0, comments: 0, likes: 0 };
+        cur.count += 1; cur.views += a.views; cur.comments += a.comments; cur.likes += a.likes;
+        map.set(k, cur);
+      });
+      return [...map.values()];
+    };
+
+    const BY_BOARD = groupBy(a => a.board).sort((x, y) => y.count - x.count);
+    const BY_YEAR = groupBy(a => a.date.slice(0, 4)).sort((x, y) => y.key.localeCompare(x.key));
+    const YEARS = BY_YEAR.map(y => y.key);
+    const BOARDS = BY_BOARD.map(b => b.key);
+
+    const MONTH_GRID = (() => {
+      const grid = {};
+      YEARS.forEach(y => { grid[y] = Array(12).fill(0); });
+      ARTICLES.forEach(a => { grid[a.date.slice(0, 4)][Number(a.date.slice(5, 7)) - 1] += 1; });
+      return { grid, max: Math.max(...Object.values(grid).flat()) };
+    })();
+
+    const topBy = (key, n) => [...ARTICLES]
+      .sort((x, y) => y[key] - x[key] || y.date.localeCompare(x.date))
+      .slice(0, n);
+    const TOP_VIEWS = topBy('views', 20);
+    const TOP_COMMENTS = topBy('comments', 20);
+    const TOP_LIKES = topBy('likes', 20);
+    const RECENT = [...ARTICLES].sort((x, y) => y.date.localeCompare(x.date)).slice(0, 8);
+
+    // ========================================
+    // 🎨 Design System Components
+    // ========================================
+    function Button({ variant = 'primary', size = 'md', className = '', ...props }) {
+      const base = 'inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60 disabled:opacity-40 disabled:cursor-not-allowed';
+      const variants = {
+        primary: 'bg-amber-500 text-slate-950 hover:bg-amber-400',
+        secondary: 'bg-white/5 text-slate-200 ring-1 ring-white/10 hover:bg-white/10',
+        ghost: 'text-slate-400 hover:text-slate-100 hover:bg-white/5',
+        danger: 'bg-rose-600 text-white hover:bg-rose-500',
+      };
+      const sizes = { sm: 'px-2.5 py-1.5 text-xs', md: 'px-3.5 py-2 text-sm', lg: 'px-5 py-2.5 text-base' };
+      return <button className={base + ' ' + variants[variant] + ' ' + sizes[size] + ' ' + className} {...props} />;
+    }
+
+    function Card({ className = '', children }) {
+      return (
+        <div className={'rounded-2xl bg-white/[0.03] ring-1 ring-white/10 shadow-xl shadow-black/20 ' + className}>
+          {children}
+        </div>
+      );
+    }
+
+    function Badge({ children, className = '' }) {
+      return (
+        <span className={'inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset whitespace-nowrap ' + className}>
+          {children}
+        </span>
+      );
+    }
+
+    function BoardBadge({ board }) {
+      return <Badge className={boardMeta(board).badge}>{board}</Badge>;
+    }
+
+    function Input({ label, className = '', ...props }) {
+      return (
+        <label className={'block ' + className}>
+          {label && <span className="mb-1.5 block text-xs font-medium text-slate-400">{label}</span>}
+          <input
+            className="w-full rounded-lg bg-white/5 px-3 py-2 text-sm text-slate-100 ring-1 ring-white/10 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400/60"
+            {...props}
+          />
+        </label>
+      );
+    }
+
+    function Select({ label, options, className = '', ...props }) {
+      return (
+        <label className={'block ' + className}>
+          {label && <span className="mb-1.5 block text-xs font-medium text-slate-400">{label}</span>}
+          <select
+            className="w-full appearance-none rounded-lg bg-white/5 px-3 py-2 text-sm text-slate-100 ring-1 ring-white/10 focus:outline-none focus:ring-2 focus:ring-amber-400/60"
+            {...props}
+          >
+            {options.map(o => (
+              <option key={o.value} value={o.value} className="bg-slate-900 text-slate-100">{o.label}</option>
+            ))}
+          </select>
+        </label>
+      );
+    }
+
+    function Stat({ label, value, suffix, hint, accent = 'text-amber-300' }) {
+      return (
+        <Card className="p-4 sm:p-5">
+          <p className="text-xs font-medium tracking-wide text-slate-400">{label}</p>
+          <p className={'mt-1.5 text-2xl font-bold tabular-nums sm:text-3xl ' + accent}>
+            {value}
+            {suffix && <span className="ml-1 text-sm font-medium text-slate-500">{suffix}</span>}
+          </p>
+          {hint && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
+        </Card>
+      );
+    }
+
+    function BarRow({ label, value, max, color, right, delay = 0 }) {
+      const pct = max > 0 ? (value / max) * 100 : 0;
+      return (
+        <div className="group py-1.5">
+          <div className="mb-1 flex items-baseline justify-between gap-3">
+            <span className="truncate text-sm text-slate-300">{label}</span>
+            <span className="shrink-0 text-xs tabular-nums text-slate-400">{right}</span>
+          </div>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-white/5">
+            <div
+              className="grow-x h-full rounded-full transition-opacity group-hover:opacity-80"
+              style={{ width: pct + '%', backgroundColor: color, animationDelay: delay + 'ms' }}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    function Tabs({ tabs, value, onChange }) {
+      return (
+        <div role="tablist" className="inline-flex flex-wrap gap-1 rounded-xl bg-white/5 p-1 ring-1 ring-white/10">
+          {tabs.map(t => (
+            <button
+              key={t.value}
+              role="tab"
+              aria-selected={value === t.value}
+              onClick={() => onChange(t.value)}
+              className={'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ' +
+                (value === t.value ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-slate-100')}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      );
+    }
+
+    function SectionTitle({ eyebrow, title, desc, action }) {
+      return (
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            {eyebrow && <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-400/80">{eyebrow}</p>}
+            <h2 className="mt-1 text-xl font-bold text-slate-100 sm:text-2xl">{title}</h2>
+            {desc && <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-slate-400">{desc}</p>}
+          </div>
+          {action}
+        </div>
+      );
+    }
+
+    function EmptyState({ message, hint }) {
+      return (
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 py-16 text-center">
+          <p className="text-sm font-medium text-slate-300">{message}</p>
+          {hint && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
+        </div>
+      );
+    }
+
+    // ========================================
+    // 🔀 Router (hash-based)
+    // ========================================
+    const RouterContext = createContext({ path: '/', query: {}, navigate: () => {} });
+    const useRouter = () => useContext(RouterContext);
+
+    const parseHash = () => {
+      const raw = window.location.hash.replace(/^#/, '') || '/';
+      const [path, qs] = raw.split('?');
+      const query = {};
+      new URLSearchParams(qs || '').forEach((v, k) => { query[k] = v; });
+      return { path: path || '/', query };
+    };
+
+    function Router({ children }) {
+      const [route, setRoute] = useState(parseHash);
+
+      useEffect(() => {
+        const onChange = () => { setRoute(parseHash()); window.scrollTo(0, 0); };
+        window.addEventListener('hashchange', onChange);
+        return () => window.removeEventListener('hashchange', onChange);
+      }, []);
+
+      const navigate = useCallback((to) => {
+        if (('#' + to) === window.location.hash) { setRoute(parseHash()); window.scrollTo(0, 0); }
+        else window.location.hash = to;
+      }, []);
+
+      return (
+        <RouterContext.Provider value={{ path: route.path, query: route.query, navigate }}>
+          {children}
+        </RouterContext.Provider>
+      );
+    }
+
+    function Route() { return null; }
+
+    function Routes({ children }) {
+      const { path } = useRouter();
+      const routes = React.Children.toArray(children);
+      const matched = routes.find(r => r.props.path === path) || routes.find(r => r.props.path === '*');
+      return matched ? matched.props.element : null;
+    }
+
+    function Link({ to, className = '', children, ...props }) {
+      const { path, navigate } = useRouter();
+      const active = path === to.split('?')[0];
+      return (
+        <a
+          href={'#' + to}
+          aria-current={active ? 'page' : undefined}
+          onClick={(e) => { e.preventDefault(); navigate(to); }}
+          className={className}
+          {...props}
+        >
+          {typeof children === 'function' ? children(active) : children}
+        </a>
+      );
+    }
+
+    // ========================================
+    // 🧩 Layout Components
+    // ========================================
+    const NAV = [
+      { to: '/', label: '개요' },
+      { to: '/articles', label: '전체 글' },
+      { to: '/insights', label: '랭킹 · 분석' },
+      { to: '/method', label: '수집 방법' },
+    ];
+
+    function Header() {
+      const { path } = useRouter();
+      const [open, setOpen] = useState(false);
+      useEffect(() => { setOpen(false); }, [path]);
+
+      return (
+        <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0b0f14]/85 backdrop-blur-md">
+          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
+            <Link to="/" className="flex items-center gap-2.5">
+              <span className="grid h-9 w-9 place-items-center rounded-xl bg-amber-500/15 text-lg ring-1 ring-amber-500/30">🎧</span>
+              <span className="leading-tight">
+                <span className="block text-sm font-bold text-slate-100">범스파파 아카이브</span>
+                <span className="block text-[11px] text-slate-500">모두의 오디오 카페 · {nf(TOTAL)}건</span>
+              </span>
+            </Link>
+
+            <nav className="hidden items-center gap-1 md:flex" aria-label="주요 메뉴">
+              {NAV.map(n => (
+                <Link key={n.to} to={n.to}>
+                  {(active) => (
+                    <span className={'rounded-lg px-3 py-2 text-sm font-medium transition-colors ' +
+                      (active ? 'bg-white/10 text-amber-300' : 'text-slate-400 hover:text-slate-100')}>
+                      {n.label}
+                    </span>
+                  )}
+                </Link>
+              ))}
+              <a href={CAFE.url} target="_blank" rel="noopener noreferrer"
+                 className="ml-2 rounded-lg bg-amber-500 px-3 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-amber-400">
+                카페 바로가기 ↗
+              </a>
+            </nav>
+
+            <Button variant="secondary" size="sm" className="md:hidden" onClick={() => setOpen(o => !o)}
+                    aria-expanded={open} aria-label="메뉴 토글">
+              {open ? '닫기 ✕' : '메뉴 ☰'}
+            </Button>
+          </div>
+
+          {open && (
+            <nav className="border-t border-white/10 px-4 py-2 md:hidden" aria-label="모바일 메뉴">
+              {NAV.map(n => (
+                <Link key={n.to} to={n.to}>
+                  {(active) => (
+                    <span className={'block rounded-lg px-3 py-2.5 text-sm font-medium ' +
+                      (active ? 'bg-white/10 text-amber-300' : 'text-slate-300')}>
+                      {n.label}
+                    </span>
+                  )}
+                </Link>
+              ))}
+              <a href={CAFE.url} target="_blank" rel="noopener noreferrer"
+                 className="block px-3 py-2.5 text-sm font-medium text-amber-300">카페 바로가기 ↗</a>
+            </nav>
+          )}
+        </header>
+      );
+    }
+
+    function Footer() {
+      return (
+        <footer className="mt-16 border-t border-white/10 py-8">
+          <div className="mx-auto max-w-6xl px-4 text-xs leading-relaxed text-slate-500 sm:px-6">
+            <p>
+              이 페이지는 <a href={CAFE.url} target="_blank" rel="noopener noreferrer" className="text-slate-400 underline decoration-dotted hover:text-amber-300">모두의 오디오</a> 카페에서
+              Playwright(MCP)로 수집한 <strong className="font-semibold text-slate-400">범스파파</strong> 님의 작성글 {nf(TOTAL)}건을 정리한 결과입니다.
+            </p>
+            <p className="mt-1">
+              수집일 {CAFE.collectedAt} · 원본 데이터 <code className="rounded bg-white/5 px-1.5 py-0.5 text-[11px] text-slate-400">beomspapa-articles.json</code> · 글 본문은 저장하지 않고 목록 메타데이터만 사용했습니다.
+            </p>
+          </div>
+        </footer>
+      );
+    }
+
+    function Page({ children }) {
+      return <main className="fade-up mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">{children}</main>;
+    }
+
+    // ========================================
+    // 🧱 Shared Article Views
+    // ========================================
+    function ArticleRow({ article, rank }) {
+      return (
+        <a
+          href={article.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group flex flex-col gap-2 border-b border-white/5 px-3 py-3.5 transition-colors last:border-b-0 hover:bg-white/[0.04] sm:flex-row sm:items-center sm:gap-4 sm:px-4"
+        >
+          {typeof rank === 'number' && (
+            <span className={'w-6 shrink-0 text-sm font-bold tabular-nums sm:text-center ' +
+              (rank < 3 ? 'text-amber-400' : 'text-slate-600')}>{rank + 1}</span>
+          )}
+          <span className="w-[5.5rem] shrink-0 text-xs tabular-nums text-slate-500">{article.date}</span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-medium text-slate-200 group-hover:text-amber-300">{article.title}</span>
+            <span className="mt-1.5 block sm:hidden"><BoardBadge board={article.board} /></span>
+          </span>
+          <span className="hidden w-44 shrink-0 sm:block"><BoardBadge board={article.board} /></span>
+          <span className="flex shrink-0 items-center gap-3 text-xs tabular-nums text-slate-500">
+            <span title="조회수">👁 {nf(article.views)}</span>
+            <span title="댓글수">💬 {nf(article.comments)}</span>
+            <span title="좋아요" className="hidden sm:inline">♡ {nf(article.likes)}</span>
+          </span>
+        </a>
+      );
+    }
+
+    function ArticleList({ articles, ranked = false }) {
+      if (articles.length === 0) {
+        return <EmptyState message="조건에 맞는 글이 없습니다." hint="검색어나 필터를 바꿔보세요." />;
+      }
+      return (
+        <Card className="overflow-hidden">
+          {articles.map((a, i) => (
+            <ArticleRow key={a.id} article={a} rank={ranked ? i : undefined} />
+          ))}
+        </Card>
+      );
+    }
+
+    function BoardChart({ metric = 'count' }) {
+      const rows = [...BY_BOARD].sort((x, y) => y[metric] - x[metric]);
+      const max = Math.max(...rows.map(r => r[metric]));
+      return (
+        <div>
+          {rows.map((r, i) => (
+            <BarRow
+              key={r.key}
+              label={r.key}
+              value={r[metric]}
+              max={max}
+              color={boardMeta(r.key).color}
+              delay={i * 45}
+              right={metric === 'count'
+                ? nf(r.count) + '건 · ' + ((r.count / TOTAL) * 100).toFixed(1) + '%'
+                : nf(r[metric])}
+            />
+          ))}
+        </div>
+      );
+    }
+
+    function YearChart({ onPick }) {
+      const max = Math.max(...BY_YEAR.map(y => y.count));
+      return (
+        <div className="flex h-full min-h-[14rem] items-end justify-between gap-2 sm:gap-3">
+          {[...BY_YEAR].reverse().map((y, i) => (
+            <button
+              key={y.key}
+              onClick={() => onPick && onPick(y.key)}
+              className="group flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-2 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60"
+              title={y.key + '년 ' + y.count + '건 보기'}
+            >
+              <span className="text-xs font-semibold tabular-nums text-slate-400 group-hover:text-amber-300">{y.count}</span>
+              <span
+                className="grow-y w-full rounded-t-md bg-gradient-to-t from-amber-600/40 to-amber-400 transition-opacity group-hover:opacity-75"
+                style={{ height: (y.count / max) * 100 + '%', animationDelay: i * 60 + 'ms' }}
+              />
+              <span className="text-[11px] tabular-nums text-slate-500 group-hover:text-slate-300">{y.key}</span>
+            </button>
+          ))}
+        </div>
+      );
+    }
+
+    function MonthHeatmap() {
+      const months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+      return (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[34rem] border-separate border-spacing-1 text-center">
+            <thead>
+              <tr>
+                <th className="w-12"></th>
+                {months.map(m => <th key={m} className="text-[11px] font-medium text-slate-500">{m}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {YEARS.map(y => (
+                <tr key={y}>
+                  <th className="pr-1 text-right text-[11px] font-semibold tabular-nums text-slate-500">{y}</th>
+                  {MONTH_GRID.grid[y].map((c, i) => (
+                    <td
+                      key={i}
+                      title={y + '년 ' + months[i] + ' · ' + c + '건'}
+                      className="h-7 rounded text-[11px] font-medium tabular-nums"
+                      style={{
+                        backgroundColor: c === 0 ? 'rgba(255,255,255,0.03)' : 'rgba(245,158,11,' + (0.15 + (c / MONTH_GRID.max) * 0.75) + ')',
+                        color: c === 0 ? '#334155' : (c / MONTH_GRID.max > 0.45 ? '#1c1917' : '#fcd34d'),
+                      }}
+                    >
+                      {c || ''}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+
+    // ========================================
+    // 📄 Page — 개요
+    // ========================================
+    function OverviewPage() {
+      const { navigate } = useRouter();
+      const avgViews = (TOTAL_VIEWS / TOTAL).toFixed(1);
+      const avgComments = (TOTAL_COMMENTS / TOTAL).toFixed(1);
+
+      return (
+        <>
+          <section className="hero-glow border-b border-white/5">
+            <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+              <div className="grid items-center gap-10 lg:grid-cols-[1.15fr_1fr]">
+                <div className="fade-up">
+                  <Badge className="bg-amber-500/15 text-amber-300 ring-amber-500/30">Playwright MCP 수집 · {CAFE.collectedAt}</Badge>
+                  <h1 className="mt-4 text-3xl font-extrabold leading-tight text-slate-50 sm:text-5xl">
+                    범스파파의 <span className="text-amber-400">7년치 오디오 기록</span>
+                  </h1>
+                  <p className="mt-4 max-w-xl text-sm leading-relaxed text-slate-400 sm:text-base">
+                    네이버 카페 <strong className="font-semibold text-slate-300">모두의 오디오</strong>에 남긴 글 {nf(TOTAL)}건을
+                    게시판 · 연도 · 반응별로 정리했습니다. {FIRST_DATE}부터 {LAST_DATE}까지, 앰프와 스피커를 바꿔온
+                    기록이자 한 사람의 취미 연대기입니다.
+                  </p>
+                  <div className="mt-6 flex flex-wrap gap-2">
+                    <Button size="lg" onClick={() => navigate('/articles')}>전체 글 탐색하기</Button>
+                    <Button size="lg" variant="secondary" onClick={() => navigate('/insights')}>랭킹 · 분석 보기</Button>
+                  </div>
+                  <dl className="mt-8 grid grid-cols-2 gap-x-6 gap-y-4 text-sm sm:grid-cols-4">
+                    {[
+                      ['활동 기간', FIRST_DATE.slice(0, 4) + '–' + LAST_DATE.slice(0, 4)],
+                      ['멤버 등급', CAFE.memberGrade],
+                      ['방문 횟수', CAFE.visits],
+                      ['구독 멤버', CAFE.subscribers],
+                    ].map(([k, v]) => (
+                      <div key={k}>
+                        <dt className="text-xs text-slate-500">{k}</dt>
+                        <dd className="mt-0.5 font-semibold text-slate-200">{v}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+
+                <Card className="fade-up overflow-hidden">
+                  <img src="images/01-member-profile.png" alt="범스파파 프로필 및 작성글 목록 화면 캡처"
+                       loading="lazy" className="w-full object-cover"
+                       style={{ maxHeight: '26rem', objectPosition: 'top' }} />
+                  <div className="border-t border-white/10 px-4 py-3 text-xs text-slate-500">
+                    멤버 프로필 페이지 캡처 ·{' '}
+                    <a href={CAFE.profileUrl} target="_blank" rel="noopener noreferrer"
+                       className="text-amber-400/90 underline decoration-dotted">원본 프로필 ↗</a>
+                  </div>
+                </Card>
+              </div>
+            </div>
+          </section>
+
+          <Page>
+            <section className="mb-14">
+              <SectionTitle eyebrow="Summary" title="한눈에 보는 활동"
+                desc="목록 API에서 수집한 조회 · 댓글 · 좋아요 메타데이터를 합산했습니다." />
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+                <Stat label="총 작성글" value={nf(TOTAL)} suffix="건" hint={FIRST_DATE + ' ~ ' + LAST_DATE} />
+                <Stat label="누적 조회수" value={nf(TOTAL_VIEWS)} hint={'글당 평균 ' + avgViews + '회'} accent="text-sky-300" />
+                <Stat label="누적 댓글수" value={nf(TOTAL_COMMENTS)} hint={'글당 평균 ' + avgComments + '개'} accent="text-emerald-300" />
+                <Stat label="누적 좋아요" value={nf(TOTAL_LIKES)} hint={'글당 평균 ' + (TOTAL_LIKES / TOTAL).toFixed(1) + '개'} accent="text-rose-300" />
+              </div>
+            </section>
+
+            <section className="mb-14 grid gap-6 lg:grid-cols-2">
+              <Card className="p-5 sm:p-6">
+                <SectionTitle eyebrow="Boards" title="게시판별 분포"
+                  desc="오디오 · 음악 감상기 계열이 전체의 약 60%를 차지합니다." />
+                <BoardChart />
+              </Card>
+              <Card className="flex flex-col p-5 sm:p-6">
+                <SectionTitle eyebrow="Timeline" title="연도별 활동량"
+                  desc="막대를 누르면 해당 연도의 글 목록으로 이동합니다." />
+                <div className="flex-1">
+                  <YearChart onPick={(y) => navigate('/articles?year=' + y)} />
+                </div>
+              </Card>
+            </section>
+
+            <section className="mb-14">
+              <SectionTitle eyebrow="Latest" title="최근 글"
+                action={<Button variant="secondary" size="sm" onClick={() => navigate('/articles')}>전체 보기 →</Button>} />
+              <div className="grid gap-6 lg:grid-cols-[1fr_1.15fr]">
+                <Card className="overflow-hidden">
+                  <img src="images/03-latest-article.png" alt="최신 글 본문 상단 캡처" loading="lazy" className="w-full" />
+                  <div className="p-4">
+                    <BoardBadge board="모두의 기기 리뷰" />
+                    <a href="https://cafe.naver.com/audiodio/6328" target="_blank" rel="noopener noreferrer"
+                       className="mt-2 block text-base font-semibold text-slate-100 hover:text-amber-300">
+                      [CDP대전] 포시 오디오 매락 vs 수월우 디스크드림2
+                    </a>
+                    <p className="mt-1.5 text-sm leading-relaxed text-slate-400">
+                      2026.08.29 · 중국산 휴대형 CDP 2종(수월우 디스크드림2, 포시 오디오 매락)의 사용 소감을 비교한 리뷰 글.
+                    </p>
+                  </div>
+                </Card>
+                <ArticleList articles={RECENT} />
+              </div>
+            </section>
+
+            <section>
+              <SectionTitle eyebrow="Cafe" title="카페 & 멤버 정보" />
+              <Card className="overflow-hidden">
+                <dl className="grid grid-cols-1 sm:grid-cols-2">
+                  {[
+                    ['카페 이름', CAFE.name + ' (' + CAFE.slug + ')'],
+                    ['카페 주소', <a key="u" href={CAFE.url} target="_blank" rel="noopener noreferrer" className="text-amber-400/90 underline decoration-dotted">{CAFE.url}</a>],
+                    ['개설일 / 매니저', CAFE.opened + ' / ' + CAFE.manager],
+                    ['카페 등급 · 멤버수', CAFE.grade + ' · ' + CAFE.members],
+                    ['카페 전체 게시글', CAFE.totalPosts],
+                    ['멤버 닉네임', CAFE.nickname + ' (' + CAFE.memberGrade + ', ' + CAFE.maskedId + ')'],
+                    ['cafeId', CAFE.cafeId],
+                    ['수집된 작성글', nf(TOTAL) + '건 (프로필 표기 403건 + 최신 1건)'],
+                  ].map(([k, v]) => (
+                    <div key={k} className="flex flex-col gap-1 border-b border-white/5 px-4 py-3 sm:flex-row sm:items-center sm:gap-4">
+                      <dt className="w-40 shrink-0 text-xs font-medium text-slate-500">{k}</dt>
+                      <dd className="min-w-0 break-all text-sm text-slate-200">{v}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </Card>
+            </section>
+          </Page>
+        </>
+      );
+    }
+
+    // ========================================
+    // 📄 Page — 전체 글 탐색
+    // ========================================
+    const SORTS = [
+      { value: 'date-desc', label: '최신순' },
+      { value: 'date-asc', label: '오래된순' },
+      { value: 'views-desc', label: '조회수 많은순' },
+      { value: 'comments-desc', label: '댓글 많은순' },
+      { value: 'likes-desc', label: '좋아요 많은순' },
+    ];
+    const PER_PAGE = 40;
+
+    function ArticlesPage() {
+      const { query } = useRouter();
+      const [keyword, setKeyword] = useState('');
+      const [board, setBoard] = useState('all');
+      const [year, setYear] = useState(query.year || 'all');
+      const [sort, setSort] = useState('date-desc');
+      const [page, setPage] = useState(1);
+
+      // 해시 쿼리(?year=2023)로 진입하면 연도 필터를 맞춰준다
+      useEffect(() => { setYear(query.year || 'all'); setPage(1); }, [query.year]);
+      useEffect(() => { setPage(1); }, [keyword, board, year, sort]);
+
+      const filtered = useMemo(() => {
+        const kw = keyword.trim().toLowerCase();
+        const [key, dir] = sort.split('-');
+        return ARTICLES
+          .filter(a => (board === 'all' || a.board === board))
+          .filter(a => (year === 'all' || a.date.startsWith(year)))
+          .filter(a => (!kw || a.title.toLowerCase().includes(kw)))
+          .sort((x, y) => {
+            if (key === 'date') return dir === 'desc' ? y.date.localeCompare(x.date) : x.date.localeCompare(y.date);
+            return y[key] - x[key] || y.date.localeCompare(x.date);
+          });
+      }, [keyword, board, year, sort]);
+
+      const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+      const current = Math.min(page, totalPages);
+      const pageItems = filtered.slice((current - 1) * PER_PAGE, current * PER_PAGE);
+      const filteredViews = sumBy(filtered, 'views');
+      const filteredComments = sumBy(filtered, 'comments');
+      const isFiltered = keyword.trim() || board !== 'all' || year !== 'all';
+
+      const reset = () => { setKeyword(''); setBoard('all'); setYear('all'); setSort('date-desc'); };
+
+      const pageNumbers = useMemo(() => {
+        const around = 2;
+        const set = new Set([1, totalPages]);
+        for (let i = current - around; i <= current + around; i++) if (i >= 1 && i <= totalPages) set.add(i);
+        return [...set].sort((a, b) => a - b);
+      }, [current, totalPages]);
+
+      return (
+        <Page>
+          <SectionTitle
+            eyebrow="Explorer"
+            title={'전체 글 ' + nf(TOTAL) + '건 탐색'}
+            desc="제목 검색과 게시판 · 연도 필터, 정렬을 조합해 원하는 글을 찾을 수 있습니다. 글 제목을 누르면 네이버 카페 원문이 새 탭에서 열립니다."
+          />
+
+          <Card className="mb-6 p-4 sm:p-5">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <Input
+                label="제목 검색"
+                type="search"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                placeholder="예: 튜너, 바흐, 이사"
+                className="lg:col-span-1"
+              />
+              <Select
+                label="게시판"
+                value={board}
+                onChange={(e) => setBoard(e.target.value)}
+                options={[{ value: 'all', label: '전체 게시판' }, ...BOARDS.map(b => ({ value: b, label: b }))]}
+              />
+              <Select
+                label="연도"
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+                options={[{ value: 'all', label: '전체 기간' }, ...YEARS.map(y => ({ value: y, label: y + '년' }))]}
+              />
+              <Select label="정렬" value={sort} onChange={(e) => setSort(e.target.value)} options={SORTS} />
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-white/5 pt-4">
+              <p className="text-sm text-slate-400">
+                <strong className="font-semibold text-amber-300">{nf(filtered.length)}건</strong>
+                <span className="text-slate-600"> / {nf(TOTAL)}건</span>
+                <span className="ml-3 text-xs text-slate-500">조회 {nf(filteredViews)} · 댓글 {nf(filteredComments)}</span>
+              </p>
+              {isFiltered && <Button variant="ghost" size="sm" onClick={reset}>필터 초기화 ✕</Button>}
+            </div>
+          </Card>
+
+          <ArticleList articles={pageItems} />
+
+          {totalPages > 1 && (
+            <nav className="mt-6 flex flex-wrap items-center justify-center gap-1.5" aria-label="페이지네이션">
+              <Button variant="secondary" size="sm" disabled={current === 1} onClick={() => setPage(current - 1)}>← 이전</Button>
+              {pageNumbers.map((p, i) => (
+                <React.Fragment key={p}>
+                  {i > 0 && pageNumbers[i - 1] !== p - 1 && <span className="px-1 text-xs text-slate-600">…</span>}
+                  <button
+                    onClick={() => setPage(p)}
+                    aria-current={p === current ? 'page' : undefined}
+                    className={'h-8 min-w-[2rem] rounded-lg px-2 text-xs font-semibold tabular-nums transition-colors ' +
+                      (p === current ? 'bg-amber-500 text-slate-950' : 'bg-white/5 text-slate-400 ring-1 ring-white/10 hover:text-slate-100')}
+                  >
+                    {p}
+                  </button>
+                </React.Fragment>
+              ))}
+              <Button variant="secondary" size="sm" disabled={current === totalPages} onClick={() => setPage(current + 1)}>다음 →</Button>
+            </nav>
+          )}
+        </Page>
+      );
+    }
+
+    // ========================================
+    // 📄 Page — 랭킹 · 분석
+    // ========================================
+    const RANK_TABS = [
+      { value: 'views', label: '조회수 TOP 20' },
+      { value: 'comments', label: '댓글수 TOP 20' },
+      { value: 'likes', label: '좋아요 TOP 20' },
+    ];
+
+    function InsightsPage() {
+      const { navigate } = useRouter();
+      const [rank, setRank] = useState('views');
+      const [boardMetric, setBoardMetric] = useState('count');
+
+      const ranked = rank === 'views' ? TOP_VIEWS : rank === 'comments' ? TOP_COMMENTS : TOP_LIKES;
+      const busiestYear = [...BY_YEAR].sort((x, y) => y.count - x.count)[0];
+      const topBoard = BY_BOARD[0];
+      const bestViewed = TOP_VIEWS[0];
+      const mostTalked = TOP_COMMENTS[0];
+
+      return (
+        <Page>
+          <SectionTitle
+            eyebrow="Insights"
+            title="랭킹과 활동 패턴"
+            desc="어떤 글이 가장 많이 읽혔고, 어느 시기에 가장 활발했는지 살펴봅니다."
+          />
+
+          <div className="mb-12 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+            <Stat label="가장 활발했던 해" value={busiestYear.key} suffix="년" hint={busiestYear.count + '건 작성'} />
+            <Stat label="주력 게시판" value={topBoard.key.replace('모두의 ', '')} hint={topBoard.count + '건 · ' + ((topBoard.count / TOTAL) * 100).toFixed(1) + '%'} accent="text-sky-300" />
+            <Stat label="최고 조회 글" value={nf(bestViewed.views)} suffix="회" hint={bestViewed.title} accent="text-emerald-300" />
+            <Stat label="최다 댓글 글" value={nf(mostTalked.comments)} suffix="개" hint={mostTalked.title} accent="text-rose-300" />
+          </div>
+
+          <section className="mb-12">
+            <SectionTitle eyebrow="Ranking" title="반응이 좋았던 글"
+              action={<Tabs tabs={RANK_TABS} value={rank} onChange={setRank} />} />
+            <ArticleList articles={ranked} ranked />
+          </section>
+
+          <section className="mb-12 grid gap-6 lg:grid-cols-2">
+            <Card className="p-5 sm:p-6">
+              <SectionTitle
+                eyebrow="Boards"
+                title="게시판별 비교"
+                desc="글 수뿐 아니라 조회 · 댓글 총량으로도 비교해 보세요."
+                action={
+                  <Tabs
+                    tabs={[
+                      { value: 'count', label: '글 수' },
+                      { value: 'views', label: '조회' },
+                      { value: 'comments', label: '댓글' },
+                    ]}
+                    value={boardMetric}
+                    onChange={setBoardMetric}
+                  />
+                }
+              />
+              <BoardChart metric={boardMetric} />
+            </Card>
+
+            <Card className="flex flex-col p-5 sm:p-6">
+              <SectionTitle eyebrow="Timeline" title="연도별 활동량" desc="막대를 누르면 해당 연도 글 목록으로 이동합니다." />
+              <div className="flex-1">
+                <YearChart onPick={(y) => navigate('/articles?year=' + y)} />
+              </div>
+            </Card>
+          </section>
+
+          <section className="mb-12">
+            <SectionTitle eyebrow="Heatmap" title="월별 활동 히트맵"
+              desc="색이 진할수록 그 달에 글이 많았습니다. 이사와 기기 교체가 잦았던 시기에 글도 몰려 있습니다." />
+            <Card className="p-4 sm:p-6">
+              <MonthHeatmap />
+            </Card>
+          </section>
+
+          <section>
+            <SectionTitle eyebrow="Boards" title="게시판 상세 지표" />
+            <Card className="overflow-x-auto">
+              <table className="w-full min-w-[36rem] text-sm">
+                <thead>
+                  <tr className="border-b border-white/10 text-xs text-slate-500">
+                    <th className="px-4 py-3 text-left font-medium">게시판</th>
+                    <th className="px-4 py-3 text-right font-medium">글 수</th>
+                    <th className="px-4 py-3 text-right font-medium">비중</th>
+                    <th className="px-4 py-3 text-right font-medium">조회 합계</th>
+                    <th className="px-4 py-3 text-right font-medium">평균 조회</th>
+                    <th className="px-4 py-3 text-right font-medium">평균 댓글</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {BY_BOARD.map(b => (
+                    <tr key={b.key} className="border-b border-white/5 last:border-b-0 hover:bg-white/[0.03]">
+                      <td className="px-4 py-3"><BoardBadge board={b.key} /></td>
+                      <td className="px-4 py-3 text-right tabular-nums text-slate-200">{nf(b.count)}</td>
+                      <td className="px-4 py-3 text-right tabular-nums text-slate-500">{((b.count / TOTAL) * 100).toFixed(1)}%</td>
+                      <td className="px-4 py-3 text-right tabular-nums text-slate-300">{nf(b.views)}</td>
+                      <td className="px-4 py-3 text-right tabular-nums text-slate-300">{(b.views / b.count).toFixed(1)}</td>
+                      <td className="px-4 py-3 text-right tabular-nums text-slate-300">{(b.comments / b.count).toFixed(1)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Card>
+          </section>
+        </Page>
+      );
+    }
+
+    // ========================================
+    // 📄 Page — 수집 방법
+    // ========================================
+    function CodeBlock({ children }) {
+      return (
+        <pre className="mt-3 overflow-x-auto rounded-xl bg-black/40 p-4 text-[12px] leading-relaxed text-slate-300 ring-1 ring-white/10">
+          <code>{children}</code>
+        </pre>
+      );
+    }
+
+    function Step({ n, title, children }) {
+      return (
+        <li className="relative pl-11">
+          <span className="absolute left-0 top-0 grid h-8 w-8 place-items-center rounded-full bg-amber-500/15 text-sm font-bold text-amber-300 ring-1 ring-amber-500/30">{n}</span>
+          <h3 className="pt-1 text-sm font-semibold text-slate-100">{title}</h3>
+          <div className="mt-1.5 text-sm leading-relaxed text-slate-400">{children}</div>
+        </li>
+      );
+    }
+
+    function MethodPage() {
+      const outputs = [
+        ['beomspapa-articles.json', '전체 404건 원본 데이터 (id, date, board, title, comments, views, likes, url)'],
+        ['범스파파-작성글-정리.md', '마크다운 정리본 — 표와 전체 목록'],
+        ['index.html', '이 웹사이트 (단일 파일, 데이터 내장)'],
+        ['images/01-member-profile.png', '범스파파 프로필 + 작성글 목록 1페이지'],
+        ['images/02-cafe-home.png', '모두의 오디오 카페 메인'],
+        ['images/03-latest-article.png', '최신 글 본문 상단'],
+      ];
+
+      return (
+        <Page>
+          <SectionTitle
+            eyebrow="Method"
+            title="Playwright MCP로 수집한 과정"
+            desc="닉네임 검색은 막혀 있었기 때문에, memberKey를 얻어 멤버 작성글 API를 직접 호출하는 방식이 가장 확실했습니다."
+          />
+
+          <div className="grid gap-6 lg:grid-cols-[1.3fr_1fr]">
+            <Card className="p-5 sm:p-7">
+              <ol className="space-y-7">
+                <Step n="1" title="카페 접속 및 로그인">
+                  <code className="rounded bg-white/5 px-1.5 py-0.5 text-xs text-slate-300">browser_navigate</code>로 <span className="text-slate-300">cafe.naver.com</span>에 접속합니다.
+                  비로그인 상태면 <span className="text-slate-300">nid.naver.com</span> 로그인 페이지로 리다이렉트되므로 <strong className="text-slate-200">사용자가 직접 로그인</strong>해야 합니다.
+                </Step>
+                <Step n="2" title="cafeId 확인">
+                  카페 메인(<span className="text-slate-300">/audiodio</span>)에서 <code className="rounded bg-white/5 px-1.5 py-0.5 text-xs text-slate-300">window.g_sClubId</code>를 읽어
+                  cafeId = <strong className="text-amber-300">29796463</strong>를 얻습니다.
+                </Step>
+                <Step n="3" title="memberKey 획득">
+                  범스파파가 쓴 글 하나(articleId 6328)의 상세 API를 호출해 작성자 키를 뽑아냅니다.
+                  <CodeBlock>{'GET https://apis.naver.com/cafe-web/cafe-articleapi/v2.1\n    /cafes/29796463/articles/6328\n\n→ result.article.writer.memberKey\n  = m2aZj4sxCuS3IIgKXkqKiW6l0Itb5vJkS9PfzrlH6N0'}</CodeBlock>
+                </Step>
+                <Step n="4" title="목록 API 특정">
+                  멤버 프로필 페이지로 이동한 뒤 <code className="rounded bg-white/5 px-1.5 py-0.5 text-xs text-slate-300">browser_network_requests</code>로
+                  작성글 목록이 실제로 호출하는 내부 API를 찾습니다.
+                  <CodeBlock>{'GET https://apis.naver.com/cafe-web/cafe-mobile\n    /CafeMemberNetworkArticleListV3\n  ?search.cafeId=29796463\n  &search.memberKey=<memberKey>\n  &search.perPage=50\n  &search.page=<1..9>\n  &requestFrom=A'}</CodeBlock>
+                </Step>
+                <Step n="5" title="페이지네이션 수집">
+                  <code className="rounded bg-white/5 px-1.5 py-0.5 text-xs text-slate-300">browser_evaluate</code> 안에서 위 API를
+                  <code className="mx-1 rounded bg-white/5 px-1.5 py-0.5 text-xs text-slate-300">credentials: 'include'</code>로 9페이지까지 호출해
+                  <strong className="text-slate-200"> 404건</strong>을 모으고 JSON으로 저장했습니다.
+                </Step>
+              </ol>
+            </Card>
+
+            <div className="space-y-6">
+              <Card className="p-5 sm:p-6">
+                <h3 className="text-sm font-semibold text-rose-300">시도했지만 안 된 방법</h3>
+                <ul className="mt-3 space-y-3 text-sm leading-relaxed text-slate-400">
+                  <li className="flex gap-2">
+                    <span className="text-rose-400/70">✕</span>
+                    <span><code className="text-[12px] text-slate-300">/f-e/cafes/&lt;cafeId&gt;/articles/search?q=…</code> — 카페 메인으로 리다이렉트</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-rose-400/70">✕</span>
+                    <span><code className="text-[12px] text-slate-300">ArticleSearchList.nhn</code> 직접 접근 — iframe 밖에서 열면 빈 문서 반환</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-rose-400/70">✕</span>
+                    <span><code className="text-[12px] text-slate-300">cafe-search-api/v3/…/articles</code> — 404 (경로 변경 추정)</span>
+                  </li>
+                </ul>
+                <p className="mt-4 rounded-lg bg-amber-500/10 p-3 text-xs leading-relaxed text-amber-200/90 ring-1 ring-amber-500/20">
+                  결론: 닉네임으로 검색하는 것보다 <strong>memberKey를 얻어 멤버 작성글 API를 쓰는 편</strong>이 확실합니다.
+                </p>
+              </Card>
+
+              <Card className="overflow-hidden">
+                <h3 className="border-b border-white/10 px-5 py-4 text-sm font-semibold text-slate-100">산출물</h3>
+                <ul className="divide-y divide-white/5">
+                  {outputs.map(([file, desc]) => (
+                    <li key={file} className="px-5 py-3">
+                      <code className="text-[12px] font-semibold text-amber-300/90">{file}</code>
+                      <p className="mt-1 text-xs leading-relaxed text-slate-400">{desc}</p>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            </div>
+          </div>
+
+          <section className="mt-12">
+            <SectionTitle eyebrow="Captures" title="수집 화면 캡처" />
+            <div className="grid gap-4 sm:grid-cols-3">
+              {[
+                ['images/01-member-profile.png', '멤버 프로필 + 작성글 목록'],
+                ['images/02-cafe-home.png', '모두의 오디오 카페 메인'],
+                ['images/03-latest-article.png', '최신 글 본문 상단'],
+              ].map(([src, caption]) => (
+                <a key={src} href={src} target="_blank" rel="noopener noreferrer" className="group">
+                  <Card className="overflow-hidden transition-transform group-hover:-translate-y-0.5">
+                    <img src={src} alt={caption} loading="lazy" className="h-44 w-full object-cover" style={{ objectPosition: 'top' }} />
+                    <p className="px-4 py-3 text-xs text-slate-400 group-hover:text-amber-300">{caption} ↗</p>
+                  </Card>
+                </a>
+              ))}
+            </div>
+          </section>
+        </Page>
+      );
+    }
+
+    // ========================================
+    // 📄 Page — 404
+    // ========================================
+    function NotFoundPage() {
+      const { navigate } = useRouter();
+      return (
+        <Page>
+          <div className="py-20 text-center">
+            <p className="text-5xl">🎚️</p>
+            <h2 className="mt-4 text-2xl font-bold text-slate-100">주파수를 못 찾았습니다</h2>
+            <p className="mt-2 text-sm text-slate-400">요청하신 페이지가 없습니다.</p>
+            <Button className="mt-6" onClick={() => navigate('/')}>개요로 돌아가기</Button>
+          </div>
+        </Page>
+      );
+    }
+
+    // ========================================
+    // 🚀 App
+    // ========================================
+    function App() {
+      return (
+        <Router>
+          <div className="flex min-h-screen flex-col">
+            <Header />
+            <div className="flex-1">
+              <Routes>
+                <Route path="/" element={<OverviewPage />} />
+                <Route path="/articles" element={<ArticlesPage />} />
+                <Route path="/insights" element={<InsightsPage />} />
+                <Route path="/method" element={<MethodPage />} />
+                <Route path="*" element={<NotFoundPage />} />
+              </Routes>
+            </div>
+            <Footer />
+          </div>
+        </Router>
+      );
+    }
+
+    // ========================================
+    // Rendering
+    // ========================================
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

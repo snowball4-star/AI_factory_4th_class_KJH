@@ -1,0 +1,2717 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>우리동네 맛집 TOP 5 · 카카오맵 리뷰 순위</title>
+
+  <!-- ⚠️ 모든 CDN 은 버전 고정. 미고정 시 @babel/standalone 이 8.x 로 올라가
+       type="text/babel" 인라인 변환이 통째로 깨진다. Babel 은 반드시 7.x. -->
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.25.9/babel.min.js"></script>
+
+  <style>
+    /* Tailwind 유틸리티로 표현하기 어려운 애니메이션/스크롤바만 커스텀 */
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .rise-in { animation: riseIn .38s cubic-bezier(.22,.8,.3,1) both; }
+
+    @keyframes barGrow {
+      from { transform: scaleX(0); }
+      to   { transform: scaleX(1); }
+    }
+    .bar-grow { transform-origin: left center; animation: barGrow .7s cubic-bezier(.22,.8,.3,1) both; }
+
+    .suggest-scroll::-webkit-scrollbar { width: 8px; }
+    .suggest-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .rise-in, .bar-grow { animation: none; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased">
+  <div id="root"></div>
+
+  <script type="text/babel">
+const { useState, useMemo, useRef, useEffect, useCallback } = React;
+
+// ========================================
+// 📦 DATA — Playwright 로 카카오맵에서 수집한 스냅샷 (정적 내장)
+// 카카오맵에는 브라우저에서 리뷰 수를 조회할 수 있는 공개 API 가 없어서,
+// 미리 수집해 둔 데이터를 페이지 안에 그대로 내장한다.
+// ========================================
+
+const DATASET = {
+  "updatedAt": "2026-09-05",
+  "source": "카카오맵 (map.kakao.com)",
+  "regions": [
+    {
+      "dong": "대치동",
+      "gu": "강남구",
+      "aliases": [
+        "대치",
+        "은마",
+        "선릉",
+        "대치동학원가",
+        "학원가"
+      ],
+      "surveyed": 115,
+      "places": [
+        {
+          "name": "진대감 선릉점",
+          "cat": "육류,고기",
+          "rating": 4.7,
+          "ratingCnt": 268,
+          "review": 3059,
+          "addr": "서울 강남구 테헤란로70길 25 101호",
+          "jibun": "대치동 895-11",
+          "tel": "02-564-1253",
+          "url": "https://place.map.kakao.com/26565017"
+        },
+        {
+          "name": "농민백암순대 본점",
+          "cat": "국밥",
+          "rating": 4.5,
+          "ratingCnt": 857,
+          "review": 1540,
+          "addr": "서울 강남구 선릉로86길 40-4 알앤지타운 1층",
+          "jibun": "대치동 896-33",
+          "tel": "02-555-9603",
+          "url": "https://place.map.kakao.com/17163273"
+        },
+        {
+          "name": "중앙해장",
+          "cat": "해장국",
+          "rating": 4.1,
+          "ratingCnt": 808,
+          "review": 1405,
+          "addr": "서울 강남구 영동대로86길 17 육인빌딩 1층",
+          "jibun": "대치동 996-16",
+          "tel": "02-558-7905",
+          "url": "https://place.map.kakao.com/27531028"
+        },
+        {
+          "name": "셀러브리티버거",
+          "cat": "햄버거",
+          "rating": 4.1,
+          "ratingCnt": 82,
+          "review": 1383,
+          "addr": "서울 강남구 도곡로63길 25 서진빌딩 1층",
+          "jibun": "대치동 923-13",
+          "tel": "0503-7150-5183",
+          "url": "https://place.map.kakao.com/853722638"
+        },
+        {
+          "name": "신동궁감자탕뼈숯불구이 선릉직영점",
+          "cat": "감자탕",
+          "rating": 3.8,
+          "ratingCnt": 295,
+          "review": 1233,
+          "addr": "서울 강남구 선릉로86길 39 1층",
+          "jibun": "대치동 890-44",
+          "tel": "02-558-7944",
+          "url": "https://place.map.kakao.com/11356521"
+        },
+        {
+          "name": "한티옥",
+          "cat": "국밥",
+          "rating": 3.5,
+          "ratingCnt": 60,
+          "review": 1077,
+          "addr": "서울 강남구 도곡로 418 강원빌딩 1층",
+          "jibun": "대치동 1024-4",
+          "tel": "02-552-5289",
+          "url": "https://place.map.kakao.com/1466449848"
+        },
+        {
+          "name": "이가네양꼬치 선릉점",
+          "cat": "양꼬치",
+          "rating": 4,
+          "ratingCnt": 31,
+          "review": 983,
+          "addr": "서울 강남구 역삼로67길 33",
+          "jibun": "대치동 896-15",
+          "tel": "02-558-8292",
+          "url": "https://place.map.kakao.com/1387213721"
+        },
+        {
+          "name": "김태완스시 대치본점",
+          "cat": "일식",
+          "rating": 4.9,
+          "ratingCnt": 1596,
+          "review": 815,
+          "addr": "서울 강남구 선릉로64길 20 1층",
+          "jibun": "대치동 936-16",
+          "tel": "02-555-3013",
+          "url": "https://place.map.kakao.com/2077289603"
+        },
+        {
+          "name": "보노보노 삼성점",
+          "cat": "뷔페",
+          "rating": 4.1,
+          "ratingCnt": 127,
+          "review": 776,
+          "addr": "서울 강남구 테헤란로 508 해성2빌딩 지하1층",
+          "jibun": "대치동 942-10",
+          "tel": "02-3288-8080",
+          "url": "https://place.map.kakao.com/7891904"
+        },
+        {
+          "name": "뽕나무쟁이 선릉본점",
+          "cat": "족발,보쌈",
+          "rating": 4.3,
+          "ratingCnt": 358,
+          "review": 738,
+          "addr": "서울 강남구 역삼로65길 31 1층",
+          "jibun": "대치동 896-5",
+          "tel": "02-558-9279",
+          "url": "https://place.map.kakao.com/11190567"
+        }
+      ]
+    },
+    {
+      "dong": "망원동",
+      "gu": "마포구",
+      "aliases": [
+        "망원",
+        "망리단길",
+        "망원시장"
+      ],
+      "surveyed": 39,
+      "places": [
+        {
+          "name": "헤키",
+          "cat": "일식",
+          "rating": 4.5,
+          "ratingCnt": 864,
+          "review": 1299,
+          "addr": "서울 마포구 동교로9길 33 1층",
+          "jibun": "망원동 379-25",
+          "tel": "070-7773-9870",
+          "url": "https://place.map.kakao.com/1226420399"
+        },
+        {
+          "name": "어글리베이커리",
+          "cat": "제과,베이커리",
+          "rating": 3.1,
+          "ratingCnt": 377,
+          "review": 1098,
+          "addr": "서울 마포구 월드컵로13길 73 1층",
+          "jibun": "망원동 400-1",
+          "tel": "02-338-2018",
+          "url": "https://place.map.kakao.com/828640256"
+        },
+        {
+          "name": "망원동 즉석우동 전문돈까스 본점",
+          "cat": "돈까스,우동",
+          "rating": 4,
+          "ratingCnt": 540,
+          "review": 459,
+          "addr": "서울 마포구 동교로 83 1층",
+          "jibun": "망원동 386-4",
+          "tel": "02-336-1330",
+          "url": "https://place.map.kakao.com/15526158"
+        },
+        {
+          "name": "카페나하 본점",
+          "cat": "일식",
+          "rating": 4,
+          "ratingCnt": 196,
+          "review": 458,
+          "addr": "서울 마포구 희우정로16길 32 2층",
+          "jibun": "망원동 398-2",
+          "tel": "070-8834-1632",
+          "url": "https://place.map.kakao.com/401923604"
+        },
+        {
+          "name": "비캔드",
+          "cat": "피자",
+          "rating": 3.6,
+          "ratingCnt": 79,
+          "review": 452,
+          "addr": "서울 마포구 망원로10길 11-12 1-2층",
+          "jibun": "망원동 485-13",
+          "tel": "010-5691-3754",
+          "url": "https://place.map.kakao.com/1443924309"
+        },
+        {
+          "name": "이치젠",
+          "cat": "일식",
+          "rating": 3.5,
+          "ratingCnt": 284,
+          "review": 447,
+          "addr": "서울 마포구 포은로 109 1층 101호",
+          "jibun": "망원동 415-31",
+          "tel": "070-7740-0321",
+          "url": "https://place.map.kakao.com/132500108"
+        },
+        {
+          "name": "포트레이트 커피바",
+          "cat": "카페",
+          "rating": 4.3,
+          "ratingCnt": 142,
+          "review": 440,
+          "addr": "서울 마포구 포은로8길 32 1층",
+          "jibun": "망원동 414-27",
+          "tel": "010-5018-4693",
+          "url": "https://place.map.kakao.com/1291730987"
+        },
+        {
+          "name": "일등식당",
+          "cat": "해장국",
+          "rating": 4.1,
+          "ratingCnt": 230,
+          "review": 388,
+          "addr": "서울 마포구 방울내로 82 1층",
+          "jibun": "망원동 476-1",
+          "tel": "02-333-0361",
+          "url": "https://place.map.kakao.com/16050121"
+        },
+        {
+          "name": "육장",
+          "cat": "국밥",
+          "rating": 3.9,
+          "ratingCnt": 240,
+          "review": 361,
+          "addr": "서울 마포구 포은로 75 1층",
+          "jibun": "망원동 395-4",
+          "tel": "0507-1335-2707",
+          "url": "https://place.map.kakao.com/64633006"
+        },
+        {
+          "name": "청어람 망원점",
+          "cat": "곱창,막창",
+          "rating": 3.5,
+          "ratingCnt": 267,
+          "review": 313,
+          "addr": "서울 마포구 망원로 97 창은빌딩 1층",
+          "jibun": "망원동 482-3",
+          "tel": "",
+          "url": "https://place.map.kakao.com/13292214"
+        }
+      ]
+    },
+    {
+      "dong": "목동",
+      "gu": "양천구",
+      "aliases": [
+        "목동",
+        "오목교",
+        "목동역"
+      ],
+      "surveyed": 53,
+      "places": [
+        {
+          "name": "하순옥황금안동국시 목동본점",
+          "cat": "국수",
+          "rating": 4.2,
+          "ratingCnt": 48,
+          "review": 1308,
+          "addr": "서울 양천구 목동서로 213 세신비젼프라자 지하1층 101~104호",
+          "jibun": "목동 923",
+          "tel": "02-2646-2648",
+          "url": "https://place.map.kakao.com/10368971"
+        },
+        {
+          "name": "오목교곱창",
+          "cat": "곱창,막창",
+          "rating": 4.1,
+          "ratingCnt": 68,
+          "review": 915,
+          "addr": "서울 양천구 목동동로 226-13 1층",
+          "jibun": "목동 406-75",
+          "tel": "010-4216-5399",
+          "url": "https://place.map.kakao.com/1862484893"
+        },
+        {
+          "name": "현경 목동점",
+          "cat": "중국요리",
+          "rating": 2.7,
+          "ratingCnt": 71,
+          "review": 588,
+          "addr": "서울 양천구 오목로 312 제일빌딩 지하1층",
+          "jibun": "목동 405-276",
+          "tel": "02-2061-1877",
+          "url": "https://place.map.kakao.com/11199478"
+        },
+        {
+          "name": "팔각도 목동점",
+          "cat": "닭요리",
+          "rating": 3.6,
+          "ratingCnt": 69,
+          "review": 548,
+          "addr": "서울 양천구 목동동로 266-1 금강빌딩 1층",
+          "jibun": "목동 406-227",
+          "tel": "02-6053-8883",
+          "url": "https://place.map.kakao.com/1576447858"
+        },
+        {
+          "name": "순백회관 목동본점",
+          "cat": "국밥",
+          "rating": 4.6,
+          "ratingCnt": 33,
+          "review": 497,
+          "addr": "서울 양천구 오목로 337-20 1-2층",
+          "jibun": "목동 406-228",
+          "tel": "02-2646-4885",
+          "url": "https://place.map.kakao.com/1199092795"
+        },
+        {
+          "name": "정돈 현대백화점 목동점",
+          "cat": "돈까스,우동",
+          "rating": 4.1,
+          "ratingCnt": 54,
+          "review": 376,
+          "addr": "서울 양천구 목동동로 257 지하 2층",
+          "jibun": "목동 916",
+          "tel": "02-2163-2088",
+          "url": "https://place.map.kakao.com/420485128"
+        },
+        {
+          "name": "뭉텅 오목교점",
+          "cat": "육류,고기",
+          "rating": 4.8,
+          "ratingCnt": 32,
+          "review": 365,
+          "addr": "서울 양천구 오목로 339 1층",
+          "jibun": "목동 406-34",
+          "tel": "02-2644-7770",
+          "url": "https://place.map.kakao.com/1435582513"
+        },
+        {
+          "name": "대포동쪽갈비",
+          "cat": "갈비",
+          "rating": 4.5,
+          "ratingCnt": 59,
+          "review": 351,
+          "addr": "서울 양천구 오목로 337-15 1층",
+          "jibun": "목동 406-216",
+          "tel": "02-2655-2771",
+          "url": "https://place.map.kakao.com/126457156"
+        },
+        {
+          "name": "불로부터 목동본점",
+          "cat": "육류,고기",
+          "rating": 4.8,
+          "ratingCnt": 18,
+          "review": 340,
+          "addr": "서울 양천구 목동동로 256 1층",
+          "jibun": "목동 406-223",
+          "tel": "010-5901-7012",
+          "url": "https://place.map.kakao.com/924043954"
+        },
+        {
+          "name": "양천뼈다귀 본점",
+          "cat": "해장국",
+          "rating": 3.6,
+          "ratingCnt": 138,
+          "review": 278,
+          "addr": "서울 양천구 목동동로 258 1층",
+          "jibun": "목동 934",
+          "tel": "02-2642-4334",
+          "url": "https://place.map.kakao.com/10578508"
+        }
+      ]
+    },
+    {
+      "dong": "방배동",
+      "gu": "서초구",
+      "aliases": [
+        "방배",
+        "내방",
+        "방배역",
+        "사당"
+      ],
+      "surveyed": 59,
+      "places": [
+        {
+          "name": "선화의고기 방배본점",
+          "cat": "육류,고기",
+          "rating": 4.7,
+          "ratingCnt": 287,
+          "review": 835,
+          "addr": "서울 서초구 서초대로24길 9 1층",
+          "jibun": "방배동 936-4",
+          "tel": "02-3486-5505",
+          "url": "https://place.map.kakao.com/1090301830"
+        },
+        {
+          "name": "김태완스시 방배본점",
+          "cat": "초밥,롤",
+          "rating": 4.7,
+          "ratingCnt": 528,
+          "review": 764,
+          "addr": "서울 서초구 효령로31길 21 평안빌딩 1층",
+          "jibun": "방배동 911-19",
+          "tel": "0503-7152-7812",
+          "url": "https://place.map.kakao.com/501745730"
+        },
+        {
+          "name": "안사부 내방역점",
+          "cat": "중국요리",
+          "rating": 3,
+          "ratingCnt": 30,
+          "review": 675,
+          "addr": "서울 서초구 방배로 167",
+          "jibun": "방배동 874-15",
+          "tel": "02-532-4966",
+          "url": "https://place.map.kakao.com/63377180"
+        },
+        {
+          "name": "중화요리청빈",
+          "cat": "중국요리",
+          "rating": 4.6,
+          "ratingCnt": 10,
+          "review": 577,
+          "addr": "서울 서초구 서초대로24길 38 지하1층",
+          "jibun": "방배동 935-12",
+          "tel": "02-597-7277",
+          "url": "https://place.map.kakao.com/1261386253"
+        },
+        {
+          "name": "핏제리아오 방배역점",
+          "cat": "이탈리안",
+          "rating": 4.5,
+          "ratingCnt": 31,
+          "review": 512,
+          "addr": "서울 서초구 방배로13길 28 한울서리풀베아체 1층 101호",
+          "jibun": "방배동 922-15",
+          "tel": "02-521-3589",
+          "url": "https://place.map.kakao.com/1692997303"
+        },
+        {
+          "name": "까르니브라질그릴",
+          "cat": "멕시칸,브라질",
+          "rating": 4.3,
+          "ratingCnt": 137,
+          "review": 324,
+          "addr": "서울 서초구 방배로 83-9 동화빌딩 5층",
+          "jibun": "방배동 909-4",
+          "tel": "02-598-5066",
+          "url": "https://place.map.kakao.com/27099185"
+        },
+        {
+          "name": "호왕 서래본점",
+          "cat": "육류,고기",
+          "rating": 4.7,
+          "ratingCnt": 231,
+          "review": 316,
+          "addr": "서울 서초구 서초대로 91 1-2층",
+          "jibun": "방배동 872-7",
+          "tel": "010-9514-8586",
+          "url": "https://place.map.kakao.com/26992331"
+        },
+        {
+          "name": "우동 키누",
+          "cat": "돈까스,우동",
+          "rating": 4.1,
+          "ratingCnt": 31,
+          "review": 242,
+          "addr": "서울 서초구 방배로28길 16 1층",
+          "jibun": "방배동 850-1",
+          "tel": "0507-1329-5980",
+          "url": "https://place.map.kakao.com/1620593515"
+        },
+        {
+          "name": "주",
+          "cat": "중국요리",
+          "rating": 3.9,
+          "ratingCnt": 197,
+          "review": 187,
+          "addr": "서울 서초구 동광로19길 16 1층",
+          "jibun": "방배동 795-5",
+          "tel": "02-3482-3374",
+          "url": "https://place.map.kakao.com/11831509"
+        },
+        {
+          "name": "찰싹 방배본점",
+          "cat": "삼겹살",
+          "rating": 5,
+          "ratingCnt": 4,
+          "review": 174,
+          "addr": "서울 서초구 효령로31길 10 나이스빌 1층 찰싹",
+          "jibun": "방배동 909-11",
+          "tel": "02-588-9597",
+          "url": "https://place.map.kakao.com/1901129458"
+        }
+      ]
+    },
+    {
+      "dong": "방이동",
+      "gu": "송파구",
+      "aliases": [
+        "방이",
+        "방이역",
+        "방이동먹자골목",
+        "먹자골목",
+        "올림픽공원",
+        "몽촌토성"
+      ],
+      "surveyed": 30,
+      "places": [
+        {
+          "name": "조조모모",
+          "cat": "한식",
+          "rating": 4.5,
+          "ratingCnt": 39,
+          "review": 891,
+          "addr": "서울 송파구 오금로11길 16 지하1층",
+          "jibun": "방이동 64-5",
+          "tel": "070-8800-0229",
+          "url": "https://place.map.kakao.com/171171267"
+        },
+        {
+          "name": "표현식당 방이점",
+          "cat": "육류,고기",
+          "rating": 3.7,
+          "ratingCnt": 29,
+          "review": 799,
+          "addr": "서울 송파구 올림픽로32길 18-22 1층",
+          "jibun": "방이동 64-9",
+          "tel": "",
+          "url": "https://place.map.kakao.com/940502762"
+        },
+        {
+          "name": "홈수끼 방이본점",
+          "cat": "샤브샤브",
+          "rating": 4.1,
+          "ratingCnt": 131,
+          "review": 474,
+          "addr": "서울 송파구 위례성대로 134 한스빌딩",
+          "jibun": "방이동 183-6",
+          "tel": "02-417-4124",
+          "url": "https://place.map.kakao.com/10969285"
+        },
+        {
+          "name": "대취",
+          "cat": "한식",
+          "rating": 4.6,
+          "ratingCnt": 19,
+          "review": 465,
+          "addr": "서울 송파구 올림픽로32길 22-14 ING빌딩 2층",
+          "jibun": "방이동 63-15",
+          "tel": "",
+          "url": "https://place.map.kakao.com/2004852968"
+        },
+        {
+          "name": "안목 잠실점",
+          "cat": "국밥",
+          "rating": 4.8,
+          "ratingCnt": 380,
+          "review": 450,
+          "addr": "서울 송파구 오금로 105 덕림빌딩 1층",
+          "jibun": "방이동 66",
+          "tel": "",
+          "url": "https://place.map.kakao.com/189736915"
+        },
+        {
+          "name": "방이샤브샤브칼국수 방이본점",
+          "cat": "샤브샤브",
+          "rating": 4.5,
+          "ratingCnt": 241,
+          "review": 428,
+          "addr": "서울 송파구 양재대로71길 2-27 인택파크랜드 1층",
+          "jibun": "방이동 185",
+          "tel": "02-423-3450",
+          "url": "https://place.map.kakao.com/16790592"
+        },
+        {
+          "name": "조개진",
+          "cat": "조개",
+          "rating": 4.8,
+          "ratingCnt": 75,
+          "review": 405,
+          "addr": "서울 송파구 오금로11길 10 한라빌딩 2층 201호",
+          "jibun": "방이동 64-8",
+          "tel": "0502-5550-8210",
+          "url": "https://place.map.kakao.com/215998570"
+        },
+        {
+          "name": "당산오돌 방이점",
+          "cat": "육류,고기",
+          "rating": 4.4,
+          "ratingCnt": 25,
+          "review": 349,
+          "addr": "서울 송파구 양재대로71길 2-7 1층",
+          "jibun": "방이동 185-7",
+          "tel": "02-420-7770",
+          "url": "https://place.map.kakao.com/2070021127"
+        },
+        {
+          "name": "방이수산 잠실방이점",
+          "cat": "회",
+          "rating": 3.4,
+          "ratingCnt": 28,
+          "review": 327,
+          "addr": "서울 송파구 올림픽로32길 30 하나빌딩 1층",
+          "jibun": "방이동 69-5",
+          "tel": "",
+          "url": "https://place.map.kakao.com/1598901385"
+        },
+        {
+          "name": "이카리",
+          "cat": "한식",
+          "rating": 4.4,
+          "ratingCnt": 17,
+          "review": 312,
+          "addr": "서울 송파구 오금로13길 15 은정빌라 지층",
+          "jibun": "방이동 62-7",
+          "tel": "010-4824-0660",
+          "url": "https://place.map.kakao.com/1667801318"
+        }
+      ]
+    },
+    {
+      "dong": "삼성동",
+      "gu": "강남구",
+      "aliases": [
+        "삼성",
+        "코엑스",
+        "삼성역",
+        "봉은사"
+      ],
+      "surveyed": 31,
+      "places": [
+        {
+          "name": "동어동락 삼성본점",
+          "cat": "회",
+          "rating": 4.8,
+          "ratingCnt": 330,
+          "review": 1642,
+          "addr": "서울 강남구 삼성로96길 7 1층",
+          "jibun": "삼성동 156-7",
+          "tel": "02-552-5569",
+          "url": "https://place.map.kakao.com/1751054299"
+        },
+        {
+          "name": "하이디라오 COEX점",
+          "cat": "중국요리",
+          "rating": 3.7,
+          "ratingCnt": 135,
+          "review": 1189,
+          "addr": "서울 강남구 테헤란로87길 58 컨벤션별관 지하2층 2A09호",
+          "jibun": "삼성동 159",
+          "tel": "02-562-1005",
+          "url": "https://place.map.kakao.com/576159166"
+        },
+        {
+          "name": "딤딤섬 파르나스몰점",
+          "cat": "중국요리",
+          "rating": 3.7,
+          "ratingCnt": 252,
+          "review": 1045,
+          "addr": "서울 강남구 테헤란로 521 파르나스타워 지하1층 F-2A호",
+          "jibun": "삼성동 159-8",
+          "tel": "02-3453-3999",
+          "url": "https://place.map.kakao.com/20435029"
+        },
+        {
+          "name": "그랜드인터컨티넨탈 서울파르나스 그랜드키친",
+          "cat": "뷔페",
+          "rating": 4.2,
+          "ratingCnt": 98,
+          "review": 796,
+          "addr": "서울 강남구 테헤란로 521 1층",
+          "jibun": "삼성동 159-8",
+          "tel": "02-559-7575",
+          "url": "https://place.map.kakao.com/8214517"
+        },
+        {
+          "name": "팀호완 삼성점",
+          "cat": "중식",
+          "rating": 3.4,
+          "ratingCnt": 336,
+          "review": 767,
+          "addr": "서울 강남구 봉은사로86길 30 1층",
+          "jibun": "삼성동 148-15",
+          "tel": "0507-1374-3082",
+          "url": "https://place.map.kakao.com/1770731230"
+        },
+        {
+          "name": "허머스키친 삼성점",
+          "cat": "아시아음식",
+          "rating": 4,
+          "ratingCnt": 220,
+          "review": 585,
+          "addr": "서울 강남구 테헤란로 521 파르나스몰 지하1층 F-26호",
+          "jibun": "삼성동 159-8",
+          "tel": "02-3453-6811",
+          "url": "https://place.map.kakao.com/2022806150"
+        },
+        {
+          "name": "동어 동락 삼성2호점",
+          "cat": "해물,생선",
+          "rating": 4.9,
+          "ratingCnt": 336,
+          "review": 511,
+          "addr": "서울 강남구 삼성로92길 27 1층",
+          "jibun": "삼성동 158-14",
+          "tel": "0502-5551-8521",
+          "url": "https://place.map.kakao.com/1883427320"
+        },
+        {
+          "name": "이대성의진면목",
+          "cat": "한식",
+          "rating": 4.1,
+          "ratingCnt": 147,
+          "review": 466,
+          "addr": "서울 강남구 삼성로100길 23-3 1층",
+          "jibun": "삼성동 153-64",
+          "tel": "02-569-7577",
+          "url": "https://place.map.kakao.com/1198484281"
+        },
+        {
+          "name": "수다 삼성2호점",
+          "cat": "일본식주점",
+          "rating": 4.3,
+          "ratingCnt": 140,
+          "review": 457,
+          "addr": "서울 강남구 삼성로100길 23-13",
+          "jibun": "삼성동 153-5",
+          "tel": "02-595-3584",
+          "url": "https://place.map.kakao.com/1211307526"
+        },
+        {
+          "name": "수다 삼성1호점",
+          "cat": "일본식주점",
+          "rating": 4.6,
+          "ratingCnt": 230,
+          "review": 455,
+          "addr": "서울 강남구 테헤란로87길 53 1층",
+          "jibun": "삼성동 153-34",
+          "tel": "02-596-3584",
+          "url": "https://place.map.kakao.com/14480921"
+        }
+      ]
+    },
+    {
+      "dong": "서교동",
+      "gu": "마포구",
+      "aliases": [
+        "홍대",
+        "홍대입구",
+        "홍익대",
+        "홍대앞"
+      ],
+      "surveyed": 25,
+      "places": [
+        {
+          "name": "우와 홍대본점",
+          "cat": "일식",
+          "rating": 3.4,
+          "ratingCnt": 230,
+          "review": 1460,
+          "addr": "서울 마포구 와우산로21길 21-16 2층 202호",
+          "jibun": "서교동 364-10",
+          "tel": "0507-1414-9500",
+          "url": "https://place.map.kakao.com/400281849"
+        },
+        {
+          "name": "고기꾼김춘배 홍대본점",
+          "cat": "육류,고기",
+          "rating": 4,
+          "ratingCnt": 58,
+          "review": 1108,
+          "addr": "서울 마포구 홍익로3길 36 3-4층",
+          "jibun": "서교동 369-44",
+          "tel": "070-7779-5658",
+          "url": "https://place.map.kakao.com/27197478"
+        },
+        {
+          "name": "담택 본점",
+          "cat": "일본식라면",
+          "rating": 4.4,
+          "ratingCnt": 663,
+          "review": 1108,
+          "addr": "서울 마포구 동교로12안길 51 1층",
+          "jibun": "서교동 481-15",
+          "tel": "",
+          "url": "https://place.map.kakao.com/1534943798"
+        },
+        {
+          "name": "진진",
+          "cat": "중식",
+          "rating": 3.7,
+          "ratingCnt": 162,
+          "review": 615,
+          "addr": "서울 마포구 월드컵북로1길 60 1층",
+          "jibun": "서교동 375-35",
+          "tel": "070-5035-8878",
+          "url": "https://place.map.kakao.com/1767349854"
+        },
+        {
+          "name": "카와카츠 본점",
+          "cat": "돈까스,우동",
+          "rating": 4.1,
+          "ratingCnt": 484,
+          "review": 570,
+          "addr": "서울 마포구 동교로 126 광남벨라스아파트 1층 102호",
+          "jibun": "서교동 465-1",
+          "tel": "070-8801-2053",
+          "url": "https://place.map.kakao.com/1351221007"
+        },
+        {
+          "name": "홍스쭈꾸미 홍대본점",
+          "cat": "해물,생선",
+          "rating": 3.4,
+          "ratingCnt": 133,
+          "review": 526,
+          "addr": "서울 마포구 어울마당로 146 1층",
+          "jibun": "서교동 331-21",
+          "tel": "",
+          "url": "https://place.map.kakao.com/11786671"
+        },
+        {
+          "name": "신선화로 홍대점",
+          "cat": "육류,고기",
+          "rating": 4.1,
+          "ratingCnt": 195,
+          "review": 500,
+          "addr": "서울 마포구 어울마당로 136-2",
+          "jibun": "서교동 347-29",
+          "tel": "02-324-9858",
+          "url": "https://place.map.kakao.com/1684978197"
+        },
+        {
+          "name": "프리모바치오바치 홍대본점",
+          "cat": "이탈리안",
+          "rating": 4,
+          "ratingCnt": 243,
+          "review": 441,
+          "addr": "서울 마포구 와우산로23길 44 2-3층",
+          "jibun": "서교동 346-47",
+          "tel": "02-323-0098",
+          "url": "https://place.map.kakao.com/8123221"
+        },
+        {
+          "name": "츠케루",
+          "cat": "일본식라면",
+          "rating": 4.4,
+          "ratingCnt": 1711,
+          "review": 409,
+          "addr": "서울 마포구 와우산로23길 9 칼리오페 1층 102호",
+          "jibun": "서교동 344-9",
+          "tel": "02-322-1335",
+          "url": "https://place.map.kakao.com/268235810"
+        },
+        {
+          "name": "카미야",
+          "cat": "돈까스,우동",
+          "rating": 4.2,
+          "ratingCnt": 292,
+          "review": 409,
+          "addr": "서울 마포구 와우산로21길 28-6 지하1층",
+          "jibun": "서교동 358-39",
+          "tel": "02-322-5733",
+          "url": "https://place.map.kakao.com/12771116"
+        }
+      ]
+    },
+    {
+      "dong": "서초동",
+      "gu": "서초구",
+      "aliases": [
+        "서초",
+        "교대",
+        "교대역",
+        "서초역",
+        "법원"
+      ],
+      "surveyed": 67,
+      "places": [
+        {
+          "name": "청기와타운 교대점",
+          "cat": "육류,고기",
+          "rating": 4,
+          "ratingCnt": 61,
+          "review": 1628,
+          "addr": "서울 서초구 서초대로48길 33 1층 102호",
+          "jibun": "서초동 1570-1",
+          "tel": "02-597-1474",
+          "url": "https://place.map.kakao.com/513398024"
+        },
+        {
+          "name": "뽕사부 교대점",
+          "cat": "중국요리",
+          "rating": 3.3,
+          "ratingCnt": 86,
+          "review": 1457,
+          "addr": "서울 서초구 서초대로 270",
+          "jibun": "서초동 1572-2",
+          "tel": "02-583-8882",
+          "url": "https://place.map.kakao.com/971848820"
+        },
+        {
+          "name": "이가네양꼬치 교대2호직영점",
+          "cat": "양꼬치",
+          "rating": 4.1,
+          "ratingCnt": 14,
+          "review": 1402,
+          "addr": "서울 서초구 서초대로50길 105 1층",
+          "jibun": "서초동 1578-6",
+          "tel": "02-587-4389",
+          "url": "https://place.map.kakao.com/353628840"
+        },
+        {
+          "name": "서관면옥 교대본점",
+          "cat": "냉면",
+          "rating": 4,
+          "ratingCnt": 392,
+          "review": 1191,
+          "addr": "서울 서초구 서초대로56길 11 1층",
+          "jibun": "서초동 1675-5",
+          "tel": "02-521-9945",
+          "url": "https://place.map.kakao.com/34321780"
+        },
+        {
+          "name": "이가네양꼬치 교대1호직영점",
+          "cat": "양꼬치",
+          "rating": 4.1,
+          "ratingCnt": 50,
+          "review": 1126,
+          "addr": "서울 서초구 반포대로22길 89 1층",
+          "jibun": "서초동 1569-14",
+          "tel": "02-523-5668",
+          "url": "https://place.map.kakao.com/319670596"
+        },
+        {
+          "name": "소당깨오겹집 교대본점",
+          "cat": "육류,고기",
+          "rating": 4.8,
+          "ratingCnt": 76,
+          "review": 1009,
+          "addr": "서울 서초구 서초대로50길 84-3 선우빌딩 2층",
+          "jibun": "서초동 1565-6",
+          "tel": "02-582-0608",
+          "url": "https://place.map.kakao.com/1588676295"
+        },
+        {
+          "name": "다선칼국수 교대직영점",
+          "cat": "칼국수",
+          "rating": 3.8,
+          "ratingCnt": 57,
+          "review": 884,
+          "addr": "서울 서초구 반포대로26길 69 1-2층",
+          "jibun": "서초동 1570-9",
+          "tel": "0507-7143-5623",
+          "url": "https://place.map.kakao.com/145941801"
+        },
+        {
+          "name": "가츠오",
+          "cat": "돈까스,우동",
+          "rating": 3.8,
+          "ratingCnt": 141,
+          "review": 775,
+          "addr": "서울 서초구 서초중앙로20길 21 1층",
+          "jibun": "서초동 1658-17",
+          "tel": "02-6338-5154",
+          "url": "https://place.map.kakao.com/1943855220"
+        },
+        {
+          "name": "탐라도야지",
+          "cat": "육류,고기",
+          "rating": 3.4,
+          "ratingCnt": 103,
+          "review": 714,
+          "addr": "서울 서초구 서초대로50길 82 정원빌딩 1층",
+          "jibun": "서초동 1566-8",
+          "tel": "0507-1399-3337",
+          "url": "https://place.map.kakao.com/9475630"
+        },
+        {
+          "name": "매란방 교대",
+          "cat": "중식",
+          "rating": 4.5,
+          "ratingCnt": 95,
+          "review": 700,
+          "addr": "서울 서초구 서초대로50길 24 청화빌딩 지하1층",
+          "jibun": "서초동 1571-18",
+          "tel": "010-5823-4225",
+          "url": "https://place.map.kakao.com/1068471768"
+        }
+      ]
+    },
+    {
+      "dong": "성수동",
+      "gu": "성동구",
+      "aliases": [
+        "성수",
+        "서울숲",
+        "성수동카페거리"
+      ],
+      "surveyed": 62,
+      "places": [
+        {
+          "name": "소문난성수감자탕",
+          "cat": "감자탕",
+          "rating": 2.9,
+          "ratingCnt": 1124,
+          "review": 2505,
+          "addr": "서울 성동구 연무장길 45 1층",
+          "jibun": "성수동2가 315-100",
+          "tel": "02-465-6580",
+          "url": "https://place.map.kakao.com/13289056"
+        },
+        {
+          "name": "능동미나리 성수점",
+          "cat": "곰탕",
+          "rating": 4,
+          "ratingCnt": 316,
+          "review": 1553,
+          "addr": "서울 성동구 연무장길 42 1-2층",
+          "jibun": "성수동2가 310-14",
+          "tel": "02-2088-2435",
+          "url": "https://place.map.kakao.com/134670855"
+        },
+        {
+          "name": "조조칼국수 성수점",
+          "cat": "칼국수",
+          "rating": 4.2,
+          "ratingCnt": 184,
+          "review": 1394,
+          "addr": "서울 성동구 성수일로8길 55 1층",
+          "jibun": "성수동2가 289-257",
+          "tel": "02-468-4333",
+          "url": "https://place.map.kakao.com/1143126185"
+        },
+        {
+          "name": "아임도넛 성수점",
+          "cat": "도넛",
+          "rating": 3.9,
+          "ratingCnt": 87,
+          "review": 1299,
+          "addr": "서울 성동구 연무장길 37-30 1-2층",
+          "jibun": "성수동2가 316-50",
+          "tel": "02-548-1314",
+          "url": "https://place.map.kakao.com/2139543219"
+        },
+        {
+          "name": "이가네양꼬치 성수직영점",
+          "cat": "양꼬치",
+          "rating": 4.3,
+          "ratingCnt": 99,
+          "review": 1283,
+          "addr": "서울 성동구 아차산로 116 1층 109호",
+          "jibun": "성수동2가 315-1",
+          "tel": "02-499-9688",
+          "url": "https://place.map.kakao.com/663439868"
+        },
+        {
+          "name": "베통 성수",
+          "cat": "카페",
+          "rating": 4.2,
+          "ratingCnt": 321,
+          "review": 1129,
+          "addr": "서울 성동구 연무장7가길 8",
+          "jibun": "성수동2가 315-47",
+          "tel": "02-499-1112",
+          "url": "https://place.map.kakao.com/1091304591"
+        },
+        {
+          "name": "오마카세 오사이초밥 성수점",
+          "cat": "초밥,롤",
+          "rating": 4.5,
+          "ratingCnt": 48,
+          "review": 938,
+          "addr": "서울 성동구 연무장3길 9-14 1층",
+          "jibun": "성수동2가 301-12",
+          "tel": "02-468-5420",
+          "url": "https://place.map.kakao.com/1427881249"
+        },
+        {
+          "name": "라무라 성수점",
+          "cat": "일본식라면",
+          "rating": 3.8,
+          "ratingCnt": 139,
+          "review": 898,
+          "addr": "서울 성동구 성수이로12길 8 2층",
+          "jibun": "성수동2가 328-74",
+          "tel": "0507-1347-0999",
+          "url": "https://place.map.kakao.com/910789052"
+        },
+        {
+          "name": "규카츠정 성수점",
+          "cat": "일식",
+          "rating": 4.2,
+          "ratingCnt": 171,
+          "review": 881,
+          "addr": "서울 성동구 아차산로 96 지하1층 101호",
+          "jibun": "성수동2가 314-6",
+          "tel": "02-499-5009",
+          "url": "https://place.map.kakao.com/747388662"
+        },
+        {
+          "name": "해피베네핏 성수",
+          "cat": "중국요리",
+          "rating": 0,
+          "ratingCnt": 30,
+          "review": 842,
+          "addr": "서울 성동구 성수이로7길 27 서울숲코오롱디지탈타워 지하 102호",
+          "jibun": "성수동2가 333-140",
+          "tel": "0507-1466-6784",
+          "url": "https://place.map.kakao.com/1649527609"
+        }
+      ]
+    },
+    {
+      "dong": "신사동",
+      "gu": "강남구",
+      "aliases": [
+        "신사",
+        "가로수길",
+        "압구정",
+        "신사역"
+      ],
+      "surveyed": 36,
+      "places": [
+        {
+          "name": "스시소기",
+          "cat": "초밥,롤",
+          "rating": 4.7,
+          "ratingCnt": 55,
+          "review": 558,
+          "addr": "서울 강남구 강남대로154길 21 K.I빌딩 2층 202호",
+          "jibun": "신사동 511-13",
+          "tel": "010-7517-8772",
+          "url": "https://place.map.kakao.com/590679717"
+        },
+        {
+          "name": "이목스모크다이닝",
+          "cat": "육류,고기",
+          "rating": 4.2,
+          "ratingCnt": 27,
+          "review": 491,
+          "addr": "서울 강남구 압구정로2길 6",
+          "jibun": "신사동 505-7",
+          "tel": "",
+          "url": "https://place.map.kakao.com/485505101"
+        },
+        {
+          "name": "삼창교자",
+          "cat": "중식",
+          "rating": 3.7,
+          "ratingCnt": 111,
+          "review": 464,
+          "addr": "서울 강남구 강남대로156길 33 1층",
+          "jibun": "신사동 517-34",
+          "tel": "02-542-5588",
+          "url": "https://place.map.kakao.com/1728788067"
+        },
+        {
+          "name": "쮸즈",
+          "cat": "중국요리",
+          "rating": 3.5,
+          "ratingCnt": 293,
+          "review": 397,
+          "addr": "서울 강남구 도산대로17길 13",
+          "jibun": "신사동 540-4",
+          "tel": "02-6081-9888",
+          "url": "https://place.map.kakao.com/24371711"
+        },
+        {
+          "name": "네기다이닝라운지",
+          "cat": "일본식주점",
+          "rating": 4.2,
+          "ratingCnt": 55,
+          "review": 348,
+          "addr": "서울 강남구 도산대로15길 18 4층",
+          "jibun": "신사동 540",
+          "tel": "02-548-0807",
+          "url": "https://place.map.kakao.com/544200314"
+        },
+        {
+          "name": "갓포우오",
+          "cat": "일식",
+          "rating": 4.1,
+          "ratingCnt": 70,
+          "review": 348,
+          "addr": "서울 강남구 강남대로156길 12 다복빌딩 1층",
+          "jibun": "신사동 511-1",
+          "tel": "010-7927-1487",
+          "url": "https://place.map.kakao.com/1249116042"
+        },
+        {
+          "name": "누와",
+          "cat": "중식",
+          "rating": 3.6,
+          "ratingCnt": 21,
+          "review": 344,
+          "addr": "서울 강남구 강남대로 652 신사스퀘어 2층",
+          "jibun": "신사동 504-11",
+          "tel": "02-518-2003",
+          "url": "https://place.map.kakao.com/1915805569"
+        },
+        {
+          "name": "정돈 신사점",
+          "cat": "돈까스,우동",
+          "rating": 4,
+          "ratingCnt": 206,
+          "review": 304,
+          "addr": "서울 강남구 강남대로160길 28 1층",
+          "jibun": "신사동 519-4",
+          "tel": "02-549-0924",
+          "url": "https://place.map.kakao.com/1402068738"
+        },
+        {
+          "name": "미미면가 본점",
+          "cat": "일식",
+          "rating": 3.6,
+          "ratingCnt": 304,
+          "review": 298,
+          "addr": "서울 강남구 강남대로160길 29 1층",
+          "jibun": "신사동 521-16",
+          "tel": "0507-1413-5466",
+          "url": "https://place.map.kakao.com/18324313"
+        },
+        {
+          "name": "신사모소리",
+          "cat": "육류,고기",
+          "rating": 4.4,
+          "ratingCnt": 129,
+          "review": 247,
+          "addr": "서울 강남구 도산대로1길 24 1층 103호",
+          "jibun": "신사동 510",
+          "tel": "02-3447-0542",
+          "url": "https://place.map.kakao.com/2073285111"
+        }
+      ]
+    },
+    {
+      "dong": "여의도동",
+      "gu": "영등포구",
+      "aliases": [
+        "여의도",
+        "국회의사당",
+        "여의도역"
+      ],
+      "surveyed": 61,
+      "places": [
+        {
+          "name": "진주집",
+          "cat": "국수",
+          "rating": 3.9,
+          "ratingCnt": 972,
+          "review": 3862,
+          "addr": "서울 영등포구 국제금융로6길 33 지하1층 5~7,27~28호",
+          "jibun": "여의도동 36-2",
+          "tel": "02-780-6108",
+          "url": "https://place.map.kakao.com/8094563"
+        },
+        {
+          "name": "화목순대국",
+          "cat": "순대",
+          "rating": 3.6,
+          "ratingCnt": 528,
+          "review": 1657,
+          "addr": "서울 영등포구 여의대방로 383 경도빌딩 1층",
+          "jibun": "여의도동 44-14",
+          "tel": "02-780-8191",
+          "url": "https://place.map.kakao.com/21423297"
+        },
+        {
+          "name": "을지다락 여의도",
+          "cat": "양식",
+          "rating": 4,
+          "ratingCnt": 167,
+          "review": 1391,
+          "addr": "서울 영등포구 여의나루로 50 한국교직원공제회관 지하1층 11호",
+          "jibun": "여의도동 35-3",
+          "tel": "02-785-1112",
+          "url": "https://place.map.kakao.com/1863813515"
+        },
+        {
+          "name": "이타마에",
+          "cat": "일식",
+          "rating": 4.7,
+          "ratingCnt": 253,
+          "review": 1389,
+          "addr": "서울 영등포구 의사당대로 108 아일렉스상가 5층 502호",
+          "jibun": "여의도동 37",
+          "tel": "0507-1377-7037",
+          "url": "https://place.map.kakao.com/15538124"
+        },
+        {
+          "name": "가양칼국수",
+          "cat": "칼국수",
+          "rating": 4.2,
+          "ratingCnt": 549,
+          "review": 1025,
+          "addr": "서울 영등포구 국제금융로 86 롯데캐슬 아이비 지하1층 135호",
+          "jibun": "여의도동 43-4",
+          "tel": "0507-1399-0438",
+          "url": "https://place.map.kakao.com/20746242"
+        },
+        {
+          "name": "신홍러우 여의도점",
+          "cat": "중국요리",
+          "rating": 4.5,
+          "ratingCnt": 153,
+          "review": 1021,
+          "addr": "서울 영등포구 국제금융로 39 브라이튼 여의도 지하1층 102호",
+          "jibun": "여의도동 525",
+          "tel": "010-4351-5310",
+          "url": "https://place.map.kakao.com/1038113429"
+        },
+        {
+          "name": "모도우 여의도점",
+          "cat": "육류,고기",
+          "rating": 4.3,
+          "ratingCnt": 86,
+          "review": 938,
+          "addr": "서울 영등포구 국제금융로2길 32 여의도파이낸스타워 4층 405~406호",
+          "jibun": "여의도동 23-8",
+          "tel": "02-6082-8324",
+          "url": "https://place.map.kakao.com/1508081407"
+        },
+        {
+          "name": "로바다야끼소담 여의도점",
+          "cat": "일본식주점",
+          "rating": 3.9,
+          "ratingCnt": 54,
+          "review": 772,
+          "addr": "서울 영등포구 여의대방로65길 17 서린빌딩 1층 113~115호",
+          "jibun": "여의도동 45-19",
+          "tel": "",
+          "url": "https://place.map.kakao.com/2052514017"
+        },
+        {
+          "name": "능동미나리 여의도점",
+          "cat": "곰탕",
+          "rating": 3.9,
+          "ratingCnt": 128,
+          "review": 715,
+          "addr": "서울 영등포구 의사당대로 127 롯데캐슬엠파이어 1층 1-107호",
+          "jibun": "여의도동 36",
+          "tel": "02-780-0699",
+          "url": "https://place.map.kakao.com/1280094557"
+        },
+        {
+          "name": "아루히 니와",
+          "cat": "초밥,롤",
+          "rating": 3.9,
+          "ratingCnt": 110,
+          "review": 662,
+          "addr": "서울 영등포구 여의나루로 42",
+          "jibun": "여의도동 35-5",
+          "tel": "",
+          "url": "https://place.map.kakao.com/1247032398"
+        }
+      ]
+    },
+    {
+      "dong": "역삼동",
+      "gu": "강남구",
+      "aliases": [
+        "강남",
+        "강남역",
+        "역삼",
+        "역삼역",
+        "테헤란로"
+      ],
+      "surveyed": 60,
+      "places": [
+        {
+          "name": "고베규카츠 서울강남점",
+          "cat": "돈까스,우동",
+          "rating": 0,
+          "ratingCnt": 30,
+          "review": 2456,
+          "addr": "서울 강남구 강남대로102길 29 예촌빌딩 1층",
+          "jibun": "역삼동 617-3",
+          "tel": "02-501-4620",
+          "url": "https://place.map.kakao.com/1781227506"
+        },
+        {
+          "name": "구구당",
+          "cat": "중식",
+          "rating": 3.6,
+          "ratingCnt": 321,
+          "review": 2137,
+          "addr": "서울 강남구 강남대로102길 35 지하1층",
+          "jibun": "역삼동 617-6",
+          "tel": "02-539-1979",
+          "url": "https://place.map.kakao.com/260283466"
+        },
+        {
+          "name": "신동궁감자탕뼈숯불구이 역삼직영점",
+          "cat": "감자탕",
+          "rating": 3.4,
+          "ratingCnt": 297,
+          "review": 1378,
+          "addr": "서울 강남구 테헤란로10길 21 1층",
+          "jibun": "역삼동 823-35",
+          "tel": "",
+          "url": "https://place.map.kakao.com/7983060"
+        },
+        {
+          "name": "오레노라멘 강남점",
+          "cat": "일본식라면",
+          "rating": 4.2,
+          "ratingCnt": 328,
+          "review": 1351,
+          "addr": "서울 강남구 테헤란로1길 28-9 2층",
+          "jibun": "역삼동 817-30",
+          "tel": "02-565-3539",
+          "url": "https://place.map.kakao.com/1950857675"
+        },
+        {
+          "name": "트라가 역삼본점",
+          "cat": "양식",
+          "rating": 4,
+          "ratingCnt": 124,
+          "review": 1230,
+          "addr": "서울 강남구 테헤란로25길 46 1층",
+          "jibun": "역삼동 628-6",
+          "tel": "02-564-0608",
+          "url": "https://place.map.kakao.com/334332881"
+        },
+        {
+          "name": "일편등심 강남",
+          "cat": "육류,고기",
+          "rating": 4.7,
+          "ratingCnt": 119,
+          "review": 1121,
+          "addr": "서울 강남구 테헤란로1길 20 지하1층",
+          "jibun": "역삼동 818",
+          "tel": "070-8657-4158",
+          "url": "https://place.map.kakao.com/785573131"
+        },
+        {
+          "name": "고우가 역삼역점",
+          "cat": "육류,고기",
+          "rating": 5,
+          "ratingCnt": 285,
+          "review": 1097,
+          "addr": "서울 강남구 테헤란로 152 강남파이낸스센터 지하1층 8호",
+          "jibun": "역삼동 737",
+          "tel": "02-555-9554",
+          "url": "https://place.map.kakao.com/1050527540"
+        },
+        {
+          "name": "고래불 강남역삼본점",
+          "cat": "회",
+          "rating": 3.9,
+          "ratingCnt": 43,
+          "review": 1059,
+          "addr": "서울 강남구 논현로79길 62 1층/2층",
+          "jibun": "역삼동 828-52",
+          "tel": "02-556-3677",
+          "url": "https://place.map.kakao.com/8652100"
+        },
+        {
+          "name": "미도인 강남",
+          "cat": "퓨전일식",
+          "rating": 3.6,
+          "ratingCnt": 229,
+          "review": 926,
+          "addr": "서울 강남구 강남대로102길 16 1층",
+          "jibun": "역삼동 619-3",
+          "tel": "02-555-1995",
+          "url": "https://place.map.kakao.com/1804968253"
+        },
+        {
+          "name": "농민백암순대 강남직영점",
+          "cat": "순대",
+          "rating": 4.5,
+          "ratingCnt": 635,
+          "review": 820,
+          "addr": "서울 강남구 역삼로3길 20-4 1층",
+          "jibun": "역삼동 830-9",
+          "tel": "02-501-2772",
+          "url": "https://place.map.kakao.com/16421356"
+        }
+      ]
+    },
+    {
+      "dong": "연남동",
+      "gu": "마포구",
+      "aliases": [
+        "연남",
+        "연트럴파크",
+        "경의선숲길"
+      ],
+      "surveyed": 54,
+      "places": [
+        {
+          "name": "미쁘동",
+          "cat": "일식",
+          "rating": 0,
+          "ratingCnt": 30,
+          "review": 1853,
+          "addr": "서울 마포구 동교로38길 33-21 2층",
+          "jibun": "연남동 384-7",
+          "tel": "070-4242-1881",
+          "url": "https://place.map.kakao.com/1087043762"
+        },
+        {
+          "name": "카쿠시타",
+          "cat": "일식",
+          "rating": 0,
+          "ratingCnt": 30,
+          "review": 1572,
+          "addr": "서울 마포구 동교로38길 33-15 지하1층",
+          "jibun": "연남동 390-30",
+          "tel": "070-4187-8787",
+          "url": "https://place.map.kakao.com/1317927211"
+        },
+        {
+          "name": "연어롭다",
+          "cat": "회",
+          "rating": 0,
+          "ratingCnt": 30,
+          "review": 1399,
+          "addr": "서울 마포구 동교로38길 42 지하1층",
+          "jibun": "연남동 382-19",
+          "tel": "02-324-8300",
+          "url": "https://place.map.kakao.com/1689615887"
+        },
+        {
+          "name": "연하동",
+          "cat": "일식",
+          "rating": 3.6,
+          "ratingCnt": 173,
+          "review": 1352,
+          "addr": "서울 마포구 연남로 6 1,2층",
+          "jibun": "연남동 373-15",
+          "tel": "0507-1419-3781",
+          "url": "https://place.map.kakao.com/1712115871"
+        },
+        {
+          "name": "조앤도슨",
+          "cat": "카페",
+          "rating": 4.1,
+          "ratingCnt": 234,
+          "review": 1232,
+          "addr": "서울 마포구 동교로41길 31 1층 B102호",
+          "jibun": "연남동 254-8",
+          "tel": "010-7663-1002",
+          "url": "https://place.map.kakao.com/43859487"
+        },
+        {
+          "name": "버터앤쉘터 연남점",
+          "cat": "디저트카페",
+          "rating": 3.9,
+          "ratingCnt": 49,
+          "review": 1216,
+          "addr": "서울 마포구 성미산로 170 102호",
+          "jibun": "연남동 239-39",
+          "tel": "",
+          "url": "https://place.map.kakao.com/2133249478"
+        },
+        {
+          "name": "대승곱창",
+          "cat": "곱창,막창",
+          "rating": 4.2,
+          "ratingCnt": 60,
+          "review": 723,
+          "addr": "서울 마포구 동교로38길 4 2층",
+          "jibun": "연남동 260-16",
+          "tel": "010-2987-1497",
+          "url": "https://place.map.kakao.com/387546287"
+        },
+        {
+          "name": "형제특수부위 연남점",
+          "cat": "육류,고기",
+          "rating": 4.6,
+          "ratingCnt": 115,
+          "review": 721,
+          "addr": "서울 마포구 동교로 258 1-2층",
+          "jibun": "연남동 228-35",
+          "tel": "02-332-5592",
+          "url": "https://place.map.kakao.com/985922932"
+        },
+        {
+          "name": "연교",
+          "cat": "중국요리",
+          "rating": 3.9,
+          "ratingCnt": 443,
+          "review": 666,
+          "addr": "서울 마포구 연희로1길 65 1층",
+          "jibun": "연남동 383-95",
+          "tel": "02-333-4561",
+          "url": "https://place.map.kakao.com/934767425"
+        },
+        {
+          "name": "몽중식",
+          "cat": "중식",
+          "rating": 4.2,
+          "ratingCnt": 89,
+          "review": 610,
+          "addr": "서울 마포구 동교로 257 2층",
+          "jibun": "연남동 229-56",
+          "tel": "010-2601-2856",
+          "url": "https://place.map.kakao.com/1748774897"
+        }
+      ]
+    },
+    {
+      "dong": "이태원동",
+      "gu": "용산구",
+      "aliases": [
+        "이태원",
+        "경리단길"
+      ],
+      "surveyed": 30,
+      "places": [
+        {
+          "name": "찰만생대패 이태원점",
+          "cat": "삼겹살",
+          "rating": 4.7,
+          "ratingCnt": 244,
+          "review": 141,
+          "addr": "서울 용산구 이태원로26길 13 1층",
+          "jibun": "이태원동 130-6",
+          "tel": "02-790-9233",
+          "url": "https://place.map.kakao.com/333205845"
+        },
+        {
+          "name": "케르반레스토랑 이태원 본점",
+          "cat": "튀르키예음식",
+          "rating": 3.5,
+          "ratingCnt": 96,
+          "review": 129,
+          "addr": "서울 용산구 이태원로 192 1층",
+          "jibun": "이태원동 127-2",
+          "tel": "02-792-4767",
+          "url": "https://place.map.kakao.com/17061718"
+        },
+        {
+          "name": "꾸띠자르당",
+          "cat": "양식",
+          "rating": 4.1,
+          "ratingCnt": 363,
+          "review": 124,
+          "addr": "서울 용산구 보광로 122-1",
+          "jibun": "이태원동 131-34",
+          "tel": "02-796-5072",
+          "url": "https://place.map.kakao.com/26928254"
+        },
+        {
+          "name": "로우앤슬로우",
+          "cat": "육류,고기",
+          "rating": 0,
+          "ratingCnt": 30,
+          "review": 109,
+          "addr": "서울 용산구 보광로 126 2층",
+          "jibun": "이태원동 127-28",
+          "tel": "02-793-2268",
+          "url": "https://place.map.kakao.com/1376253571"
+        },
+        {
+          "name": "야상해",
+          "cat": "중식",
+          "rating": 4.3,
+          "ratingCnt": 546,
+          "review": 71,
+          "addr": "서울 용산구 이태원로23길 6 1층",
+          "jibun": "이태원동 119-16",
+          "tel": "02-749-8666",
+          "url": "https://place.map.kakao.com/64685570"
+        },
+        {
+          "name": "모모의기묘한모험",
+          "cat": "일본식주점",
+          "rating": 4.1,
+          "ratingCnt": 83,
+          "review": 26,
+          "addr": "서울 용산구 이태원로27가길 51 1층",
+          "jibun": "이태원동 119-21",
+          "tel": "",
+          "url": "https://place.map.kakao.com/1644755845"
+        },
+        {
+          "name": "단골집",
+          "cat": "퓨전요리",
+          "rating": 4,
+          "ratingCnt": 122,
+          "review": 23,
+          "addr": "서울 용산구 보광로59길 14-1 2층",
+          "jibun": "이태원동 128-10",
+          "tel": "02-797-3373",
+          "url": "https://place.map.kakao.com/27474269"
+        },
+        {
+          "name": "모터시티 이태원점",
+          "cat": "피자",
+          "rating": 3.7,
+          "ratingCnt": 159,
+          "review": 22,
+          "addr": "서울 용산구 이태원로 140-1 2층",
+          "jibun": "이태원동 56-30",
+          "tel": "02-794-8877",
+          "url": "https://place.map.kakao.com/124338573"
+        },
+        {
+          "name": "네키드윙즈",
+          "cat": "치킨",
+          "rating": 4.4,
+          "ratingCnt": 130,
+          "review": 20,
+          "addr": "서울 용산구 녹사평대로 174-11 1층",
+          "jibun": "이태원동 34-8",
+          "tel": "070-4078-7411",
+          "url": "https://place.map.kakao.com/931679409"
+        },
+        {
+          "name": "사라바나바반",
+          "cat": "인도음식",
+          "rating": 4.1,
+          "ratingCnt": 44,
+          "review": 17,
+          "addr": "서울 용산구 이태원로27가길 18 2층",
+          "jibun": "이태원동 112-6",
+          "tel": "",
+          "url": "https://place.map.kakao.com/1098157526"
+        }
+      ]
+    },
+    {
+      "dong": "잠실동",
+      "gu": "송파구",
+      "aliases": [
+        "잠실",
+        "잠실새내",
+        "석촌호수",
+        "신천동",
+        "신천"
+      ],
+      "surveyed": 67,
+      "places": [
+        {
+          "name": "초대창 잠실새내점",
+          "cat": "곱창,막창",
+          "rating": 4.5,
+          "ratingCnt": 45,
+          "review": 1146,
+          "addr": "서울 송파구 백제고분로9길 17 1층",
+          "jibun": "잠실동 192-13",
+          "tel": "02-416-9292",
+          "url": "https://place.map.kakao.com/617218371"
+        },
+        {
+          "name": "롯데호텔월드 라세느",
+          "cat": "뷔페",
+          "rating": 3.7,
+          "ratingCnt": 111,
+          "review": 995,
+          "addr": "서울 송파구 올림픽로 240 2층",
+          "jibun": "잠실동 40-1",
+          "tel": "02-419-7000",
+          "url": "https://place.map.kakao.com/13279465"
+        },
+        {
+          "name": "상무초밥 잠실점",
+          "cat": "초밥,롤",
+          "rating": 4.2,
+          "ratingCnt": 26,
+          "review": 787,
+          "addr": "서울 송파구 올림픽로 96 동신빌딩 102호",
+          "jibun": "잠실동 181",
+          "tel": "02-416-3777",
+          "url": "https://place.map.kakao.com/437494532"
+        },
+        {
+          "name": "돈순장 잠실새내본점",
+          "cat": "육류,고기",
+          "rating": 4.7,
+          "ratingCnt": 106,
+          "review": 596,
+          "addr": "서울 송파구 백제고분로9길 39 행복빌딩 1층",
+          "jibun": "잠실동 187-5",
+          "tel": "0507-1464-3121",
+          "url": "https://place.map.kakao.com/627702483"
+        },
+        {
+          "name": "샤오롱바오 잠실새내점",
+          "cat": "중식",
+          "rating": 4.2,
+          "ratingCnt": 27,
+          "review": 571,
+          "addr": "서울 송파구 백제고분로7길 16-15 1층",
+          "jibun": "잠실동 192-4",
+          "tel": "02-418-0517",
+          "url": "https://place.map.kakao.com/894027816"
+        },
+        {
+          "name": "미강식당",
+          "cat": "삼겹살",
+          "rating": 4.5,
+          "ratingCnt": 408,
+          "review": 510,
+          "addr": "서울 송파구 백제고분로 122 1층 103호",
+          "jibun": "잠실동 294-3",
+          "tel": "0502-5550-4555",
+          "url": "https://place.map.kakao.com/72177172"
+        },
+        {
+          "name": "홍콩완탕면 잠실새내점",
+          "cat": "중국요리",
+          "rating": 4.3,
+          "ratingCnt": 22,
+          "review": 499,
+          "addr": "서울 송파구 백제고분로7길 16-9 한신빌딩 1층",
+          "jibun": "잠실동 192-2",
+          "tel": "0503-7153-1211",
+          "url": "https://place.map.kakao.com/151815749"
+        },
+        {
+          "name": "늘푸른목장 잠실본점",
+          "cat": "육류,고기",
+          "rating": 3.6,
+          "ratingCnt": 143,
+          "review": 416,
+          "addr": "서울 송파구 백제고분로9길 34 1층",
+          "jibun": "잠실동 203-7",
+          "tel": "02-3431-4520",
+          "url": "https://place.map.kakao.com/16082320"
+        },
+        {
+          "name": "청국장과보리밥 잠실점",
+          "cat": "한식",
+          "rating": 4.6,
+          "ratingCnt": 155,
+          "review": 415,
+          "addr": "서울 송파구 백제고분로20길 4 1층",
+          "jibun": "잠실동 335-12",
+          "tel": "02-2042-1234",
+          "url": "https://place.map.kakao.com/22513020"
+        },
+        {
+          "name": "미성양꼬치&훠궈 신천점",
+          "cat": "양꼬치",
+          "rating": 3.2,
+          "ratingCnt": 13,
+          "review": 385,
+          "addr": "서울 송파구 백제고분로9길 53 1층",
+          "jibun": "잠실동 185-10",
+          "tel": "02-412-0025",
+          "url": "https://place.map.kakao.com/27204427"
+        }
+      ]
+    },
+    {
+      "dong": "청담동",
+      "gu": "강남구",
+      "aliases": [
+        "청담",
+        "청담역",
+        "갤러리아"
+      ],
+      "surveyed": 36,
+      "places": [
+        {
+          "name": "청담 백송",
+          "cat": "육류,고기",
+          "rating": 4.8,
+          "ratingCnt": 206,
+          "review": 1888,
+          "addr": "서울 강남구 도산대로100길 13 1층",
+          "jibun": "청담동 56",
+          "tel": "02-6958-9292",
+          "url": "https://place.map.kakao.com/1817216361"
+        },
+        {
+          "name": "마코토 청담점",
+          "cat": "일본식주점",
+          "rating": 4.2,
+          "ratingCnt": 102,
+          "review": 588,
+          "addr": "서울 강남구 압구정로80길 37 이에스빌딩 2층",
+          "jibun": "청담동 92-18",
+          "tel": "02-546-9218",
+          "url": "https://place.map.kakao.com/14535331"
+        },
+        {
+          "name": "밍글스",
+          "cat": "한식",
+          "rating": 4.3,
+          "ratingCnt": 117,
+          "review": 435,
+          "addr": "서울 강남구 도산대로67길 19 힐탑빌딩 2층",
+          "jibun": "청담동 94-6",
+          "tel": "02-515-7306",
+          "url": "https://place.map.kakao.com/24073852"
+        },
+        {
+          "name": "이닝",
+          "cat": "중국요리",
+          "rating": 3.2,
+          "ratingCnt": 34,
+          "review": 386,
+          "addr": "서울 강남구 도산대로58길 14 이닝빌딩 1층",
+          "jibun": "청담동 22-12",
+          "tel": "02-547-7444",
+          "url": "https://place.map.kakao.com/12602260"
+        },
+        {
+          "name": "금돈옥 청담점",
+          "cat": "갈비",
+          "rating": 4,
+          "ratingCnt": 36,
+          "review": 363,
+          "addr": "서울 강남구 삼성로133길 14 1층",
+          "jibun": "청담동 32-6",
+          "tel": "02-518-9092",
+          "url": "https://place.map.kakao.com/1311420382"
+        },
+        {
+          "name": "스시렌",
+          "cat": "일식",
+          "rating": 4.2,
+          "ratingCnt": 41,
+          "review": 325,
+          "addr": "서울 강남구 선릉로146길 27-8 2층",
+          "jibun": "청담동 20-3",
+          "tel": "010-8072-2032",
+          "url": "https://place.map.kakao.com/2111474502"
+        },
+        {
+          "name": "신의주찹쌀순대",
+          "cat": "순대",
+          "rating": 2.9,
+          "ratingCnt": 147,
+          "review": 285,
+          "addr": "서울 강남구 영동대로 725 펜타리움 1층",
+          "jibun": "청담동 68-7",
+          "tel": "02-511-9081",
+          "url": "https://place.map.kakao.com/8407127"
+        },
+        {
+          "name": "뜨락",
+          "cat": "육류,고기",
+          "rating": 0,
+          "ratingCnt": 30,
+          "review": 280,
+          "addr": "서울 강남구 영동대로142길 13-3",
+          "jibun": "청담동 130-13",
+          "tel": "02-543-2987",
+          "url": "https://place.map.kakao.com/7857098"
+        },
+        {
+          "name": "몽중헌 청담점",
+          "cat": "중국요리",
+          "rating": 3.7,
+          "ratingCnt": 107,
+          "review": 277,
+          "addr": "서울 강남구 도산대로 445 엠빌딩 지하1층",
+          "jibun": "청담동 97",
+          "tel": "02-3446-7887",
+          "url": "https://place.map.kakao.com/12140312"
+        },
+        {
+          "name": "강강술래 청담점",
+          "cat": "갈비",
+          "rating": 3.6,
+          "ratingCnt": 47,
+          "review": 275,
+          "addr": "서울 강남구 도산대로 535 1-2층",
+          "jibun": "청담동 125-16",
+          "tel": "02-3443-3392",
+          "url": "https://place.map.kakao.com/20946094"
+        }
+      ]
+    },
+    {
+      "dong": "한남동",
+      "gu": "용산구",
+      "aliases": [
+        "한남",
+        "한남동",
+        "이태원한남",
+        "리움"
+      ],
+      "surveyed": 61,
+      "places": [
+        {
+          "name": "미래회관 한남본점",
+          "cat": "육류,고기",
+          "rating": 3.7,
+          "ratingCnt": 29,
+          "review": 1725,
+          "addr": "서울 용산구 대사관로31길 29 2층",
+          "jibun": "한남동 657-174",
+          "tel": "",
+          "url": "https://place.map.kakao.com/319914161"
+        },
+        {
+          "name": "파이프그라운드 한남",
+          "cat": "피자",
+          "rating": 3.9,
+          "ratingCnt": 367,
+          "review": 1070,
+          "addr": "서울 용산구 한남대로27길 66 지하1층",
+          "jibun": "한남동 727-21",
+          "tel": "02-793-1500",
+          "url": "https://place.map.kakao.com/2069090006"
+        },
+        {
+          "name": "한남동감자탕 본점",
+          "cat": "감자탕",
+          "rating": 4.1,
+          "ratingCnt": 402,
+          "review": 960,
+          "addr": "서울 용산구 대사관로 73 1층",
+          "jibun": "한남동 634-1",
+          "tel": "02-790-8309",
+          "url": "https://place.map.kakao.com/1406730222"
+        },
+        {
+          "name": "쥬에",
+          "cat": "퓨전중식",
+          "rating": 4.2,
+          "ratingCnt": 88,
+          "review": 428,
+          "addr": "서울 용산구 독서당로 124-7 지하1층, 1-2층",
+          "jibun": "한남동 3-1",
+          "tel": "02-798-9700",
+          "url": "https://place.map.kakao.com/1237949316"
+        },
+        {
+          "name": "화포식당 한남점",
+          "cat": "삼겹살",
+          "rating": 3.1,
+          "ratingCnt": 40,
+          "review": 411,
+          "addr": "서울 용산구 대사관로34길 9 1층",
+          "jibun": "한남동 85-4",
+          "tel": "02-794-9393",
+          "url": "https://place.map.kakao.com/27345302"
+        },
+        {
+          "name": "장지녕간장게장 한남점",
+          "cat": "게,대게",
+          "rating": 3.4,
+          "ratingCnt": 71,
+          "review": 407,
+          "addr": "서울 용산구 독서당로 46 한남아이파크 지하1층 101호",
+          "jibun": "한남동 828",
+          "tel": "02-794-7737",
+          "url": "https://place.map.kakao.com/258085186"
+        },
+        {
+          "name": "부자피자 1호점",
+          "cat": "피자",
+          "rating": 3.9,
+          "ratingCnt": 353,
+          "review": 401,
+          "addr": "서울 용산구 이태원로55가길 28 1층",
+          "jibun": "한남동 743-33",
+          "tel": "02-794-9474",
+          "url": "https://place.map.kakao.com/21212902"
+        },
+        {
+          "name": "방울과꼬막",
+          "cat": "해물,생선",
+          "rating": 3.1,
+          "ratingCnt": 66,
+          "review": 400,
+          "addr": "서울 용산구 대사관로30길 11-5 1층",
+          "jibun": "한남동 632-10",
+          "tel": "02-749-1019",
+          "url": "https://place.map.kakao.com/175302923"
+        },
+        {
+          "name": "소와나",
+          "cat": "일식",
+          "rating": 2.7,
+          "ratingCnt": 118,
+          "review": 385,
+          "addr": "서울 용산구 이태원로54길 68 1층",
+          "jibun": "한남동 684-16",
+          "tel": "",
+          "url": "https://place.map.kakao.com/1147452616"
+        },
+        {
+          "name": "맥심플랜트",
+          "cat": "카페",
+          "rating": 4.3,
+          "ratingCnt": 438,
+          "review": 371,
+          "addr": "서울 용산구 이태원로 250 지하1-2층, 1-3층",
+          "jibun": "한남동 683-140",
+          "tel": "070-4287-8557",
+          "url": "https://place.map.kakao.com/711864705"
+        }
+      ]
+    }
+  ]
+};
+
+const REGIONS = DATASET.regions;
+
+// ========================================
+// 🔧 Utilities
+// ========================================
+
+const comma = n => n.toLocaleString('ko-KR');
+
+// 한글 받침 유무에 따라 조사를 고른다. ('우와' + 가 / '담택 본점' + 이)
+function josa(word, withBatchim, withoutBatchim) {
+  const last = (word || '').trim().slice(-1);
+  const code = last.charCodeAt(0);
+  if (!last || code < 0xac00 || code > 0xd7a3) return withoutBatchim;
+  return (code - 0xac00) % 28 > 0 ? withBatchim : withoutBatchim;
+}
+
+const RANK_STYLE = [
+  { badge: '🥇', ring: 'ring-amber-300',  bar: 'bg-amber-400'  },
+  { badge: '🥈', ring: 'ring-slate-300',  bar: 'bg-slate-400'  },
+  { badge: '🥉', ring: 'ring-orange-300', bar: 'bg-orange-400' },
+  { badge: '4',  ring: 'ring-sky-200',    bar: 'bg-sky-400'    },
+  { badge: '5',  ring: 'ring-sky-200',    bar: 'bg-sky-400'    }
+];
+const rankStyle = i => RANK_STYLE[i] || { badge: String(i + 1), ring: 'ring-slate-200', bar: 'bg-slate-300' };
+
+// 입력한 지역명을 데이터셋의 동(洞)에 매칭한다. 정확 일치 → 앞부분 일치 → 부분 일치 순.
+function matchRegions(query) {
+  const q = query.trim().replace(/\s+/g, '');
+  if (!q) return [];
+  const norm = s => s.replace(/\s+/g, '');
+  const scored = REGIONS.map(r => {
+    const keys = [r.dong, r.gu].concat(r.aliases).map(norm);
+    let score = 0;
+    if (keys.some(k => k === q)) score = 100;
+    else if (keys.some(k => k.startsWith(q))) score = 70;
+    else if (keys.some(k => k.includes(q))) score = 40;
+    else if (keys.some(k => k.length >= 2 && q.includes(k))) score = 30;
+    return { region: r, score };
+  });
+  return scored
+    .filter(s => s.score > 0)
+    .sort((a, b) => b.score - a.score || b.region.surveyed - a.region.surveyed)
+    .map(s => s.region);
+}
+
+const kakaoSearchUrl = (dong, name) =>
+  'https://map.kakao.com/?q=' + encodeURIComponent(name ? dong + ' ' + name : dong + ' 맛집');
+
+// ========================================
+// 🎨 Design System Components
+// ========================================
+
+function Button({ variant = 'primary', size = 'md', className = '', children, ...props }) {
+  const variants = {
+    primary: 'bg-slate-900 text-white hover:bg-slate-700 focus-visible:ring-slate-900',
+    secondary: 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 focus-visible:ring-slate-400',
+    ghost: 'bg-transparent text-slate-500 hover:bg-slate-100 focus-visible:ring-slate-300',
+    danger: 'bg-rose-600 text-white hover:bg-rose-500 focus-visible:ring-rose-500'
+  };
+  const sizes = { sm: 'px-3 py-1.5 text-xs', md: 'px-4 py-2 text-sm', lg: 'px-6 py-3 text-base' };
+  return (
+    <button
+      className={`inline-flex items-center justify-center gap-1.5 rounded-lg font-semibold transition
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
+                  disabled:cursor-not-allowed disabled:opacity-40
+                  ${variants[variant]} ${sizes[size]} ${className}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Input({ label, error, className = '', ...props }) {
+  return (
+    <div className="w-full">
+      {label && (
+        <label htmlFor={props.id} className="mb-1.5 block text-sm font-medium text-slate-700">{label}</label>
+      )}
+      <input
+        className={`w-full rounded-xl border bg-white px-4 py-3 text-base transition placeholder:text-slate-400
+                    focus:outline-none focus:ring-2
+                    ${error ? 'border-rose-400 focus:ring-rose-300' : 'border-slate-300 focus:border-slate-400 focus:ring-slate-300'}
+                    ${className}`}
+        {...props}
+      />
+      {error && <p className="mt-1.5 text-xs text-rose-600">{error}</p>}
+    </div>
+  );
+}
+
+function Card({ className = '', children, ...props }) {
+  return (
+    <div className={`rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/70 ${className}`} {...props}>
+      {children}
+    </div>
+  );
+}
+
+function Badge({ variant = 'default', className = '', children }) {
+  const variants = {
+    default: 'bg-slate-100 text-slate-600 border-slate-200',
+    brand: 'bg-yellow-50 text-yellow-800 border-yellow-200',
+    star: 'bg-emerald-50 text-emerald-700 border-emerald-200'
+  };
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium ${variants[variant]} ${className}`}>
+      {children}
+    </span>
+  );
+}
+
+// ========================================
+// 🧩 Common / Layout Components
+// ========================================
+
+function Header() {
+  return (
+    <header className="border-b border-slate-200 bg-white">
+      <div className="mx-auto flex max-w-4xl flex-col gap-1 px-5 py-7 sm:py-9">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl" aria-hidden="true">🍜</span>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">우리동네 맛집 TOP 5</h1>
+        </div>
+        <p className="text-sm text-slate-500 sm:text-base">
+          관심 지역을 입력하면 <strong className="font-semibold text-slate-700">카카오맵 리뷰가 많은 순</strong>으로 5곳을 알려드려요.
+        </p>
+      </div>
+    </header>
+  );
+}
+
+function Footer() {
+  const totalSurveyed = REGIONS.reduce((s, r) => s + r.surveyed, 0);
+  return (
+    <footer className="mt-16 border-t border-slate-200 bg-white">
+      <div className="mx-auto max-w-4xl space-y-2 px-5 py-8 text-xs leading-relaxed text-slate-500">
+        <p>
+          데이터 출처{' '}
+          <a href="https://map.kakao.com/" target="_blank" rel="noopener noreferrer"
+             className="font-medium text-slate-700 underline underline-offset-2 hover:text-slate-900">카카오맵</a>
+          {' · '}수집일 {DATASET.updatedAt}
+          {' · '}{REGIONS.length}개 동 / 조사 대상 {comma(totalSurveyed)}곳
+        </p>
+        <p>
+          Playwright 브라우저 자동화로 동마다 여러 키워드(맛집 · 음식점 · 고기 · 한식 · 일식 · 중식 등)를 검색해
+          모은 스냅샷입니다. 리뷰 수 · 별점 · 영업 정보는 이후 바뀔 수 있으니 방문 전 카카오맵에서 확인하세요.
+        </p>
+      </div>
+    </footer>
+  );
+}
+
+// ========================================
+// 🔎 Search Components
+// ========================================
+
+function SearchBar({ value, onChange, onSubmit, closeSignal }) {
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(-1);
+  const boxRef = useRef(null);
+
+  const suggestions = useMemo(() => matchRegions(value).slice(0, 6), [value]);
+
+  useEffect(() => {
+    const onDocMouseDown = e => {
+      if (boxRef.current && !boxRef.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', onDocMouseDown);
+    return () => document.removeEventListener('mousedown', onDocMouseDown);
+  }, []);
+
+  useEffect(() => { setActive(-1); }, [value]);
+
+  // 동네 칩이나 최근 검색으로 조회하면 열려 있던 추천 목록을 닫는다.
+  useEffect(() => { setOpen(false); }, [closeSignal]);
+
+  const choose = region => {
+    onChange(region.dong);
+    setOpen(false);
+    onSubmit(region.dong);
+  };
+
+  const handleKeyDown = e => {
+    if (!open || suggestions.length === 0) {
+      if (e.key === 'Enter') { e.preventDefault(); setOpen(false); onSubmit(value); }
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActive(i => (i + 1) % suggestions.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActive(i => (i - 1 + suggestions.length) % suggestions.length);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (active >= 0) choose(suggestions[active]);
+      else { setOpen(false); onSubmit(value); }
+    } else if (e.key === 'Escape') {
+      setOpen(false);
+    }
+  };
+
+  return (
+    <div ref={boxRef} className="relative">
+      <form
+        role="search"
+        onSubmit={e => { e.preventDefault(); setOpen(false); onSubmit(value); }}
+        className="flex flex-col gap-2 sm:flex-row"
+      >
+        <div className="flex-1" role="combobox" aria-haspopup="listbox"
+             aria-owns="region-suggest" aria-expanded={open && suggestions.length > 0}>
+          <Input
+            id="region-input"
+            type="text"
+            value={value}
+            onChange={e => { onChange(e.target.value); setOpen(true); }}
+            onFocus={() => setOpen(true)}
+            onKeyDown={handleKeyDown}
+            placeholder="관심 지역을 입력하세요 (예: 대치동, 홍대, 성수)"
+            autoComplete="off"
+            aria-label="관심 지역"
+            aria-autocomplete="list"
+            aria-controls="region-suggest"
+            aria-activedescendant={active >= 0 ? 'region-opt-' + active : undefined}
+          />
+        </div>
+        <Button type="submit" size="lg" className="sm:w-32">🔍 검색</Button>
+      </form>
+
+      {open && suggestions.length > 0 && (
+        <ul
+          id="region-suggest"
+          role="listbox"
+          aria-label="지역 추천"
+          className="suggest-scroll absolute z-20 mt-2 max-h-72 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg"
+        >
+          {suggestions.map((r, i) => (
+            <li
+              key={r.dong}
+              id={'region-opt-' + i}
+              role="option"
+              aria-selected={i === active}
+              onMouseEnter={() => setActive(i)}
+              onMouseDown={e => { e.preventDefault(); choose(r); }}
+              className={`flex cursor-pointer items-center justify-between px-4 py-2.5 text-sm
+                          ${i === active ? 'bg-slate-100' : 'hover:bg-slate-50'}`}
+            >
+              <span className="font-medium text-slate-800">{r.dong}</span>
+              <span className="text-xs text-slate-400">{r.gu} · {r.surveyed}곳 조사</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function RegionChips({ onPick, current }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {REGIONS.map(r => (
+        <button
+          key={r.dong}
+          type="button"
+          onClick={() => onPick(r.dong)}
+          aria-pressed={current === r.dong}
+          className={`rounded-full border px-3 py-1.5 text-xs font-medium transition
+                      focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400
+                      ${current === r.dong
+                        ? 'border-slate-900 bg-slate-900 text-white'
+                        : 'border-slate-300 bg-white text-slate-600 hover:border-slate-400 hover:bg-slate-50'}`}
+        >
+          {r.dong}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function RecentSearches({ items, onPick, onClear }) {
+  if (items.length === 0) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="text-xs font-medium text-slate-400">최근 검색</span>
+      {items.map(d => (
+        <button
+          key={d}
+          type="button"
+          onClick={() => onPick(d)}
+          className="rounded-full bg-slate-200/70 px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-300/70"
+        >
+          {d}
+        </button>
+      ))}
+      <Button variant="ghost" size="sm" onClick={onClear}>지우기</Button>
+    </div>
+  );
+}
+
+// ========================================
+// 🍽️ Result Components
+// ========================================
+
+function RestaurantCard({ place, index, max, dong }) {
+  const style = rankStyle(index);
+  const pct = max > 0 ? Math.max(6, Math.round((place.review / max) * 100)) : 0;
+
+  return (
+    <Card
+      className={`rise-in overflow-hidden ${index < 3 ? 'ring-2 ' + style.ring : ''}`}
+      style={{ animationDelay: index * 60 + 'ms' }}
+    >
+      <div className="flex gap-4 p-4 sm:p-5">
+        <div className="w-10 shrink-0 pt-1">
+          <span
+            className={`flex h-10 w-10 items-center justify-center rounded-full font-bold
+                        ${index < 3 ? 'text-2xl' : 'bg-slate-100 text-base text-slate-500'}`}
+            aria-label={index + 1 + '위'}
+          >
+            {style.badge}
+          </span>
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <h3 className="text-base font-bold text-slate-900 sm:text-lg">{place.name}</h3>
+            <Badge>{place.cat}</Badge>
+          </div>
+
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <Badge variant="brand">💬 리뷰 {comma(place.review)}</Badge>
+            {place.rating > 0 && (
+              <Badge variant="star">⭐ {place.rating.toFixed(1)} ({comma(place.ratingCnt)})</Badge>
+            )}
+          </div>
+
+          <div
+            className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100"
+            role="img"
+            aria-label={'리뷰 ' + comma(place.review) + '건, 이 지역 최다 리뷰 대비 ' + pct + '%'}
+          >
+            <div
+              className={`bar-grow h-full rounded-full ${style.bar}`}
+              style={{ width: pct + '%', animationDelay: index * 60 + 120 + 'ms' }}
+            />
+          </div>
+
+          <p className="mt-3 text-sm text-slate-600">{place.addr}</p>
+          <p className="text-xs text-slate-400">지번 {place.jibun}</p>
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {place.tel && (
+              <a
+                href={'tel:' + place.tel.replace(/[^0-9+]/g, '')}
+                className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+              >
+                📞 {place.tel}
+              </a>
+            )}
+            <a
+              href={place.url || kakaoSearchUrl(dong, place.name)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-lg bg-yellow-300 px-3 py-1.5 text-xs font-semibold text-slate-900 hover:bg-yellow-400"
+            >
+              카카오맵에서 보기 ↗
+            </a>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function ResultPanel({ region, metric, onMetric }) {
+  const [expanded, setExpanded] = useState(false);
+
+  // 지역이나 정렬 기준이 바뀌면 다시 TOP 5 만 보여 준다.
+  useEffect(() => { setExpanded(false); }, [region.dong, metric]);
+
+  const sorted = useMemo(() => {
+    const list = region.places.slice();
+    if (metric === 'rating') {
+      // 별점이 같으면 평가에 참여한 사람이 많은 쪽을 위로 둔다.
+      return list.sort((a, b) => b.rating - a.rating || b.ratingCnt - a.ratingCnt);
+    }
+    return list.sort((a, b) => b.review - a.review);
+  }, [region, metric]);
+
+  const max = region.places.reduce((m, p) => Math.max(m, p.review), 0);
+  const shown = expanded ? sorted : sorted.slice(0, 5);
+  const best = sorted[0];
+
+  return (
+    <section aria-labelledby="result-heading" className="space-y-4">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 id="result-heading" className="text-xl font-bold sm:text-2xl">{region.dong} 맛집 TOP 5</h2>
+          <p className="mt-0.5 text-sm text-slate-500">
+            {region.gu} · 조사 대상 {region.surveyed}곳 중 {metric === 'review' ? '리뷰 많은 순' : '별점 높은 순'}
+          </p>
+        </div>
+
+        <div className="inline-flex rounded-lg border border-slate-300 bg-white p-0.5" role="group" aria-label="정렬 기준">
+          {[['review', '리뷰순'], ['rating', '별점순']].map(pair => (
+            <button
+              key={pair[0]}
+              type="button"
+              onClick={() => onMetric(pair[0])}
+              aria-pressed={metric === pair[0]}
+              className={`rounded-md px-3 py-1.5 text-xs font-semibold transition
+                          ${metric === pair[0] ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
+            >
+              {pair[1]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {best && (
+        <p className="rounded-xl bg-slate-900 px-4 py-3 text-sm leading-relaxed text-slate-100">
+          🏆 <strong className="font-semibold">{best.name}</strong>
+          {metric === 'review'
+            ? josa(best.name, '이', '가') + ' 리뷰 ' + comma(best.review) + '건으로 1위'
+              + (best.rating > 0 ? ' · 별점 ' + best.rating.toFixed(1) + '점' : '')
+            : josa(best.name, '이', '가') + ' 별점 ' + best.rating.toFixed(1) + '점으로 1위 · 리뷰는 '
+              + comma(best.review) + '건'}
+        </p>
+      )}
+
+      <div className="space-y-3">
+        {shown.map((p, i) => (
+          <RestaurantCard key={p.name + p.addr} place={p} index={i} max={max} dong={region.dong} />
+        ))}
+      </div>
+
+      {sorted.length > 5 && (
+        <div className="flex justify-center">
+          <Button variant="secondary" onClick={() => setExpanded(v => !v)} aria-expanded={expanded}>
+            {expanded ? '접기 ▲' : '6~' + sorted.length + '위 더보기 ▼'}
+          </Button>
+        </div>
+      )}
+
+      <div className="flex justify-center pt-2">
+        <a
+          href={kakaoSearchUrl(region.dong)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm font-medium text-slate-500 underline underline-offset-4 hover:text-slate-800"
+        >
+          카카오맵에서 {region.dong} 맛집 직접 검색하기 ↗
+        </a>
+      </div>
+    </section>
+  );
+}
+
+function EmptyState({ query }) {
+  const typed = query.trim();
+  return (
+    <Card className="p-8 text-center">
+      <p className="text-4xl" aria-hidden="true">{typed ? '🔍' : '📍'}</p>
+      <h2 className="mt-3 text-lg font-bold">
+        {typed ? "'" + typed + "' 데이터가 아직 없어요" : '관심 지역을 입력해 주세요'}
+      </h2>
+      <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-500">
+        {typed
+          ? '이 페이지는 미리 수집해 둔 카카오맵 데이터를 쓰기 때문에, 위에 있는 ' + REGIONS.length + '개 동네만 조회할 수 있어요. 다른 지역은 카카오맵에서 바로 검색해 보세요.'
+          : '위 목록에서 동네를 눌러도 되고, 검색창에 직접 입력해도 됩니다. 지하철역이나 동네 별명(홍대 · 가로수길 · 코엑스 …)으로도 찾을 수 있어요.'}
+      </p>
+
+      {typed && (
+        <div className="mt-6">
+          <a
+            href={kakaoSearchUrl(typed)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block rounded-lg bg-yellow-300 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-yellow-400"
+          >
+            카카오맵에서 '{typed}' 검색하기 ↗
+          </a>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+// ========================================
+// 🚀 App
+// ========================================
+
+const RECENT_KEY = 'dongne-top5-recent';
+
+const loadRecent = () => {
+  try {
+    const saved = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
+    return Array.isArray(saved) ? saved.slice(0, 6) : [];
+  } catch (e) {
+    return []; // 시크릿 모드 등 저장소 접근이 막힌 경우
+  }
+};
+
+function App() {
+  const [query, setQuery] = useState('');
+  const [submitted, setSubmitted] = useState('');
+  const [metric, setMetric] = useState('review');
+  const [closeSignal, setCloseSignal] = useState(0);
+  const [recent, setRecent] = useState(loadRecent);
+
+  const region = useMemo(() => (submitted ? matchRegions(submitted)[0] || null : null), [submitted]);
+
+  const pushRecent = useCallback(dong => {
+    setRecent(prev => {
+      const next = [dong].concat(prev.filter(d => d !== dong)).slice(0, 6);
+      try { localStorage.setItem(RECENT_KEY, JSON.stringify(next)); } catch (e) { /* 저장 실패는 무시 */ }
+      return next;
+    });
+  }, []);
+
+  const runSearch = useCallback(term => {
+    const t = (term || '').trim();
+    setSubmitted(t);
+    const hit = matchRegions(t)[0];
+    if (hit) pushRecent(hit.dong);
+  }, [pushRecent]);
+
+  const pick = useCallback(dong => {
+    setQuery(dong);
+    runSearch(dong);
+    setCloseSignal(n => n + 1);
+  }, [runSearch]);
+
+  const clearRecent = useCallback(() => {
+    setRecent([]);
+    try { localStorage.removeItem(RECENT_KEY); } catch (e) { /* 무시 */ }
+  }, []);
+
+  return (
+    <div className="flex min-h-screen flex-col">
+      <Header />
+
+      <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 px-5 py-8">
+        <SearchBar value={query} onChange={setQuery} onSubmit={runSearch} closeSignal={closeSignal} />
+
+        <RecentSearches items={recent} onPick={pick} onClear={clearRecent} />
+
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-slate-400">조회 가능한 동네 {REGIONS.length}곳</p>
+          <RegionChips onPick={pick} current={region ? region.dong : ''} />
+        </div>
+
+        <div className="pt-2">
+          {region
+            ? <ResultPanel region={region} metric={metric} onMetric={setMetric} />
+            : <EmptyState query={submitted} />}
+        </div>
+      </main>
+
+      <Footer />
+    </div>
+  );
+}
+
+// ========================================
+// Rendering
+// ========================================
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

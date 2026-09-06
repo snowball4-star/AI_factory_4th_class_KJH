@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>오늘의 날씨</title>
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <!-- 모든 CDN 버전 고정. Babel 은 반드시 7.x (8.x 는 인라인 text/babel 미지원) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.25.9/babel.min.js"></script>
+  <style>
+    /* Tailwind 유틸리티로 표현이 어려운 애니메이션 / 스크롤바만 커스텀 CSS 사용 */
+    @keyframes float-in {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .animate-float-in { animation: float-in 0.45s ease-out both; }
+
+    @keyframes soft-bob {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-8px); }
+    }
+    .animate-soft-bob { animation: soft-bob 3.5s ease-in-out infinite; }
+
+    .scroll-slim::-webkit-scrollbar { height: 6px; }
+    .scroll-slim::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.35); border-radius: 9999px; }
+    .scroll-slim::-webkit-scrollbar-track { background: transparent; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, useCallback } = React;
+
+    // ========================================
+    // ⚙️ Config (OpenWeatherMap API)
+    // ========================================
+
+    // 주의: 브라우저에서 직접 호출하므로 키가 클라이언트에 노출된다.
+    // 실습용 키이며, 실제 서비스에서는 서버(프록시)를 거쳐 호출해야 한다.
+    const API_KEY = 'c14334f470c3279abeca118a95b76b78';
+    const API_BASE_URL = 'https://api.openweathermap.org/data/2.5';
+
+    // 조회 대상 도시 (OpenWeatherMap 은 좌표 기반 호출이 가장 정확하다)
+    const CITIES = [
+      { id: 'seoul',     city: '서울', region: '대한민국 · 서울특별시',       lat: 37.5665, lon: 126.9780 },
+      { id: 'busan',     city: '부산', region: '대한민국 · 부산광역시',       lat: 35.1796, lon: 129.0756 },
+      { id: 'jeju',      city: '제주', region: '대한민국 · 제주특별자치도',   lat: 33.4996, lon: 126.5312 },
+      { id: 'gangneung', city: '강릉', region: '대한민국 · 강원특별자치도',   lat: 37.7519, lon: 128.8761 },
+    ];
+
+    // 날씨 상태 정의: 아이콘 / 기본 라벨 / 배경 그라디언트
+    const CONDITIONS = {
+      sunny:       { icon: '☀️',  label: '맑음',      gradient: 'from-sky-400 via-sky-500 to-indigo-500' },
+      clearNight:  { icon: '🌙',  label: '맑음',      gradient: 'from-indigo-800 via-slate-800 to-slate-900' },
+      cloudy:      { icon: '⛅',  label: '구름 조금', gradient: 'from-slate-400 via-slate-500 to-slate-700' },
+      cloudyNight: { icon: '☁️',  label: '구름 조금', gradient: 'from-slate-700 via-slate-800 to-slate-900' },
+      overcast:    { icon: '☁️',  label: '흐림',      gradient: 'from-slate-500 via-slate-600 to-slate-800' },
+      rain:        { icon: '🌧️', label: '비',        gradient: 'from-slate-600 via-blue-700 to-slate-800' },
+      snow:        { icon: '🌨️', label: '눈',        gradient: 'from-sky-300 via-slate-400 to-slate-600' },
+      thunder:     { icon: '⛈️', label: '천둥번개',  gradient: 'from-indigo-700 via-slate-700 to-slate-900' },
+      fog:         { icon: '🌫️', label: '안개',      gradient: 'from-slate-400 via-slate-500 to-slate-600' },
+    };
+
+    // 대기질 지수(AQI 1~5) 등급표
+    const AQI_LEVELS = {
+      1: { label: '좋음',      tone: 'good' },
+      2: { label: '보통',      tone: 'good' },
+      3: { label: '나쁨',      tone: 'warn' },
+      4: { label: '매우 나쁨', tone: 'bad'  },
+      5: { label: '최악',      tone: 'bad'  },
+    };
+
+    // ========================================
+    // 🛠 Utils & Data Transform
+    // ========================================
+
+    const getCondition = (key) => CONDITIONS[key] || CONDITIONS.cloudy;
+
+    // OpenWeatherMap 의 weather.id / icon 코드를 앱 내부 상태 키로 변환
+    function resolveCondition(id, iconCode) {
+      const isNight = typeof iconCode === 'string' && iconCode.endsWith('n');
+      if (id >= 200 && id < 300) return 'thunder';
+      if (id >= 300 && id < 600) return 'rain';
+      if (id >= 600 && id < 700) return 'snow';
+      if (id >= 700 && id < 800) return 'fog';
+      if (id === 800) return isNight ? 'clearNight' : 'sunny';
+      if (id === 801 || id === 802) return isNight ? 'cloudyNight' : 'cloudy';
+      return 'overcast';
+    }
+
+    // API 는 UTC 기준 unix time 을 주므로, 도시의 timezone offset(초)을 더해 현지 시각으로 변환
+    const toLocalDate = (unixSeconds, tzOffset) => new Date((unixSeconds + tzOffset) * 1000);
+
+    function formatTime(unixSeconds, tzOffset) {
+      const d = toLocalDate(unixSeconds, tzOffset);
+      return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`;
+    }
+
+    function formatToday(date) {
+      const days = ['일', '월', '화', '수', '목', '금', '토'];
+      return `${date.getMonth() + 1}월 ${date.getDate()}일 ${days[date.getDay()]}요일`;
+    }
+
+    // 3시간 간격 예보 목록을 현지 날짜별로 묶어 일별 예보로 집계
+    function buildWeekly(list, tzOffset) {
+      const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+      const buckets = new Map();
+
+      list.forEach((item) => {
+        const d = toLocalDate(item.dt, tzOffset);
+        const key = d.toISOString().slice(0, 10);
+        if (!buckets.has(key)) buckets.set(key, []);
+        buckets.get(key).push({ item, date: d });
+      });
+
+      const todayKey = new Date(Date.now() + tzOffset * 1000).toISOString().slice(0, 10);
+      const tomorrowKey = new Date(Date.now() + tzOffset * 1000 + 86400000).toISOString().slice(0, 10);
+
+      return Array.from(buckets.entries()).map(([key, entries]) => {
+        // 그날을 대표하는 날씨는 정오에 가장 가까운 예보로 고른다
+        const noon = entries.reduce((best, e) =>
+          Math.abs(e.date.getUTCHours() - 12) < Math.abs(best.date.getUTCHours() - 12) ? e : best
+        , entries[0]);
+        const first = entries[0].date;
+
+        return {
+          key,
+          isToday: key === todayKey,
+          day: key === todayKey ? '오늘' : key === tomorrowKey ? '내일' : dayNames[first.getUTCDay()],
+          date: `${first.getUTCMonth() + 1}/${first.getUTCDate()}`,
+          condition: resolveCondition(noon.item.weather[0].id, noon.item.weather[0].icon),
+          label: noon.item.weather[0].description,
+          high: Math.round(Math.max(...entries.map((e) => e.item.main.temp_max))),
+          low: Math.round(Math.min(...entries.map((e) => e.item.main.temp_min))),
+          rainChance: Math.round(Math.max(...entries.map((e) => e.item.pop || 0)) * 100),
+        };
+      });
+    }
+
+    // 세 개의 API 응답(현재 날씨 / 예보 / 대기질)을 화면이 쓰는 하나의 형태로 정규화
+    function transformWeather(city, current, forecast, air) {
+      const tz = current.timezone;
+      const weekly = buildWeekly(forecast.list, tz);
+      // 예보 목록은 "다음" 3시간 슬롯부터 시작하므로, 늦은 밤에는 오늘 버킷이 없을 수 있다
+      const today = weekly.find((d) => d.isToday) || null;
+      const airNow = air && air.list && air.list[0];
+
+      const hourly = forecast.list.slice(0, 8).map((item) => {
+        const d = toLocalDate(item.dt, tz);
+        return {
+          key: item.dt,
+          time: `${String(d.getUTCHours()).padStart(2, '0')}시`,
+          temp: Math.round(item.main.temp),
+          condition: resolveCondition(item.weather[0].id, item.weather[0].icon),
+          label: item.weather[0].description,
+          rainChance: Math.round((item.pop || 0) * 100),
+        };
+      });
+
+      return {
+        ...city,
+        updatedAt: formatTime(current.dt, tz),
+        current: {
+          condition: resolveCondition(current.weather[0].id, current.weather[0].icon),
+          label: current.weather[0].description,
+          temp: Math.round(current.main.temp),
+          feelsLike: Math.round(current.main.feels_like),
+          // 현재 날씨 API 의 temp_max/min 은 한 지점 값이라, 예보에서 집계한 오늘 최고·최저를 우선 사용
+          high: today ? today.high : Math.round(current.main.temp_max),
+          low: today ? today.low : Math.round(current.main.temp_min),
+          humidity: current.main.humidity,
+          wind: Math.round(current.wind.speed * 10) / 10,
+          rainChance: forecast.list[0] ? Math.round((forecast.list[0].pop || 0) * 100) : 0,
+          pressure: current.main.pressure,
+          sunrise: formatTime(current.sys.sunrise, tz),
+          sunset: formatTime(current.sys.sunset, tz),
+          aqi: airNow ? airNow.main.aqi : null,
+          pm25: airNow ? Math.round(airNow.components.pm2_5) : null,
+        },
+        hourly,
+        weekly,
+      };
+    }
+
+    // ========================================
+    // 📡 API Layer
+    // ========================================
+
+    async function fetchJson(url, signal) {
+      const res = await fetch(url, { signal });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        const err = new Error(body.message || `요청 실패 (${res.status})`);
+        err.status = res.status;
+        throw err;
+      }
+      return res.json();
+    }
+
+    function toUserMessage(err) {
+      if (err.status === 401) {
+        return 'API 키가 올바르지 않거나 아직 활성화되지 않았습니다. 새로 발급한 키는 활성화까지 최대 2시간이 걸릴 수 있습니다.';
+      }
+      if (err.status === 429) return 'API 호출 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.';
+      if (err.status >= 500) return 'OpenWeatherMap 서버에 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.';
+      if (err instanceof TypeError) return '네트워크에 연결할 수 없습니다. 인터넷 연결을 확인해 주세요.';
+      return err.message || '날씨 정보를 불러오지 못했습니다.';
+    }
+
+    // 선택한 도시의 현재 날씨 · 예보 · 대기질을 한 번에 가져오는 커스텀 훅
+    function useWeather(city) {
+      const [state, setState] = useState({ data: null, loading: true, error: null });
+      const [reloadKey, setReloadKey] = useState(0);
+      const refetch = useCallback(() => setReloadKey((k) => k + 1), []);
+
+      useEffect(() => {
+        const controller = new AbortController();
+        let alive = true;
+
+        setState({ data: null, loading: true, error: null });
+
+        const query = `lat=${city.lat}&lon=${city.lon}&appid=${API_KEY}`;
+        const requests = [
+          fetchJson(`${API_BASE_URL}/weather?${query}&units=metric&lang=kr`, controller.signal),
+          fetchJson(`${API_BASE_URL}/forecast?${query}&units=metric&lang=kr`, controller.signal),
+          // 대기질은 실패해도 나머지 화면은 보여준다
+          fetchJson(`${API_BASE_URL}/air_pollution?${query}`, controller.signal).catch(() => null),
+        ];
+
+        Promise.all(requests)
+          .then(([current, forecast, air]) => {
+            if (!alive) return;
+            setState({ data: transformWeather(city, current, forecast, air), loading: false, error: null });
+          })
+          .catch((err) => {
+            if (!alive || err.name === 'AbortError') return;
+            setState({ data: null, loading: false, error: toUserMessage(err) });
+          });
+
+        return () => {
+          alive = false;
+          controller.abort();
+        };
+      }, [city.id, city.lat, city.lon, reloadKey]);
+
+      return { ...state, refetch };
+    }
+
+    // ========================================
+    // 🎨 Design System Components
+    // ========================================
+
+    function Card({ children, className = '' }) {
+      return (
+        <div className={`rounded-3xl bg-white/15 backdrop-blur-md ring-1 ring-white/20 shadow-xl p-5 sm:p-6 ${className}`}>
+          {children}
+        </div>
+      );
+    }
+
+    function Button({ children, variant = 'primary', size = 'md', disabled = false, onClick, className = '', ...rest }) {
+      const base = 'inline-flex items-center justify-center font-semibold rounded-full transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:opacity-50 disabled:cursor-not-allowed';
+      const variants = {
+        primary: 'bg-white text-slate-900 shadow-lg hover:bg-white/90',
+        secondary: 'bg-white/15 text-white ring-1 ring-white/30 hover:bg-white/25',
+        danger: 'bg-rose-500 text-white hover:bg-rose-600',
+        ghost: 'bg-transparent text-white/80 hover:bg-white/10',
+      };
+      const sizes = {
+        sm: 'text-xs px-3 py-1.5 gap-1',
+        md: 'text-sm px-4 py-2 gap-1.5',
+        lg: 'text-base px-6 py-3 gap-2',
+      };
+      return (
+        <button
+          type="button"
+          onClick={onClick}
+          disabled={disabled}
+          className={`${base} ${variants[variant]} ${sizes[size]} ${className}`}
+          {...rest}
+        >
+          {children}
+        </button>
+      );
+    }
+
+    function Badge({ children, tone = 'neutral', className = '' }) {
+      const tones = {
+        neutral: 'bg-white/20 text-white ring-white/25',
+        good: 'bg-emerald-400/25 text-emerald-50 ring-emerald-200/40',
+        warn: 'bg-amber-400/25 text-amber-50 ring-amber-200/40',
+        bad: 'bg-rose-500/25 text-rose-50 ring-rose-200/40',
+      };
+      return (
+        <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ring-1 ${tones[tone]} ${className}`}>
+          {children}
+        </span>
+      );
+    }
+
+    function Skeleton({ className = '' }) {
+      return <div className={`animate-pulse rounded-2xl bg-white/20 ${className}`} aria-hidden="true" />;
+    }
+
+    // ========================================
+    // 🧩 Common / Layout Components
+    // ========================================
+
+    function Header({ today, updatedAt, onRefresh, refreshing }) {
+      return (
+        <header className="flex flex-wrap items-end justify-between gap-3 text-white">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">오늘의 날씨</h1>
+            <p className="text-sm text-white/70">
+              {today}
+              {updatedAt && <span className="ml-2 text-white/50">· {updatedAt} 관측</span>}
+            </p>
+          </div>
+          <Button variant="secondary" size="sm" onClick={onRefresh} disabled={refreshing} aria-label="날씨 정보 새로고침">
+            🔄 새로고침
+          </Button>
+        </header>
+      );
+    }
+
+    function CitySelector({ cities, selectedId, onSelect, disabled }) {
+      return (
+        <nav aria-label="도시 선택" className="flex flex-wrap gap-2">
+          {cities.map((c) => (
+            <Button
+              key={c.id}
+              size="sm"
+              variant={c.id === selectedId ? 'primary' : 'secondary'}
+              disabled={disabled}
+              onClick={() => onSelect(c.id)}
+              aria-current={c.id === selectedId ? 'true' : undefined}
+            >
+              {c.city}
+            </Button>
+          ))}
+        </nav>
+      );
+    }
+
+    function StatCard({ icon, label, value, sub }) {
+      return (
+        <div className="rounded-2xl bg-white/10 ring-1 ring-white/15 p-4 flex flex-col gap-1">
+          <span className="text-xs text-white/70 flex items-center gap-1">
+            <span aria-hidden="true">{icon}</span> {label}
+          </span>
+          <span className="text-xl font-semibold text-white">{value}</span>
+          {sub && <span className="text-xs text-white/60">{sub}</span>}
+        </div>
+      );
+    }
+
+    function Footer() {
+      return (
+        <footer className="pb-8 pt-2 text-center text-xs text-white/50">
+          데이터 제공: OpenWeatherMap · 현재 날씨 / 5일 3시간 예보 / 대기질 API
+        </footer>
+      );
+    }
+
+    // ========================================
+    // 📄 Section Components
+    // ========================================
+
+    function CurrentWeather({ data }) {
+      const cond = getCondition(data.current.condition);
+      return (
+        <Card className="animate-float-in">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+            <div className="flex flex-col gap-2 text-white">
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-bold">{data.city}</h2>
+                <Badge>{data.current.label || cond.label}</Badge>
+              </div>
+              <p className="text-xs text-white/60">{data.region}</p>
+              <div className="flex items-end gap-3 mt-1">
+                <span className="text-7xl font-extralight leading-none tracking-tighter">{data.current.temp}°</span>
+                <span className="mb-2 text-sm text-white/80">체감 {data.current.feelsLike}°</span>
+              </div>
+              <p className="text-sm text-white/80">
+                최고 {data.current.high}° · 최저 {data.current.low}°
+              </p>
+            </div>
+
+            <div className="self-center text-[7rem] leading-none sm:text-[9rem] animate-soft-bob" role="img" aria-label={data.current.label || cond.label}>
+              {cond.icon}
+            </div>
+          </div>
+        </Card>
+      );
+    }
+
+    function WeatherDetails({ current }) {
+      const aqi = current.aqi ? AQI_LEVELS[current.aqi] : null;
+      return (
+        <section aria-labelledby="details-heading" className="animate-float-in">
+          <h3 id="details-heading" className="mb-3 px-1 text-sm font-semibold text-white/80">상세 정보</h3>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            <StatCard icon="💧" label="습도" value={`${current.humidity}%`} />
+            <StatCard icon="🌬️" label="풍속" value={`${current.wind} m/s`} />
+            <StatCard icon="☔" label="강수확률" value={`${current.rainChance}%`} sub="향후 3시간" />
+            <StatCard icon="🧭" label="기압" value={`${current.pressure}`} sub="hPa" />
+            <StatCard icon="🌅" label="일출" value={current.sunrise} />
+            <StatCard icon="🌇" label="일몰" value={current.sunset} />
+          </div>
+          <div className="mt-3 px-1">
+            {aqi ? (
+              <Badge tone={aqi.tone}>
+                😷 대기질 {aqi.label}
+                {current.pm25 !== null && ` · 초미세먼지 ${current.pm25}㎍/㎥`}
+              </Badge>
+            ) : (
+              <Badge>😷 대기질 정보 없음</Badge>
+            )}
+          </div>
+        </section>
+      );
+    }
+
+    function HourlyForecast({ hourly }) {
+      if (!hourly || hourly.length === 0) {
+        return (
+          <Card>
+            <p className="text-center text-sm text-white/70">시간대별 예보가 없습니다.</p>
+          </Card>
+        );
+      }
+      return (
+        <Card className="animate-float-in">
+          <h3 className="mb-4 text-sm font-semibold text-white/80">시간대별 예보 <span className="font-normal text-white/50">(3시간 간격)</span></h3>
+          <ul className="scroll-slim flex gap-3 overflow-x-auto pb-2">
+            {hourly.map((h) => {
+              const cond = getCondition(h.condition);
+              return (
+                <li key={h.key} className="flex min-w-[76px] flex-col items-center gap-2 rounded-2xl bg-white/10 px-3 py-4 ring-1 ring-white/15">
+                  <span className="text-xs text-white/70">{h.time}</span>
+                  <span className="text-2xl" role="img" aria-label={h.label || cond.label}>{cond.icon}</span>
+                  <span className="text-lg font-semibold text-white">{h.temp}°</span>
+                  <span className="text-[11px] text-sky-200">💧{h.rainChance}%</span>
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
+      );
+    }
+
+    function WeeklyForecast({ weekly }) {
+      // 주간 최저·최고 범위를 기준으로 온도 막대의 시작 위치와 길이를 계산
+      const { min, max } = useMemo(() => ({
+        min: Math.min(...weekly.map((d) => d.low)),
+        max: Math.max(...weekly.map((d) => d.high)),
+      }), [weekly]);
+      const span = Math.max(max - min, 1);
+
+      if (weekly.length === 0) {
+        return (
+          <Card>
+            <p className="text-center text-sm text-white/70">주간 예보가 없습니다.</p>
+          </Card>
+        );
+      }
+
+      return (
+        <Card className="animate-float-in">
+          <h3 className="mb-4 text-sm font-semibold text-white/80">주간 예보 <span className="font-normal text-white/50">(5일)</span></h3>
+          <ul className="flex flex-col divide-y divide-white/10">
+            {weekly.map((d) => {
+              const cond = getCondition(d.condition);
+              const left = ((d.low - min) / span) * 100;
+              const width = ((d.high - d.low) / span) * 100;
+              return (
+                <li key={d.key} className="grid grid-cols-[2.6rem_2rem_3rem_1fr_2.4rem] items-center gap-2 py-3 sm:gap-3">
+                  <span className={`text-sm ${d.day === '오늘' ? 'font-bold text-white' : 'text-white/80'}`}>{d.day}</span>
+                  <span className="text-xl" role="img" aria-label={d.label || cond.label}>{cond.icon}</span>
+                  <span className="text-xs text-sky-200">💧{d.rainChance}%</span>
+                  <div className="flex items-center gap-2">
+                    <span className="w-8 text-right text-xs text-white/60">{d.low}°</span>
+                    <div className="relative h-1.5 flex-1 rounded-full bg-white/15">
+                      <div
+                        className="absolute h-1.5 rounded-full bg-gradient-to-r from-sky-300 to-amber-300"
+                        style={{ left: `${left}%`, width: `${Math.max(width, 6)}%` }}
+                      />
+                    </div>
+                  </div>
+                  <span className="text-right text-xs font-semibold text-white">{d.high}°</span>
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
+      );
+    }
+
+    function LoadingView() {
+      return (
+        <div className="flex flex-col gap-4" role="status" aria-live="polite">
+          <span className="sr-only">날씨 정보를 불러오는 중입니다</span>
+          <Skeleton className="h-56 w-full" />
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-24 w-full" />)}
+          </div>
+          <Skeleton className="h-40 w-full" />
+        </div>
+      );
+    }
+
+    function ErrorView({ message, onRetry }) {
+      return (
+        <Card className="text-center">
+          <p className="text-4xl" role="img" aria-label="경고">⚠️</p>
+          <p className="mx-auto mt-3 max-w-md text-sm text-white/90">{message}</p>
+          <Button className="mt-4" onClick={onRetry}>다시 시도</Button>
+        </Card>
+      );
+    }
+
+    // ========================================
+    // 🚀 App Component
+    // ========================================
+
+    function App() {
+      const [selectedId, setSelectedId] = useState(CITIES[0].id);
+      const today = useMemo(() => formatToday(new Date()), []);
+
+      const city = useMemo(() => CITIES.find((c) => c.id === selectedId) || CITIES[0], [selectedId]);
+      const { data, loading, error, refetch } = useWeather(city);
+
+      const handleSelect = useCallback((id) => setSelectedId(id), []);
+
+      const gradient = data && !loading && !error
+        ? getCondition(data.current.condition).gradient
+        : 'from-slate-600 via-slate-700 to-slate-900';
+
+      return (
+        <div className={`min-h-screen bg-gradient-to-br ${gradient} transition-colors duration-700`}>
+          <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-8 sm:px-6 sm:py-10">
+            <Header
+              today={today}
+              updatedAt={data ? data.updatedAt : null}
+              onRefresh={refetch}
+              refreshing={loading}
+            />
+            <CitySelector cities={CITIES} selectedId={selectedId} onSelect={handleSelect} disabled={loading} />
+
+            {loading && <LoadingView />}
+
+            {!loading && error && <ErrorView message={error} onRetry={refetch} />}
+
+            {!loading && !error && data && (
+              <main className="flex flex-col gap-4">
+                <CurrentWeather data={data} />
+                <WeatherDetails current={data.current} />
+                <HourlyForecast hourly={data.hourly} />
+                <WeeklyForecast weekly={data.weekly} />
+              </main>
+            )}
+
+            <Footer />
+          </div>
+        </div>
+      );
+    }
+
+    // ========================================
+    // Rendering
+    // ========================================
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

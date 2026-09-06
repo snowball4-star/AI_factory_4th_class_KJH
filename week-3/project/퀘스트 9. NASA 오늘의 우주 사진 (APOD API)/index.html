@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>COSMOS DAILY — NASA 오늘의 천문학 사진</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;0,900;1,500&family=Noto+Serif+KR:wght@300;500;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <!-- 모든 CDN 버전 고정. Babel 은 반드시 7.x (8.x 는 인라인 text/babel 미지원) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.25.9/babel.min.js"></script>
+
+  <style>
+    :root { --ink: #f4f1ea; --paper: #07070c; }
+
+    body {
+      background-color: var(--paper);
+      color: var(--ink);
+      font-family: 'Noto Sans KR', system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .font-display { font-family: 'Playfair Display', 'Noto Serif KR', serif; }
+    .font-serif-ko { font-family: 'Noto Serif KR', 'Playfair Display', serif; }
+
+    /* 별이 반짝이는 배경 */
+    .starfield {
+      background-image:
+        radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,.9), transparent),
+        radial-gradient(1px 1px at 70% 15%, rgba(255,255,255,.7), transparent),
+        radial-gradient(1.5px 1.5px at 45% 70%, rgba(255,255,255,.55), transparent),
+        radial-gradient(1px 1px at 85% 60%, rgba(255,255,255,.75), transparent),
+        radial-gradient(1px 1px at 10% 85%, rgba(255,255,255,.6), transparent),
+        radial-gradient(1.5px 1.5px at 60% 92%, rgba(255,255,255,.5), transparent);
+      background-size: 220px 220px;
+      animation: twinkle 7s ease-in-out infinite alternate;
+    }
+    @keyframes twinkle { from { opacity: .35 } to { opacity: .85 } }
+
+    /* 매거진 드롭캡 */
+    .dropcap::first-letter {
+      float: left;
+      font-family: 'Playfair Display', serif;
+      font-weight: 900;
+      font-size: 4.4rem;
+      line-height: .82;
+      padding: .08em .12em 0 0;
+      color: #e7c9a0;
+    }
+
+    .fade-up { animation: fadeUp .7s cubic-bezier(.22,.8,.3,1) both; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(18px) } to { opacity: 1; transform: none } }
+
+    .shimmer {
+      background: linear-gradient(100deg, rgba(255,255,255,.04) 20%, rgba(255,255,255,.11) 40%, rgba(255,255,255,.04) 60%);
+      background-size: 220% 100%;
+      animation: shimmer 1.6s linear infinite;
+    }
+    @keyframes shimmer { from { background-position: 130% 0 } to { background-position: -30% 0 } }
+
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* 본문 2단 조판 */
+    @media (min-width: 1024px) {
+      .magazine-columns { column-count: 2; column-gap: 3.25rem; }
+      .magazine-columns > p:first-child { margin-top: 0; }
+    }
+
+    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1) opacity(.6); cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, useMemo } = React;
+
+    // ========================================
+    // 설정값 & 유틸리티
+    // ========================================
+
+    const NASA_API_KEY = 'yOaIWczRAgXvLx8DfGzLAKOoAfMth1NTcpG7Mhp0';
+    const APOD_ENDPOINT = 'https://api.nasa.gov/planetary/apod';
+    const FIRST_APOD_DATE = '1995-06-16'; // APOD 최초 발행일
+    const ARCHIVE_SIZE = 7;
+
+    const toISO = (d) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return y + '-' + m + '-' + day;
+    };
+
+    /**
+     * APOD 는 미 동부시간(ET) 자정에 새 호가 올라온다.
+     * 브라우저 로컬 날짜를 그대로 쓰면 한국처럼 앞선 시간대에서 아직 없는 날짜를 요청해
+     * HTTP 400 이 나므로, 항상 ET 기준 날짜를 "오늘"로 삼는다.
+     */
+    const etFormatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/New_York',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+    });
+    const todayISO = () => etFormatter.format(new Date()); // en-CA → YYYY-MM-DD
+
+    const shiftDate = (iso, days) => {
+      const [y, m, d] = iso.split('-').map(Number);
+      const dt = new Date(y, m - 1, d);
+      dt.setDate(dt.getDate() + days);
+      return toISO(dt);
+    };
+
+    const clampDate = (iso) => {
+      if (iso < FIRST_APOD_DATE) return FIRST_APOD_DATE;
+      if (iso > todayISO()) return todayISO();
+      return iso;
+    };
+
+    const formatKorean = (iso) => {
+      const [y, m, d] = iso.split('-').map(Number);
+      const weekday = ['일', '월', '화', '수', '목', '금', '토'][new Date(y, m - 1, d).getDay()];
+      return `${y}년 ${m}월 ${d}일 ${weekday}요일`;
+    };
+
+    // 창간일 기준 통산 발행 호수 — 매거진 느낌을 위한 장치
+    const issueNumber = (iso) => {
+      const [y, m, d] = iso.split('-').map(Number);
+      const diff = Date.UTC(y, m - 1, d) - Date.UTC(1995, 5, 16);
+      return Math.floor(diff / 86400000) + 1;
+    };
+
+    const readingMinutes = (text) => Math.max(1, Math.round((text || '').split(/\s+/).length / 200));
+
+    /**
+     * APOD 해설은 대개 줄바꿈 없는 한 덩어리로 온다.
+     * 그대로 두면 2단 조판이 무너지므로, 빈 줄이 없을 때는 문장 세 개 단위로 문단을 나눈다.
+     */
+    const toParagraphs = (text) => {
+      const raw = (text || '').replace(/\s+/g, ' ').trim();
+      if (!raw) return [];
+
+      const blocks = (text || '').split(/\n{2,}/).map((s) => s.trim()).filter(Boolean);
+      if (blocks.length > 1) return blocks;
+
+      // 마침표 뒤가 공백 + 대문자(또는 따옴표)일 때만 문장 경계로 본다.
+      // 그래야 "apod.nasa.gov", "8.1 meter" 같은 표기가 중간에 잘리지 않는다.
+      const sentences = raw.split(/(?<=[.!?]["'’)\]]?)\s+(?=["'“(]?[A-Z0-9])/);
+      const grouped = [];
+      for (let i = 0; i < sentences.length; i += 3) {
+        grouped.push(sentences.slice(i, i + 3).join(' ').trim());
+      }
+      return grouped;
+    };
+
+    const apodPageUrl = (iso) => {
+      const [y, m, d] = iso.split('-');
+      return `https://apod.nasa.gov/apod/ap${y.slice(2)}${m}${d}.html`;
+    };
+
+    const translateUrl = (text) =>
+      'https://translate.google.com/?sl=en&tl=ko&op=translate&text=' +
+      encodeURIComponent((text || '').slice(0, 4800));
+
+    // ========================================
+    // 🎨 Design System Components
+    // ========================================
+
+    function Button({ variant = 'primary', size = 'md', className = '', children, ...props }) {
+      const base =
+        'inline-flex items-center justify-center gap-2 rounded-full font-medium tracking-wide ' +
+        'transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/70 ' +
+        'disabled:opacity-35 disabled:cursor-not-allowed';
+      const variants = {
+        primary: 'bg-amber-200 text-slate-900 hover:bg-amber-100 shadow-lg shadow-amber-200/10',
+        secondary: 'bg-white/10 text-white hover:bg-white/20 backdrop-blur border border-white/15',
+        ghost: 'text-white/70 hover:text-white hover:bg-white/10',
+      };
+      const sizes = {
+        sm: 'px-3 py-1.5 text-xs',
+        md: 'px-4 py-2 text-sm',
+        lg: 'px-6 py-3 text-base',
+      };
+      return (
+        <button className={`${base} ${variants[variant]} ${sizes[size]} ${className}`} {...props}>
+          {children}
+        </button>
+      );
+    }
+
+    function Badge({ children, className = '' }) {
+      return (
+        <span className={'inline-flex items-center rounded-full border border-white/20 bg-white/5 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-white/75 ' + className}>
+          {children}
+        </span>
+      );
+    }
+
+    function Card({ className = '', children }) {
+      return (
+        <div className={`rounded-2xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur-sm ${className}`}>
+          {children}
+        </div>
+      );
+    }
+
+    function Modal({ isOpen, onClose, title, children }) {
+      useEffect(() => {
+        if (!isOpen) return;
+        const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+        document.addEventListener('keydown', onKey);
+        document.body.style.overflow = 'hidden';
+        return () => {
+          document.removeEventListener('keydown', onKey);
+          document.body.style.overflow = '';
+        };
+      }, [isOpen, onClose]);
+
+      if (!isOpen) return null;
+
+      return (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-label={title}
+          onClick={onClose}
+        >
+          <div className="relative max-h-full w-full max-w-6xl overflow-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-3 flex items-center justify-between gap-4">
+              <p className="font-display text-sm italic text-white/70">{title}</p>
+              <Button variant="secondary" size="sm" onClick={onClose}>✕ 닫기</Button>
+            </div>
+            {children}
+          </div>
+        </div>
+      );
+    }
+
+    function Spinner({ className = '' }) {
+      return (
+        <span
+          className={`inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/25 border-t-amber-200 ${className}`}
+          role="status"
+          aria-label="불러오는 중"
+        />
+      );
+    }
+
+    // ========================================
+    // 📡 데이터 레이어 (NASA APOD API)
+    // ========================================
+
+    function buildUrl(params) {
+      const query = new URLSearchParams(Object.assign({ api_key: NASA_API_KEY }, params));
+      return `${APOD_ENDPOINT}?${query.toString()}`;
+    }
+
+    async function fetchApod(params) {
+      const res = await fetch(buildUrl(params));
+      if (!res.ok) {
+        let detail = '';
+        try {
+          const body = await res.json();
+          detail = body.msg || (body.error && body.error.message) || '';
+        } catch (e) { /* JSON 응답이 아닐 수 있음 */ }
+        if (res.status === 429) throw new Error('NASA API 시간당 요청 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.');
+        if (res.status === 403) throw new Error('API 키가 거부되었습니다. 키를 다시 확인해 주세요.');
+        throw new Error(detail || `데이터를 불러오지 못했습니다 (HTTP ${res.status})`);
+      }
+      return res.json();
+    }
+
+    /**
+     * 특정 날짜의 APOD 한 건을 불러온다. reloadToken 이 바뀌면 강제로 재요청한다.
+     * 오늘 자 호가 아직 게시 전이면(ET 자정 직후) 하루 전 호로 자동 폴백한다.
+     */
+    function useApod(date, reloadToken) {
+      const [data, setData] = useState(null);
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState(null);
+
+      useEffect(() => {
+        let cancelled = false;
+        setLoading(true);
+        setError(null);
+
+        fetchApod({ date: date, thumbs: 'true' })
+          .catch((err) => {
+            if (date !== todayISO()) throw err;
+            return fetchApod({ date: shiftDate(date, -1), thumbs: 'true' });
+          })
+          .then((json) => { if (!cancelled) setData(json); })
+          .catch((err) => { if (!cancelled) { setError(err); setData(null); } })
+          .finally(() => { if (!cancelled) setLoading(false); });
+
+        return () => { cancelled = true; };
+      }, [date, reloadToken]);
+
+      return { data, loading, error };
+    }
+
+    /** 기준일 직전 며칠치를 아카이브 스트립용으로 불러온다. */
+    function useArchive(endDate, reloadToken) {
+      const [items, setItems] = useState([]);
+
+      useEffect(() => {
+        let cancelled = false;
+        const start = clampDate(shiftDate(endDate, -(ARCHIVE_SIZE - 1)));
+
+        fetchApod({ start_date: start, end_date: endDate, thumbs: 'true' })
+          .then((json) => {
+            if (cancelled) return;
+            setItems(Array.isArray(json) ? json.slice().reverse() : []);
+          })
+          .catch(() => { if (!cancelled) setItems([]); });
+
+        return () => { cancelled = true; };
+      }, [endDate, reloadToken]);
+
+      return items;
+    }
+
+    // ========================================
+    // 🧩 공통 / 레이아웃 컴포넌트
+    // ========================================
+
+    function Masthead({ date, onChangeDate, onRandom, randomLoading }) {
+      const isToday = date === todayISO();
+      const atStart = date <= FIRST_APOD_DATE;
+
+      return (
+        <header className="sticky top-0 z-30 border-b border-white/10 bg-black/70 backdrop-blur-xl">
+          <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-3 md:flex-row md:items-center md:justify-between md:gap-6">
+            <div className="flex items-baseline gap-3">
+              <h1 className="font-display text-2xl font-black tracking-[0.22em] text-white md:text-[26px]">
+                COSMOS<span className="text-amber-200">·</span>DAILY
+              </h1>
+              <span className="hidden text-[11px] uppercase tracking-[0.3em] text-white/40 sm:inline">
+                NASA APOD 매거진
+              </span>
+            </div>
+
+            <nav className="flex flex-wrap items-center gap-2" aria-label="발행일 탐색">
+              <Button variant="ghost" size="sm" onClick={() => onChangeDate(shiftDate(date, -1))} disabled={atStart}>
+                ← 이전 호
+              </Button>
+
+              <input
+                type="date"
+                value={date}
+                min={FIRST_APOD_DATE}
+                max={todayISO()}
+                onChange={(e) => e.target.value && onChangeDate(clampDate(e.target.value))}
+                aria-label="발행일 선택"
+                className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white/90 outline-none focus:border-amber-200/60"
+              />
+
+              <Button variant="ghost" size="sm" onClick={() => onChangeDate(shiftDate(date, 1))} disabled={isToday}>
+                다음 호 →
+              </Button>
+
+              <Button variant="secondary" size="sm" onClick={() => onChangeDate(todayISO())} disabled={isToday}>
+                오늘
+              </Button>
+
+              <Button variant="primary" size="sm" onClick={onRandom} disabled={randomLoading}>
+                {randomLoading ? <Spinner className="border-slate-900/30 border-t-slate-900" /> : '✦'} 랜덤 아카이브
+              </Button>
+            </nav>
+          </div>
+        </header>
+      );
+    }
+
+    function MediaFrame({ item, onZoom }) {
+      const [broken, setBroken] = useState(false);
+
+      useEffect(() => { setBroken(false); }, [item.url]);
+
+      if (item.media_type === 'video') {
+        return (
+          <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-white/10 bg-black">
+            <iframe
+              src={item.url}
+              title={item.title}
+              className="h-full w-full"
+              allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        );
+      }
+
+      if (broken) {
+        return (
+          <div className="flex aspect-[3/2] w-full items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-sm text-white/50">
+            이미지를 표시할 수 없습니다.
+          </div>
+        );
+      }
+
+      return (
+        <button
+          type="button"
+          onClick={onZoom}
+          className="group relative block w-full overflow-hidden rounded-2xl border border-white/10 bg-black"
+          aria-label="원본 크기로 보기"
+        >
+          <img
+            src={item.hdurl || item.url}
+            alt={item.title}
+            onError={() => setBroken(true)}
+            className="w-full transition-transform duration-[1400ms] ease-out group-hover:scale-[1.03]"
+          />
+          <span className="pointer-events-none absolute bottom-3 right-3 rounded-full bg-black/65 px-3 py-1.5 text-[11px] tracking-wider text-white/85 opacity-0 backdrop-blur transition-opacity group-hover:opacity-100">
+            🔍 클릭해서 원본 보기
+          </span>
+        </button>
+      );
+    }
+
+    function Hero({ item, date, onZoom }) {
+      const backdrop = item.media_type === 'image' ? (item.url || item.hdurl) : item.thumbnail_url;
+
+      return (
+        <section className="relative overflow-hidden border-b border-white/10">
+          {backdrop && (
+            <div
+              className="absolute inset-0 scale-110 bg-cover bg-center opacity-40 blur-2xl"
+              style={{ backgroundImage: `url(${backdrop})` }}
+              aria-hidden="true"
+            />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-[#07070c]" aria-hidden="true" />
+          <div className="starfield absolute inset-0 opacity-40" aria-hidden="true" />
+
+          <div className="relative mx-auto max-w-7xl px-5 pb-14 pt-12 md:pb-20 md:pt-16">
+            <div className="fade-up flex flex-wrap items-center gap-3">
+              <Badge className="border-amber-200/40 text-amber-100">제 {issueNumber(date).toLocaleString()} 호</Badge>
+              <Badge>{formatKorean(date)}</Badge>
+              <Badge>{item.media_type === 'video' ? '영상' : '사진'}</Badge>
+              {item.copyright && <Badge>© {item.copyright.trim()}</Badge>}
+            </div>
+
+            <h2 className="fade-up mt-7 max-w-5xl font-display text-4xl font-black leading-[1.08] tracking-tight text-white md:text-6xl lg:text-7xl">
+              {item.title}
+            </h2>
+
+            <p className="fade-up mt-6 max-w-2xl font-serif-ko text-base leading-relaxed text-white/60 md:text-lg">
+              미 항공우주국이 1995년부터 하루도 빠짐없이 골라 온 우주의 한 장면.
+              천문학자가 직접 붙인 해설과 함께 오늘의 우주를 읽습니다.
+            </p>
+
+            <div className="fade-up mt-10">
+              <MediaFrame item={item} onZoom={onZoom} />
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    function MetaPanel({ item, date }) {
+      const [copied, setCopied] = useState(false);
+
+      const share = useCallback(() => {
+        const text = `${item.title} — NASA APOD ${date}\n${apodPageUrl(date)}`;
+        if (!navigator.clipboard) return;
+        navigator.clipboard.writeText(text)
+          .then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+          })
+          .catch(() => setCopied(false));
+      }, [item.title, date]);
+
+      const rows = [
+        { label: '발행일', value: formatKorean(date) },
+        { label: '형식', value: item.media_type === 'video' ? '동영상' : '정지 이미지' },
+        { label: '저작권', value: item.copyright ? item.copyright.trim() : 'Public Domain (NASA)' },
+        { label: '읽는 시간', value: `약 ${readingMinutes(item.explanation)}분` },
+      ];
+
+      return (
+        <Card className="lg:sticky lg:top-24">
+          <h3 className="font-display text-xs uppercase tracking-[0.3em] text-amber-200/80">Fact Sheet</h3>
+
+          <dl className="mt-5 space-y-4">
+            {rows.map((row) => (
+              <div key={row.label} className="border-b border-white/10 pb-3 last:border-0 last:pb-0">
+                <dt className="text-[11px] uppercase tracking-[0.2em] text-white/40">{row.label}</dt>
+                <dd className="mt-1 font-serif-ko text-sm leading-snug text-white/85">{row.value}</dd>
+              </div>
+            ))}
+          </dl>
+
+          <div className="mt-6 flex flex-col gap-2">
+            {item.hdurl && (
+              <a href={item.hdurl} target="_blank" rel="noopener noreferrer">
+                <Button variant="secondary" size="sm" className="w-full">⬇ 고해상도 원본</Button>
+              </a>
+            )}
+            <a href={apodPageUrl(date)} target="_blank" rel="noopener noreferrer">
+              <Button variant="ghost" size="sm" className="w-full">↗ NASA 원문 페이지</Button>
+            </a>
+            <a href={translateUrl(item.explanation)} target="_blank" rel="noopener noreferrer">
+              <Button variant="ghost" size="sm" className="w-full">🌐 해설 한국어 번역</Button>
+            </a>
+            <Button variant="ghost" size="sm" className="w-full" onClick={share}>
+              {copied ? '✓ 복사되었습니다' : '⧉ 링크 복사'}
+            </Button>
+          </div>
+        </Card>
+      );
+    }
+
+    function Article({ item, date }) {
+      const paragraphs = useMemo(() => toParagraphs(item.explanation), [item.explanation]);
+
+      return (
+        <section className="mx-auto max-w-7xl px-5 py-14 md:py-20">
+          <div className="grid gap-12 lg:grid-cols-[1fr_18rem] lg:gap-16">
+            <article>
+              <div className="flex items-center gap-4">
+                <span className="h-px w-12 bg-amber-200/60" aria-hidden="true" />
+                <p className="font-display text-xs uppercase tracking-[0.34em] text-amber-200/80">
+                  The Astronomer&rsquo;s Note
+                </p>
+              </div>
+
+              <h3 className="mt-5 font-display text-2xl font-bold leading-snug text-white md:text-3xl">
+                {item.title}
+              </h3>
+
+              <p className="mt-3 text-[11px] uppercase tracking-[0.24em] text-white/35">
+                NASA / Astronomy Picture of the Day · {date}
+              </p>
+
+              <div className="magazine-columns mt-9 space-y-6 font-serif-ko text-[17px] leading-[1.95] text-white/80">
+                {paragraphs.map((p, i) => (
+                  <p key={i} className={i === 0 ? 'dropcap' : ''}>{p}</p>
+                ))}
+              </div>
+
+              <p className="mt-10 border-l-2 border-amber-200/40 pl-4 text-xs leading-relaxed text-white/40">
+                APOD 해설은 천문학자 Robert Nemiroff(미시간 공대)와 Jerry Bonnell(메릴랜드대)이 매일 직접 작성합니다.
+                위 텍스트는 원문을 그대로 옮긴 것이며, 한국어로 읽고 싶다면 오른쪽 &lsquo;해설 한국어 번역&rsquo; 버튼을 이용하세요.
+              </p>
+            </article>
+
+            <aside>
+              <MetaPanel item={item} date={date} />
+            </aside>
+          </div>
+        </section>
+      );
+    }
+
+    function ArchiveStrip({ items, activeDate, onSelect }) {
+      if (!items.length) return null;
+
+      return (
+        <section className="border-t border-white/10 bg-white/[0.02]">
+          <div className="mx-auto max-w-7xl px-5 py-12">
+            <div className="flex items-baseline justify-between gap-4">
+              <h3 className="font-display text-xs uppercase tracking-[0.34em] text-amber-200/80">Recent Issues</h3>
+              <span className="text-[11px] tracking-wider text-white/35">최근 {items.length}일</span>
+            </div>
+
+            <div className="no-scrollbar mt-6 flex gap-4 overflow-x-auto pb-2">
+              {items.map((entry) => {
+                const thumb = entry.media_type === 'image' ? entry.url : entry.thumbnail_url;
+                const active = entry.date === activeDate;
+                return (
+                  <button
+                    key={entry.date}
+                    type="button"
+                    onClick={() => onSelect(entry.date)}
+                    aria-current={active ? 'true' : undefined}
+                    className={
+                      'group w-52 shrink-0 overflow-hidden rounded-xl border text-left transition-all ' +
+                      (active
+                        ? 'border-amber-200/70 bg-amber-200/10'
+                        : 'border-white/10 bg-white/[0.03] hover:border-white/30 hover:bg-white/[0.07]')
+                    }
+                  >
+                    <div className="aspect-[4/3] w-full overflow-hidden bg-black/40">
+                      {thumb ? (
+                        <img
+                          src={thumb}
+                          alt=""
+                          loading="lazy"
+                          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-xs text-white/30">미리보기 없음</div>
+                      )}
+                    </div>
+                    <div className="p-3">
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-white/40">{entry.date}</p>
+                      <p className="mt-1 font-serif-ko text-sm leading-snug text-white/85">{entry.title}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    function Footer() {
+      return (
+        <footer className="border-t border-white/10 bg-black">
+          <div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-10 text-xs text-white/35 md:flex-row md:items-center md:justify-between">
+            <p className="font-display tracking-[0.3em]">COSMOS · DAILY</p>
+            <p>데이터 제공: NASA Astronomy Picture of the Day API · 이미지 저작권은 각 촬영자에게 있습니다.</p>
+          </div>
+        </footer>
+      );
+    }
+
+    // ========================================
+    // 📄 상태 화면 (로딩 / 오류)
+    // ========================================
+
+    function IssueSkeleton() {
+      return (
+        <div className="mx-auto max-w-7xl px-5 py-16">
+          <div className="shimmer h-5 w-40 rounded-full" />
+          <div className="shimmer mt-7 h-14 w-4/5 rounded-lg" />
+          <div className="shimmer mt-4 h-14 w-2/5 rounded-lg" />
+          <div className="shimmer mt-10 aspect-[16/9] w-full rounded-2xl" />
+          <div className="mt-10 space-y-4">
+            <div className="shimmer h-4 w-full rounded" />
+            <div className="shimmer h-4 w-11/12 rounded" />
+            <div className="shimmer h-4 w-10/12 rounded" />
+          </div>
+          <p className="mt-8 flex items-center gap-3 text-sm text-white/40">
+            <Spinner /> 우주에서 오늘의 사진을 내려받는 중…
+          </p>
+        </div>
+      );
+    }
+
+    function ErrorView({ error, onRetry }) {
+      return (
+        <div className="mx-auto max-w-2xl px-5 py-24 text-center">
+          <p className="font-display text-6xl text-white/15">✷</p>
+          <h2 className="mt-6 font-display text-2xl font-bold text-white">신호를 받지 못했습니다</h2>
+          <p className="mt-3 font-serif-ko text-sm leading-relaxed text-white/55">{error.message}</p>
+          <Button variant="primary" size="md" className="mt-8" onClick={onRetry}>다시 시도</Button>
+        </div>
+      );
+    }
+
+    // ========================================
+    // 🚀 App
+    // ========================================
+
+    function App() {
+      const [date, setDate] = useState(todayISO());
+      const [reloadToken, setReloadToken] = useState(0);
+      const [zoomOpen, setZoomOpen] = useState(false);
+      const [randomLoading, setRandomLoading] = useState(false);
+
+      const { data, loading, error } = useApod(date, reloadToken);
+      // 폴백이 일어났다면 실제로 받아 온 호의 날짜를 기준으로 지면을 구성한다.
+      const resolvedDate = data && data.date ? data.date : date;
+      const archive = useArchive(resolvedDate, reloadToken);
+
+      const changeDate = useCallback((next) => {
+        setDate(clampDate(next));
+        setZoomOpen(false);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, []);
+
+      const goRandom = useCallback(() => {
+        setRandomLoading(true);
+        fetchApod({ count: '1', thumbs: 'true' })
+          .then((json) => {
+            const picked = Array.isArray(json) ? json[0] : null;
+            if (picked && picked.date) changeDate(picked.date);
+          })
+          .catch(() => { /* 실패 시 현재 호를 유지한다 */ })
+          .finally(() => setRandomLoading(false));
+      }, [changeDate]);
+
+      // ⌨️ 좌우 방향키로 발행일 이동
+      useEffect(() => {
+        const onKey = (e) => {
+          const tag = document.activeElement && document.activeElement.tagName;
+          if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+          if (e.key === 'ArrowLeft') changeDate(shiftDate(date, -1));
+          if (e.key === 'ArrowRight' && date < todayISO()) changeDate(shiftDate(date, 1));
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+      }, [date, changeDate]);
+
+      // 📄 문서 제목을 현재 호 제목과 동기화
+      useEffect(() => {
+        document.title = data && data.title
+          ? `${data.title} — COSMOS DAILY`
+          : 'COSMOS DAILY — NASA 오늘의 천문학 사진';
+      }, [data]);
+
+      return (
+        <div className="min-h-screen">
+          <Masthead date={date} onChangeDate={changeDate} onRandom={goRandom} randomLoading={randomLoading} />
+
+          <main>
+            {loading && <IssueSkeleton />}
+
+            {!loading && error && <ErrorView error={error} onRetry={() => setReloadToken((k) => k + 1)} />}
+
+            {!loading && !error && data && (
+              <React.Fragment key={data.date}>
+                <Hero item={data} date={resolvedDate} onZoom={() => setZoomOpen(true)} />
+                <Article item={data} date={resolvedDate} />
+                <ArchiveStrip items={archive} activeDate={resolvedDate} onSelect={changeDate} />
+              </React.Fragment>
+            )}
+          </main>
+
+          <Footer />
+
+          <Modal isOpen={zoomOpen && !!data} onClose={() => setZoomOpen(false)} title={data ? data.title : ''}>
+            {data && <img src={data.hdurl || data.url} alt={data.title} className="w-full rounded-xl" />}
+          </Modal>
+        </div>
+      );
+    }
+
+    // ========================================
+    // Rendering
+    // ========================================
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

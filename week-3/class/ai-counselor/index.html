@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>마음쉼표 · AI 심리상담 챗봇</title>
+
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <!-- CDN 버전 고정: Babel 은 반드시 7.x (8.x 는 인라인 text/babel 미지원) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.25.9/babel.min.js"></script>
+
+  <style>
+    /* Tailwind 유틸리티로 표현 불가능한 애니메이션 / 스크롤바만 커스텀 */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-up { animation: fadeUp .28s ease-out both; }
+
+    @keyframes blink {
+      0%, 80%, 100% { opacity: .25; transform: translateY(0); }
+      40%           { opacity: 1;   transform: translateY(-3px); }
+    }
+    .dot { animation: blink 1.2s infinite; }
+    .dot:nth-child(2) { animation-delay: .18s; }
+    .dot:nth-child(3) { animation-delay: .36s; }
+
+    .scroll-soft::-webkit-scrollbar { width: 8px; }
+    .scroll-soft::-webkit-scrollbar-thumb { background: rgba(120,140,135,.32); border-radius: 999px; }
+    .scroll-soft::-webkit-scrollbar-track { background: transparent; }
+  </style>
+</head>
+<body class="bg-stone-100">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+    // ========================================
+    // ⚙️ Constants & Configuration
+    // ========================================
+
+    const OPENAI_ENDPOINT = 'https://api.openai.com/v1/chat/completions';
+
+    const STORAGE_KEYS = {
+      apiKey:  'mindpause.apiKey',
+      persona: 'mindpause.persona',
+      model:   'mindpause.model',
+      history: 'mindpause.history',
+    };
+
+    const MODELS = [
+      { id: 'gpt-4o-mini', label: 'GPT-4o mini · 빠르고 경제적' },
+      { id: 'gpt-4o',      label: 'GPT-4o · 더 깊은 공감과 추론' },
+    ];
+
+    const SAFETY_RULES = [
+      '[반드시 지킬 안전 원칙]',
+      '- 너는 의료인이 아니며 진단·처방을 하지 않는다. 정신과적 진단명을 단정하지 않는다.',
+      '- 사용자가 자해, 자살, 타해, 학대 등 심각한 위기를 언급하면 즉시 공감하며 안전을 확인하고,',
+      '  한국의 도움 창구를 안내한다: 자살예방 상담전화 109, 정신건강 위기상담 1577-0199,',
+      '  생명의전화 1588-9191, 긴급 상황은 112 / 119.',
+      '- 위기 신호가 없다면 위기 안내를 먼저 꺼내지 않는다.',
+      '- 조언을 쏟아내기보다 먼저 충분히 들어주고, 사용자가 스스로 답을 찾도록 돕는다.',
+      '- 답변은 한국어 존댓말로 3~6문장 정도로 간결하게. 필요할 때만 짧은 목록을 쓴다.',
+      '- 매 답변은 사용자가 이어서 이야기할 수 있는 열린 질문 하나로 마무리한다.',
+    ].join('\n');
+
+    const PERSONAS = [
+      {
+        id: 'empathy',
+        emoji: '🌿',
+        name: '따뜻한 경청',
+        tagline: '판단 없이 들어주는 공감 중심 대화',
+        accent: 'emerald',
+        greeting: '안녕하세요, 마음쉼표예요. 오늘 여기까지 와주셔서 고마워요.\n지금 마음속에 가장 크게 자리 잡고 있는 게 무엇인가요? 편하게 꺼내놓으셔도 괜찮아요.',
+        starters: ['요즘 이유 없이 마음이 무거워요', '누구에게도 말 못 한 고민이 있어요', '그냥 오늘 있었던 일을 얘기하고 싶어요'],
+        prompt: [
+          "너는 '마음쉼표'라는 이름의 따뜻한 심리상담 도우미다. 인간중심 상담(칼 로저스)의 태도를 따른다.",
+          '무조건적 긍정적 존중, 공감적 이해, 진솔함을 유지한다.',
+          '사용자의 말을 요약해 되비추어 주고(반영), 감정에 이름을 붙여주며, 성급한 해결책 제시를 피한다.',
+        ].join('\n'),
+      },
+      {
+        id: 'cbt',
+        emoji: '🧩',
+        name: '생각 정리 코치',
+        tagline: '인지행동치료(CBT)로 생각의 습관 살펴보기',
+        accent: 'sky',
+        greeting: '반가워요. 여기서는 머릿속을 맴도는 생각을 하나씩 펼쳐서 같이 살펴볼 거예요.\n최근에 마음을 힘들게 했던 상황 하나를 떠올려 볼까요? 언제, 어디서, 무슨 일이 있었나요?',
+        starters: ['자꾸 최악의 상황만 상상하게 돼요', '실수 하나에 계속 자책해요', '사람들이 나를 싫어할까 봐 불안해요'],
+        prompt: [
+          '너는 인지행동치료(CBT) 기반의 심리상담 도우미다.',
+          '"상황 → 자동적 사고 → 감정(0~100) → 근거와 반증 → 균형 잡힌 대안 사고" 흐름으로 부드럽게 안내한다.',
+          '흑백논리, 재앙화, 독심술, 과잉일반화 같은 인지 왜곡을 발견하면 비난하지 않고 호기심 어린 질문으로 짚어준다.',
+          '한 번에 한 단계씩만 진행하고, 사용자가 스스로 대안을 찾도록 소크라테스식 질문을 사용한다.',
+        ].join('\n'),
+      },
+      {
+        id: 'mindful',
+        emoji: '🫧',
+        name: '마음챙김 안내',
+        tagline: '호흡과 감각으로 지금 여기에 머무르기',
+        accent: 'violet',
+        greeting: '천천히 오셨네요. 잠시 숨을 한 번 크게 내쉬어 볼까요.\n지금 몸에서 가장 먼저 느껴지는 감각은 어떤 것인가요? 긴장, 무거움, 따뜻함 무엇이든 좋아요.',
+        starters: ['불안해서 잠이 안 와요', '지금 너무 긴장돼요', '머리가 복잡해서 쉬고 싶어요'],
+        prompt: [
+          '너는 마음챙김(MBSR) 기반의 심리상담 도우미다.',
+          '호흡 관찰, 바디스캔, 5-4-3-2-1 그라운딩, 감정에 이름 붙이기 같은 짧은 연습을 상황에 맞게 하나씩 제안한다.',
+          '지시는 느리고 부드러운 문장으로, 한 번에 한 가지 연습만 안내한다.',
+          '연습 후에는 무엇이 느껴졌는지 반드시 물어본다.',
+        ].join('\n'),
+      },
+      {
+        id: 'relation',
+        emoji: '🤝',
+        name: '관계 고민 상담',
+        tagline: '가족·연인·직장 사이의 갈등 풀어보기',
+        accent: 'amber',
+        greeting: '관계 때문에 마음이 복잡하셨군요. 그 안에 계시는 것만으로도 많이 애쓰고 계신 거예요.\n어떤 관계에서 어떤 일이 있었는지, 편한 부분부터 들려주시겠어요?',
+        starters: ['가족과 대화만 하면 싸워요', '직장 상사 때문에 출근이 두려워요', '친한 친구와 거리가 생겼어요'],
+        prompt: [
+          '너는 대인관계 갈등을 다루는 심리상담 도우미다.',
+          '사용자 편에서 먼저 충분히 공감한 뒤, 상대의 입장을 강요하지 않으면서 넓은 시야를 갖도록 돕는다.',
+          '비폭력대화(관찰-느낌-욕구-부탁) 틀과 건강한 경계 설정을 상황에 맞게 제안한다.',
+          '누가 옳은지 판정하지 않고, 사용자가 원하는 관계의 모습을 함께 찾는다.',
+        ].join('\n'),
+      },
+    ];
+
+    const ACCENT = {
+      emerald: { chip: 'bg-emerald-100 text-emerald-800', ring: 'ring-emerald-400 bg-emerald-50', dot: 'bg-emerald-500', btn: 'bg-emerald-600 hover:bg-emerald-700' },
+      sky:     { chip: 'bg-sky-100 text-sky-800',         ring: 'ring-sky-400 bg-sky-50',         dot: 'bg-sky-500',     btn: 'bg-sky-600 hover:bg-sky-700' },
+      violet:  { chip: 'bg-violet-100 text-violet-800',   ring: 'ring-violet-400 bg-violet-50',   dot: 'bg-violet-500',  btn: 'bg-violet-600 hover:bg-violet-700' },
+      amber:   { chip: 'bg-amber-100 text-amber-800',     ring: 'ring-amber-400 bg-amber-50',     dot: 'bg-amber-500',   btn: 'bg-amber-600 hover:bg-amber-700' },
+    };
+
+    const CRISIS_LINES = [
+      { name: '자살예방 상담전화', tel: '109',       desc: '24시간 · 전화 한 통이면 바로 연결됩니다' },
+      { name: '정신건강 위기상담', tel: '1577-0199', desc: '24시간 · 지역 정신건강복지센터 연계' },
+      { name: '생명의전화',       tel: '1588-9191', desc: '24시간 자원봉사 상담원 연결' },
+      { name: '청소년 전화',      tel: '1388',      desc: '청소년 고민 · 24시간' },
+      { name: '긴급 상황',        tel: '112',       desc: '지금 당장 위험하다면 즉시 신고해 주세요 (119 포함)' },
+    ];
+
+    // ========================================
+    // 🛠️ Utilities
+    // ========================================
+
+    function loadStore(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw === null ? fallback : JSON.parse(raw);
+      } catch (e) {
+        return fallback;
+      }
+    }
+
+    function saveStore(key, value) {
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch (e) {
+        /* 시크릿 모드 등 저장 실패는 무시 */
+      }
+    }
+
+    function timeLabel(ts) {
+      return new Date(ts).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function maskKey(key) {
+      if (!key) return '미설정';
+      return key.slice(0, 6) + '••••' + key.slice(-4);
+    }
+
+    // ========================================
+    // 🎨 Design System Components
+    // ========================================
+
+    function Button({ variant = 'primary', size = 'md', className = '', children, ...rest }) {
+      const base = 'inline-flex items-center justify-center gap-1.5 rounded-xl font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-500 disabled:opacity-45 disabled:cursor-not-allowed';
+      const variants = {
+        primary:   'bg-emerald-600 text-white hover:bg-emerald-700 active:scale-[.98] shadow-sm',
+        secondary: 'bg-white text-stone-700 border border-stone-300 hover:bg-stone-50 active:scale-[.98]',
+        danger:    'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100',
+        ghost:     'text-stone-600 hover:bg-stone-200/70',
+      };
+      const sizes = { sm: 'px-3 py-1.5 text-xs', md: 'px-4 py-2 text-sm', lg: 'px-5 py-2.5 text-base' };
+      return (
+        <button className={`${base} ${variants[variant]} ${sizes[size]} ${className}`} {...rest}>
+          {children}
+        </button>
+      );
+    }
+
+    function Input({ label, error, className = '', ...rest }) {
+      return (
+        <label className="block">
+          {label && <span className="mb-1.5 block text-sm font-medium text-stone-700">{label}</span>}
+          <input
+            className={`w-full rounded-xl border px-3.5 py-2.5 text-sm text-stone-800 placeholder:text-stone-400 transition focus:outline-none focus:ring-2 ${
+              error ? 'border-rose-300 focus:ring-rose-300' : 'border-stone-300 focus:ring-emerald-400'
+            } ${className}`}
+            {...rest}
+          />
+          {error && <span className="mt-1.5 block text-xs text-rose-600">{error}</span>}
+        </label>
+      );
+    }
+
+    function Card({ className = '', children }) {
+      return <div className={`rounded-2xl border border-stone-200/80 bg-white shadow-sm ${className}`}>{children}</div>;
+    }
+
+    function Badge({ className = '', children }) {
+      return <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${className}`}>{children}</span>;
+    }
+
+    function Modal({ isOpen, onClose, title, size = 'md', children }) {
+      useEffect(() => {
+        if (!isOpen) return;
+        const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+      }, [isOpen, onClose]);
+
+      if (!isOpen) return null;
+      const sizes = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl' };
+
+      return (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-stone-900/40 backdrop-blur-sm sm:items-center sm:p-4"
+          role="dialog" aria-modal="true" aria-label={title} onClick={onClose}
+        >
+          <div
+            className={`w-full ${sizes[size]} animate-fade-up rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-stone-200 px-6 py-4">
+              <h2 className="text-base font-semibold text-stone-800">{title}</h2>
+              <button onClick={onClose} aria-label="닫기"
+                      className="rounded-lg p-1.5 text-stone-400 transition hover:bg-stone-100 hover:text-stone-600">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" d="M6 6l12 12M18 6L6 18" />
+                </svg>
+              </button>
+            </div>
+            <div className="max-h-[70vh] overflow-y-auto scroll-soft px-6 py-5">{children}</div>
+          </div>
+        </div>
+      );
+    }
+
+    // ========================================
+    // ✍️ RichText — 경량 마크다운 렌더러
+    // ========================================
+
+    function renderInline(text, prefix) {
+      return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) => {
+        if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+          return <strong key={prefix + i} className="font-semibold">{part.slice(2, -2)}</strong>;
+        }
+        return <React.Fragment key={prefix + i}>{part}</React.Fragment>;
+      });
+    }
+
+    function RichText({ text }) {
+      return (
+        <div className="space-y-1.5">
+          {text.split('\n').map((line, i) => {
+            const t = line.trim();
+            if (!t) return <div key={i} className="h-1.5" />;
+            const bullet = /^([-*•]|\d+[.)])\s+/.exec(t);
+            if (bullet) {
+              return (
+                <div key={i} className="flex gap-2">
+                  <span className="select-none opacity-55">{/^\d/.test(t) ? bullet[1] : '•'}</span>
+                  <span className="flex-1">{renderInline(t.slice(bullet[0].length), i + '-')}</span>
+                </div>
+              );
+            }
+            return <p key={i}>{renderInline(t, i + '-')}</p>;
+          })}
+        </div>
+      );
+    }
+
+    // ========================================
+    // 🧩 Chat Components
+    // ========================================
+
+    function Avatar({ role, persona }) {
+      if (role === 'user') {
+        return (
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-stone-700 text-sm font-semibold text-white">
+            나
+          </div>
+        );
+      }
+      return (
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-lg shadow-sm ring-1 ring-stone-200">
+          {persona.emoji}
+        </div>
+      );
+    }
+
+    function MessageBubble({ message, persona }) {
+      const isUser = message.role === 'user';
+      return (
+        <div className={`flex animate-fade-up gap-3 ${isUser ? 'flex-row-reverse' : ''}`}>
+          <Avatar role={message.role} persona={persona} />
+          <div className={`flex max-w-[85%] flex-col gap-1 sm:max-w-[75%] ${isUser ? 'items-end' : 'items-start'}`}>
+            <div className={`rounded-2xl px-4 py-3 text-[15px] leading-relaxed ${
+              isUser
+                ? 'rounded-tr-md bg-stone-800 text-stone-50'
+                : message.error
+                  ? 'rounded-tl-md border border-rose-200 bg-rose-50 text-rose-800'
+                  : 'rounded-tl-md border border-stone-200/80 bg-white text-stone-800 shadow-sm'
+            }`}>
+              <RichText text={message.content} />
+            </div>
+            <span className="px-1 text-[11px] text-stone-400">
+              {isUser ? '나' : persona.name} · {timeLabel(message.ts)}
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    function TypingIndicator({ persona }) {
+      const dot = ACCENT[persona.accent].dot;
+      return (
+        <div className="flex animate-fade-up gap-3">
+          <Avatar role="assistant" persona={persona} />
+          <div className="flex items-center gap-1.5 rounded-2xl rounded-tl-md border border-stone-200/80 bg-white px-4 py-4 shadow-sm">
+            <span className={`dot h-2 w-2 rounded-full ${dot}`} />
+            <span className={`dot h-2 w-2 rounded-full ${dot}`} />
+            <span className={`dot h-2 w-2 rounded-full ${dot}`} />
+          </div>
+        </div>
+      );
+    }
+
+    function PersonaCard({ persona, active, onSelect }) {
+      const accent = ACCENT[persona.accent];
+      return (
+        <button
+          onClick={() => onSelect(persona.id)}
+          aria-pressed={active}
+          className={`w-full rounded-2xl border p-3.5 text-left transition-all ${
+            active ? `border-transparent ring-2 ${accent.ring} shadow-sm`
+                   : 'border-stone-200 bg-white hover:border-stone-300 hover:shadow-sm'
+          }`}
+        >
+          <div className="flex items-start gap-3">
+            <span className="text-xl leading-none">{persona.emoji}</span>
+            <div className="min-w-0">
+              <div className="text-sm font-semibold text-stone-800">{persona.name}</div>
+              <div className="mt-0.5 text-xs leading-snug text-stone-500">{persona.tagline}</div>
+            </div>
+          </div>
+        </button>
+      );
+    }
+
+    function CrisisContent() {
+      return (
+        <div className="space-y-4">
+          <p className="text-sm leading-relaxed text-stone-600">
+            지금 많이 힘드시다면 혼자 견디지 않으셔도 됩니다. 아래 창구는 모두 무료이고,
+            훈련받은 사람이 24시간 기다리고 있어요.
+          </p>
+          <ul className="space-y-2">
+            {CRISIS_LINES.map((line) => (
+              <li key={line.name} className="flex items-center justify-between gap-3 rounded-xl bg-stone-50 px-4 py-3">
+                <div>
+                  <div className="text-sm font-semibold text-stone-800">{line.name}</div>
+                  <div className="text-xs text-stone-500">{line.desc}</div>
+                </div>
+                <a href={`tel:${line.tel}`}
+                   className="shrink-0 rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-rose-700">
+                  {line.tel}
+                </a>
+              </li>
+            ))}
+          </ul>
+          <p className="rounded-xl bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-800">
+            이 앱은 AI 대화 도우미이며 전문 상담·의료 서비스를 대체하지 않습니다.
+            어려움이 계속된다면 정신건강의학과나 전문 상담센터에서 도움을 받으시길 권해요.
+          </p>
+        </div>
+      );
+    }
+
+    // ========================================
+    // 🔑 Page: 최초 실행 시 API 키 등록
+    // ========================================
+
+    function ApiKeySetup({ onSave }) {
+      const [value, setValue] = useState('');
+      const invalid = value.length > 0 && !value.startsWith('sk-');
+
+      return (
+        <div className="flex min-h-[100dvh] items-center justify-center bg-gradient-to-b from-emerald-50 via-stone-50 to-stone-100 p-5">
+          <Card className="w-full max-w-md animate-fade-up p-7">
+            <div className="mb-5 text-center">
+              <div className="mb-3 text-4xl">🍃</div>
+              <h1 className="text-xl font-bold text-stone-800">마음쉼표</h1>
+              <p className="mt-1.5 text-sm text-stone-500">시작하려면 OpenAI API 키를 등록해 주세요.</p>
+            </div>
+
+            <form onSubmit={(e) => { e.preventDefault(); if (value.trim() && !invalid) onSave(value.trim()); }}>
+              <Input
+                label="OpenAI API 키"
+                type="password"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                placeholder="sk-proj-..."
+                autoFocus
+                error={invalid ? 'OpenAI 키는 sk- 로 시작합니다.' : ''}
+              />
+              <Button type="submit" size="lg" className="mt-4 w-full" disabled={!value.trim() || invalid}>
+                상담 시작하기
+              </Button>
+            </form>
+
+            <p className="mt-5 rounded-xl bg-stone-50 px-4 py-3 text-xs leading-relaxed text-stone-500">
+              키는 이 브라우저의 localStorage에만 저장되고 OpenAI 서버 외 어디로도 전송되지 않습니다.
+              브라우저에서 직접 호출하는 구조라 키가 노출될 수 있으니, 공용 PC에서는 사용 후
+              설정에서 키를 지워 주세요.
+            </p>
+          </Card>
+        </div>
+      );
+    }
+
+    // ========================================
+    // 📄 Page: 상담 채팅 화면
+    // ========================================
+
+    function CounselorPage({ apiKey, setApiKey }) {
+      const [personaId, setPersonaId]   = useState(() => loadStore(STORAGE_KEYS.persona, PERSONAS[0].id));
+      const [model, setModel]           = useState(() => loadStore(STORAGE_KEYS.model, MODELS[0].id));
+      const [messages, setMessages]     = useState(() => loadStore(STORAGE_KEYS.history, []));
+      const [draft, setDraft]           = useState('');
+      const [isStreaming, setStreaming] = useState(false);
+      const [settingsOpen, setSettings] = useState(false);
+      const [crisisOpen, setCrisis]     = useState(false);
+      const [sidebarOpen, setSidebar]   = useState(false);
+      const [keyDraft, setKeyDraft]     = useState('');
+
+      const abortRef  = useRef(null);
+      const bottomRef = useRef(null);
+      const inputRef  = useRef(null);
+
+      const persona = useMemo(() => PERSONAS.find((p) => p.id === personaId) || PERSONAS[0], [personaId]);
+      const accent = ACCENT[persona.accent];
+
+      // --- 상태 영속화 (최근 60개 메시지까지) ---
+      useEffect(() => { saveStore(STORAGE_KEYS.persona, personaId); }, [personaId]);
+      useEffect(() => { saveStore(STORAGE_KEYS.model, model); }, [model]);
+      useEffect(() => { saveStore(STORAGE_KEYS.history, messages.slice(-60)); }, [messages]);
+
+      // --- 새 메시지가 오면 항상 아래로 스크롤 ---
+      useEffect(() => {
+        bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }, [messages, isStreaming]);
+
+      // --- 언마운트 시 진행 중인 요청 정리 ---
+      useEffect(() => () => abortRef.current?.abort(), []);
+
+      const resetConversation = useCallback(() => {
+        abortRef.current?.abort();
+        setMessages([]);
+        setStreaming(false);
+        setSidebar(false);
+      }, []);
+
+      const changePersona = useCallback((id) => {
+        setPersonaId(id);
+        setSidebar(false);
+        inputRef.current?.focus();
+      }, []);
+
+      // --- OpenAI Chat Completions 스트리밍 호출 ---
+      const sendMessage = useCallback(async (rawText) => {
+        const text = rawText.trim();
+        if (!text || isStreaming) return;
+
+        const userMsg = { id: Date.now(), role: 'user', content: text, ts: Date.now() };
+        const history = [...messages, userMsg];
+        setMessages(history);
+        setDraft('');
+        setStreaming(true);
+
+        const controller = new AbortController();
+        abortRef.current = controller;
+
+        const payloadMessages = [
+          { role: 'system', content: `${persona.prompt}\n\n${SAFETY_RULES}` },
+          ...history.filter((m) => !m.error).slice(-20).map((m) => ({ role: m.role, content: m.content })),
+        ];
+
+        const assistantId = Date.now() + 1;
+        let started = false;
+
+        try {
+          const res = await fetch(OPENAI_ENDPOINT, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify({
+              model,
+              messages: payloadMessages,
+              temperature: 0.85,
+              max_tokens: 700,
+              presence_penalty: 0.3,
+              stream: true,
+            }),
+            signal: controller.signal,
+          });
+
+          if (!res.ok) {
+            const detail = await res.json().catch(() => null);
+            const reason = detail && detail.error ? detail.error.message : `HTTP ${res.status}`;
+            throw new Error(
+              res.status === 401 ? 'API 키가 올바르지 않습니다. 설정에서 키를 확인해 주세요.'
+              : res.status === 429 ? '요청이 너무 잦거나 사용 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.'
+              : reason
+            );
+          }
+
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = '';
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() ?? '';   // 잘린 조각은 다음 청크에서 이어붙인다
+
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed.startsWith('data:')) continue;
+              const payload = trimmed.slice(5).trim();
+              if (payload === '[DONE]') continue;
+
+              try {
+                const json = JSON.parse(payload);
+                const delta = json.choices && json.choices[0] && json.choices[0].delta
+                  ? json.choices[0].delta.content : null;
+                if (!delta) continue;
+
+                if (!started) {
+                  started = true;
+                  setMessages((prev) => [...prev, { id: assistantId, role: 'assistant', content: delta, ts: Date.now() }]);
+                } else {
+                  setMessages((prev) =>
+                    prev.map((m) => (m.id === assistantId ? { ...m, content: m.content + delta } : m))
+                  );
+                }
+              } catch (e) {
+                /* 파싱 불가한 조각은 건너뛴다 */
+              }
+            }
+          }
+
+          if (!started) {
+            setMessages((prev) => [...prev, {
+              id: assistantId, role: 'assistant', ts: Date.now(),
+              content: '응답이 비어 있었어요. 다시 한번 말씀해 주시겠어요?',
+            }]);
+          }
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            setMessages((prev) => [...prev, {
+              id: Date.now() + 2, role: 'assistant', error: true, ts: Date.now(),
+              content: `연결에 문제가 생겼어요.\n${err.message}`,
+            }]);
+          }
+          // AbortError(사용자 중단)면 지금까지 받은 내용을 그대로 남긴다.
+        } finally {
+          abortRef.current = null;
+          setStreaming(false);
+        }
+      }, [apiKey, isStreaming, messages, model, persona]);
+
+      const stopStreaming = useCallback(() => abortRef.current?.abort(), []);
+
+      const onKeyDown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+          e.preventDefault();
+          sendMessage(draft);
+        }
+      };
+
+      const openSettings = () => {
+        setKeyDraft(apiKey);
+        setSettings(true);
+        setSidebar(false);
+      };
+
+      const isEmpty = messages.length === 0;
+
+      // --- 사이드바 (데스크톱 고정 / 모바일 드로어 공용) ---
+      const sidebar = (
+        <div className="flex h-full flex-col gap-5 overflow-y-auto scroll-soft p-5">
+          <div>
+            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-stone-400">상담 방식</h2>
+            <div className="space-y-2">
+              {PERSONAS.map((p) => (
+                <PersonaCard key={p.id} persona={p} active={p.id === personaId} onSelect={changePersona} />
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-stone-400">모델</h2>
+            <select
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
+              aria-label="AI 모델 선택"
+              className="w-full rounded-xl border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-700 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+            >
+              {MODELS.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
+            </select>
+          </div>
+
+          <div className="mt-auto space-y-2 border-t border-stone-200 pt-4">
+            <Button variant="secondary" size="sm" className="w-full" onClick={openSettings}>
+              ⚙️ API 키 설정
+            </Button>
+            <Button variant="danger" size="sm" className="w-full"
+                    onClick={resetConversation} disabled={isEmpty && !isStreaming}>
+              🗑️ 대화 새로 시작
+            </Button>
+            <p className="pt-1 text-[11px] leading-relaxed text-stone-400">
+              대화 내용은 이 브라우저에만 저장됩니다. (OpenAI API 호출 제외)
+            </p>
+          </div>
+        </div>
+      );
+
+      return (
+        <div className="flex h-[100dvh] flex-col bg-gradient-to-b from-stone-50 to-stone-100">
+
+          {/* 헤더 */}
+          <header className="z-20 flex shrink-0 items-center gap-3 border-b border-stone-200 bg-white/85 px-4 py-3 backdrop-blur sm:px-6">
+            <button onClick={() => setSidebar(true)} aria-label="메뉴 열기"
+                    className="rounded-lg p-2 text-stone-500 transition hover:bg-stone-100 lg:hidden">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+
+            <div className="flex min-w-0 items-center gap-2.5">
+              <span className="text-2xl leading-none">🍃</span>
+              <div className="min-w-0">
+                <h1 className="truncate text-base font-bold text-stone-800">마음쉼표</h1>
+                <p className="truncate text-xs text-stone-500">언제든 편하게 이야기하는 곳</p>
+              </div>
+            </div>
+
+            <div className="ml-auto flex items-center gap-2">
+              <Badge className={`hidden sm:inline-flex ${accent.chip}`}>
+                {persona.emoji} {persona.name}
+              </Badge>
+              <Button variant="ghost" size="sm" onClick={() => setCrisis(true)} className="text-rose-600 hover:bg-rose-50">
+                🆘 <span className="hidden sm:inline">도움받기</span>
+              </Button>
+            </div>
+          </header>
+
+          <div className="flex min-h-0 flex-1">
+
+            {/* 사이드바 — 데스크톱 */}
+            <aside className="hidden w-72 shrink-0 border-r border-stone-200 bg-white/60 lg:block">
+              {sidebar}
+            </aside>
+
+            {/* 사이드바 — 모바일 드로어 */}
+            {sidebarOpen && (
+              <div className="fixed inset-0 z-40 lg:hidden" onClick={() => setSidebar(false)}>
+                <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" />
+                <div className="absolute left-0 top-0 h-full w-[85%] max-w-xs animate-fade-up bg-white shadow-2xl"
+                     onClick={(e) => e.stopPropagation()}>
+                  {sidebar}
+                </div>
+              </div>
+            )}
+
+            {/* 채팅 영역 */}
+            <main className="flex min-w-0 flex-1 flex-col">
+              <div className="flex-1 overflow-y-auto scroll-soft px-4 py-6 sm:px-6">
+                <div className="mx-auto flex max-w-3xl flex-col gap-5">
+
+                  {isEmpty ? (
+                    <div className="animate-fade-up py-4">
+                      <Card className="p-6 sm:p-8">
+                        <div className={`mb-4 inline-flex items-center gap-2 rounded-full px-3 py-1.5 ${accent.chip}`}>
+                          <span>{persona.emoji}</span>
+                          <span className="text-xs font-semibold">{persona.name}</span>
+                        </div>
+                        <p className="whitespace-pre-line text-[15px] leading-relaxed text-stone-700">
+                          {persona.greeting}
+                        </p>
+
+                        <div className="mt-6">
+                          <p className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-stone-400">
+                            이렇게 시작해 보세요
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {persona.starters.map((s) => (
+                              <button key={s} onClick={() => sendMessage(s)}
+                                      className="rounded-full border border-stone-200 bg-stone-50 px-3.5 py-2 text-sm text-stone-600 transition hover:border-stone-300 hover:bg-white hover:text-stone-800">
+                                {s}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </Card>
+
+                      <p className="mt-4 px-1 text-center text-xs leading-relaxed text-stone-400">
+                        마음쉼표는 AI 대화 도우미입니다. 전문 상담이나 치료를 대체하지 않아요.<br />
+                        위급한 상황에는{' '}
+                        <button onClick={() => setCrisis(true)}
+                                className="font-semibold text-rose-500 underline underline-offset-2">
+                          도움받기
+                        </button>
+                        를 눌러 주세요.
+                      </p>
+                    </div>
+                  ) : (
+                    messages.map((m) => <MessageBubble key={m.id} message={m} persona={persona} />)
+                  )}
+
+                  {isStreaming && messages[messages.length - 1]?.role === 'user' && (
+                    <TypingIndicator persona={persona} />
+                  )}
+
+                  <div ref={bottomRef} />
+                </div>
+              </div>
+
+              {/* 입력창 */}
+              <div className="shrink-0 border-t border-stone-200 bg-white/85 px-4 py-3 backdrop-blur sm:px-6">
+                <div className="mx-auto max-w-3xl">
+                  <div className="flex items-end gap-2 rounded-2xl border border-stone-300 bg-white p-2 shadow-sm transition focus-within:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-100">
+                    <textarea
+                      ref={inputRef}
+                      rows={2}
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                      onKeyDown={onKeyDown}
+                      disabled={isStreaming}
+                      aria-label="상담 메시지 입력"
+                      placeholder="지금 마음에 있는 이야기를 편하게 적어보세요…"
+                      className="max-h-40 flex-1 resize-none bg-transparent px-2.5 py-2 text-[15px] leading-relaxed text-stone-800 placeholder:text-stone-400 focus:outline-none disabled:opacity-60"
+                    />
+                    {isStreaming ? (
+                      <Button variant="secondary" size="md" onClick={stopStreaming} className="shrink-0">
+                        ■ 중단
+                      </Button>
+                    ) : (
+                      <Button size="md" onClick={() => sendMessage(draft)} disabled={!draft.trim()}
+                              className={`shrink-0 ${accent.btn}`} aria-label="메시지 보내기">
+                        보내기
+                      </Button>
+                    )}
+                  </div>
+                  <p className="mt-2 px-1 text-[11px] text-stone-400">
+                    Enter 전송 · Shift + Enter 줄바꿈 · 키 {maskKey(apiKey)}
+                  </p>
+                </div>
+              </div>
+            </main>
+          </div>
+
+          {/* 설정 모달 */}
+          <Modal isOpen={settingsOpen} onClose={() => setSettings(false)} title="OpenAI API 설정">
+            <div className="space-y-4">
+              <Input
+                label="API 키"
+                type="password"
+                value={keyDraft}
+                onChange={(e) => setKeyDraft(e.target.value)}
+                placeholder="sk-proj-..."
+                error={keyDraft && !keyDraft.startsWith('sk-') ? 'OpenAI 키는 sk- 로 시작합니다.' : ''}
+              />
+              <p className="rounded-xl bg-stone-50 px-4 py-3 text-xs leading-relaxed text-stone-500">
+                키는 이 브라우저의 localStorage에만 저장됩니다. 브라우저에서 직접 호출하는 구조라
+                실제 서비스에서는 서버를 거쳐 호출하는 것이 안전합니다.
+              </p>
+              <div className="flex justify-between gap-2">
+                <Button variant="danger" onClick={() => { setApiKey(''); setSettings(false); }}>
+                  키 삭제
+                </Button>
+                <div className="flex gap-2">
+                  <Button variant="ghost" onClick={() => setSettings(false)}>취소</Button>
+                  <Button onClick={() => { setApiKey(keyDraft.trim()); setSettings(false); }}>저장</Button>
+                </div>
+              </div>
+            </div>
+          </Modal>
+
+          {/* 위기 안내 모달 */}
+          <Modal isOpen={crisisOpen} onClose={() => setCrisis(false)} title="🆘 지금 도움이 필요하다면">
+            <CrisisContent />
+          </Modal>
+        </div>
+      );
+    }
+
+    // ========================================
+    // 🚀 App
+    // ========================================
+
+    function App() {
+      const [apiKey, setApiKey] = useState(() => loadStore(STORAGE_KEYS.apiKey, ''));
+
+      useEffect(() => { saveStore(STORAGE_KEYS.apiKey, apiKey); }, [apiKey]);
+
+      if (!apiKey) return <ApiKeySetup onSave={setApiKey} />;
+      return <CounselorPage apiKey={apiKey} setApiKey={setApiKey} />;
+    }
+
+    // ========================================
+    // Rendering
+    // ========================================
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

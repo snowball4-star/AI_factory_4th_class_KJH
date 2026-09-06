@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>카메라 리서치 리포트 · 네이버 커뮤니티 지도 & 인기 디지털카메라</title>
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <!-- CDN 버전 고정: Babel 은 반드시 7.x (8.x 는 인라인 text/babel 미지원) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.25.9/babel.min.js"></script>
+  <style>
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+    .fade-up { animation: fadeUp .45s ease-out both; }
+    @keyframes growX { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+    .grow-x { transform-origin: left; animation: growX .7s cubic-bezier(.2,.8,.2,1) both; }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 9999px; }
+    ::-webkit-scrollbar-track { background: #18181b; }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, useContext, createContext, useCallback } = React;
+
+    // ========================================
+    // 🎨 Design System Components
+    // ========================================
+
+    function Button({ variant = 'primary', size = 'md', className = '', children, ...props }) {
+      const variants = {
+        primary: 'bg-amber-500 text-zinc-950 hover:bg-amber-400 font-semibold',
+        secondary: 'bg-zinc-800 text-zinc-100 hover:bg-zinc-700 border border-zinc-700',
+        ghost: 'bg-transparent text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60',
+        danger: 'bg-rose-600 text-white hover:bg-rose-500',
+      };
+      const sizes = { sm: 'px-3 py-1.5 text-xs', md: 'px-4 py-2 text-sm', lg: 'px-6 py-3 text-base' };
+      return (
+        <button
+          className={`inline-flex items-center justify-center gap-1.5 rounded-lg transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 disabled:opacity-40 disabled:cursor-not-allowed ${variants[variant]} ${sizes[size]} ${className}`}
+          {...props}
+        >
+          {children}
+        </button>
+      );
+    }
+
+    function Input({ label, className = '', ...props }) {
+      return (
+        <label className={`block ${className}`}>
+          {label && <span className="mb-1.5 block text-xs font-medium text-zinc-400">{label}</span>}
+          <input
+            className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3.5 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+            {...props}
+          />
+        </label>
+      );
+    }
+
+    function Card({ className = '', children, ...props }) {
+      return (
+        <div
+          className={`rounded-xl border border-zinc-800 bg-zinc-900/70 shadow-lg shadow-black/20 ${className}`}
+          {...props}
+        >
+          {children}
+        </div>
+      );
+    }
+
+    function Badge({ tone = 'zinc', className = '', children }) {
+      const tones = {
+        zinc: 'bg-zinc-800 text-zinc-300 border-zinc-700',
+        amber: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+        sky: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
+        emerald: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+        rose: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
+        violet: 'bg-violet-500/15 text-violet-300 border-violet-500/30',
+      };
+      return (
+        <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-medium ${tones[tone]} ${className}`}>
+          {children}
+        </span>
+      );
+    }
+
+    function StatTile({ value, unit, label, hint }) {
+      return (
+        <Card className="p-5">
+          <div className="flex items-baseline gap-1">
+            <span className="text-3xl font-bold tracking-tight text-amber-400">{value}</span>
+            {unit && <span className="text-sm font-medium text-amber-500/70">{unit}</span>}
+          </div>
+          <p className="mt-1.5 text-sm font-medium text-zinc-200">{label}</p>
+          {hint && <p className="mt-0.5 text-xs leading-relaxed text-zinc-500">{hint}</p>}
+        </Card>
+      );
+    }
+
+    function SectionTitle({ eyebrow, title, desc }) {
+      return (
+        <div className="mb-7">
+          {eyebrow && <p className="mb-1.5 text-xs font-semibold uppercase tracking-widest text-amber-500">{eyebrow}</p>}
+          <h2 className="text-2xl font-bold tracking-tight text-zinc-50 sm:text-3xl">{title}</h2>
+          {desc && <p className="mt-2.5 max-w-3xl text-sm leading-relaxed text-zinc-400">{desc}</p>}
+        </div>
+      );
+    }
+
+    function Bar({ ratio, tone = 'amber' }) {
+      const tones = { amber: 'bg-amber-500', sky: 'bg-sky-500', violet: 'bg-violet-500', emerald: 'bg-emerald-500' };
+      return (
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-800" role="presentation">
+          <div className={`grow-x h-full rounded-full ${tones[tone]}`} style={{ width: `${Math.max(ratio * 100, 2)}%` }} />
+        </div>
+      );
+    }
+
+    // ========================================
+    // 🔀 Router Components (hash-based)
+    // ========================================
+
+    const RouterContext = createContext({ path: '/', navigate: () => {} });
+
+    function Router({ children }) {
+      const [path, setPath] = useState(() => window.location.hash.slice(1) || '/');
+
+      useEffect(() => {
+        const onHashChange = () => {
+          setPath(window.location.hash.slice(1) || '/');
+          window.scrollTo({ top: 0 });
+        };
+        window.addEventListener('hashchange', onHashChange);
+        return () => window.removeEventListener('hashchange', onHashChange);
+      }, []);
+
+      const navigate = useCallback((to) => { window.location.hash = to; }, []);
+
+      return <RouterContext.Provider value={{ path, navigate }}>{children}</RouterContext.Provider>;
+    }
+
+    function useRouter() { return useContext(RouterContext); }
+
+    function Routes({ children }) {
+      const { path } = useRouter();
+      const routes = React.Children.toArray(children);
+      const matched = routes.find((r) => r.props.path === path) || routes.find((r) => r.props.path === '*');
+      return matched ? matched.props.element : null;
+    }
+
+    function Route() { return null; }
+
+    function Link({ to, className = '', children, ...props }) {
+      const { navigate } = useRouter();
+      return (
+        <a
+          href={`#${to}`}
+          onClick={(e) => { e.preventDefault(); navigate(to); }}
+          className={className}
+          {...props}
+        >
+          {children}
+        </a>
+      );
+    }
+
+    // ========================================
+    // 📊 Data (2026-09-06 네이버 수집)
+    // ========================================
+
+    const CAFES = [
+      { name: '[소니 미러리스 클럽]', members: 288564, kind: '브랜드', brand: '소니', url: 'https://cafe.naver.com/nex3nex5', desc: '국내 최대 카메라 카페. a7 V·a7C II·a6700·FX3 II 실사용기와 중고 시세', badge: '대표카페' },
+      { name: '디갤 (DSLR·미러리스 중고)', members: 224973, kind: '브랜드', brand: '종합', url: 'https://cafe.naver.com/temadica', desc: '브랜드 무관 중고 거래·기종 추천. 사진 분야 구인구직 게시판', badge: null },
+      { name: '캐논클럽', members: 173034, kind: '브랜드', brand: '캐논', url: 'https://cafe.naver.com/canon450dclub', desc: 'R50·R8·R6·R7·R10 등 EOS R 라인업 정보와 출사·교육', badge: '대표카페' },
+      { name: 'DOF LOOK', members: 141892, kind: '장르', brand: '영상', url: 'https://cafe.naver.com/doflook', desc: '영상 촬영 커뮤니티. 시네마 카메라·짐벌·색보정', badge: '대표카페' },
+      { name: '필름카메라 동호회', members: 136862, kind: '장르', brand: '필름', url: 'https://cafe.naver.com/35mmcamera', desc: '수동·하프·토이·폴라로이드. 필름 감성 유행의 진원지', badge: '대표카페' },
+      { name: '후지피플', members: 135450, kind: '브랜드', brand: '후지필름', url: 'https://cafe.naver.com/fujipeople', desc: '12년 연속 네이버 대표카페. X-T5·X100VI·X half 유저층', badge: '대표카페' },
+      { name: '소니 사용자모임', members: 121230, kind: '브랜드', brand: '소니', url: 'https://cafe.naver.com/x1smart', desc: '카메라 + 이어폰/엑스페리아까지 다루는 소니 종합 모임', badge: null },
+      { name: '캐논미러리스클럽', members: 92271, kind: '브랜드', brand: '캐논', url: 'https://cafe.naver.com/dicawith', desc: '캐논 중심이지만 소니·니콘 강의도 진행. 사진 교육 비중이 높음', badge: null },
+      { name: '네이버 카메라를메라', members: 63434, kind: '장르', brand: '입문', url: 'https://cafe.naver.com/cameramera', desc: '"12주 완성 사진초보 탈출" 커리큘럼형 공식 카페', badge: '공식' },
+      { name: '라이프스케치 (올림푸스/OM)', members: 24140, kind: '브랜드', brand: '올림푸스', url: 'https://cafe.naver.com/witholy', desc: 'OM-D·PEN 등 마이크로포서드 공식 커뮤니티', badge: '공식' },
+      { name: '사랑을 담는 사진사', members: 18674, kind: '장르', brand: '종합', url: 'https://cafe.naver.com/nikond40', desc: '브랜드 무관 종합 동호회, 출사·강습 중심', badge: null },
+      { name: '토담쓰담', members: 17669, kind: '장르', brand: '종합', url: 'https://cafe.naver.com/todamssudam', desc: '무료 사진강좌·스튜디오 제공·모델 촬영회', badge: null },
+      { name: '니콘피플', members: 14863, kind: '브랜드', brand: '니콘', url: 'https://cafe.naver.com/nikonpeople', desc: 'Zf·Z5 II·Z6 커뮤니티. 규모 대비 새 글이 많음(하루 70여 건)', badge: null },
+      { name: '사진공감', members: 7759, kind: '장르', brand: '종합', url: 'https://cafe.naver.com/photosympathy', desc: '무료 초급 강좌와 해외 출사 프로그램', badge: null },
+      { name: '펜탁시안의 라이브뷰', members: 4378, kind: '브랜드', brand: '펜탁스', url: 'https://cafe.naver.com/pentaxianstyle', desc: '국내에서 몇 안 남은 펜탁스 K 시리즈 사용자 모임', badge: null },
+    ];
+
+    const OFFICIAL_BLOGS = [
+      { name: '소니코리아', id: 'sonykorea', desc: '알파 신제품·펌웨어·이벤트 1차 공지' },
+      { name: '캐논코리아 주식회사 블로그', id: 'canonkoreacamera', desc: 'EOS R·파워샷 신제품과 정품 서비스 안내' },
+      { name: '니콘 공식 블로그', id: 'nikonimagingkorea', desc: 'Z 시리즈 소식과 니콘 스쿨 강좌' },
+    ];
+
+    const REVIEW_BLOGS = [
+      { name: '올페의 사진 & 카메라 렌즈 리뷰', id: 'olivepage', tag: '렌즈', desc: '바디보다 렌즈 리뷰 비중이 높다' },
+      { name: 'StrongArm의 카메라/렌즈 리뷰 블로그', id: 'strongarmrev', tag: '스펙', desc: '스펙 위주의 정공법 리뷰' },
+      { name: 'cyoz 테크스냅 (카메라·IT 리뷰)', id: 'lskimch', tag: 'IT', desc: '카메라와 IT 기기를 함께 다룬다' },
+      { name: '가을눈스냅 & 카메라, 렌즈 리뷰', id: 'shiny_ss', tag: '작례', desc: '스냅 작가 시점의 실전 작례' },
+      { name: '아둥스 (카메라와 함께하는 리뷰)', id: 'ramiebbo', tag: '생활', desc: '생활 밀착형 사용기, 업로드가 잦다' },
+      { name: '장비그래퍼: IT·카메라 리뷰 / 네오루나', id: 'neolunar', tag: '영상', desc: '포토·비디오그래퍼의 영상 장비 관점' },
+      { name: 'Jeju Sonais Photoworks', id: 'avecjh', tag: '작례', desc: '제주 풍경 작례 중심 (이웃 8천+)' },
+      { name: 'Digital Photography & Analogue Emotion', id: 'dpiw', tag: '감성', desc: '디지털과 아날로그 감성 비교' },
+      { name: '잇츠카메라 가이드', id: 'itscamera_official', tag: '중고', desc: '중고 카메라 매입·시세 정보' },
+      { name: '카메라를 메라', id: 'herodkr', tag: '입문', desc: '동명 공식 카페 운영자의 입문 강의형 포스팅' },
+    ];
+
+    const MIRRORLESS = [
+      { rank: 1, name: '소니 A7C II', variant: '바디', brand: '소니', price: 2108650, rating: 4.95, reviews: 2246, note: '2위와 3배 차이. 풀프레임을 콤팩트 바디에 넣은 조합이 압도적 1위' },
+      { rank: 2, name: '후지필름 X-T5', variant: '바디', brand: '후지필름', price: 2189990, rating: 4.97, reviews: 755, note: '4천만 화소 APS-C + 다이얼 조작. 후지 감성의 대표 기종' },
+      { rank: 3, name: '캐논 EOS R6 Mark II', variant: '바디', brand: '캐논', price: 2266990, rating: 4.95, reviews: 592, note: '40매/초 연사. 스포츠·행사 촬영의 표준' },
+      { rank: 4, name: '후지필름 X-M5', variant: '15-45 킷', brand: '후지필름', price: 1299000, rating: 4.96, reviews: 564, note: '뷰파인더를 빼고 가격을 낮춘 입문 후지. 필름 시뮬레이션 다이얼' },
+      { rank: 5, name: '후지필름 X-T50', variant: '바디', brand: '후지필름', price: 1723670, rating: 4.96, reviews: 446, note: 'X-T5의 화소·필름시뮬을 물려받은 중급기' },
+      { rank: 6, name: '후지필름 X-E5', variant: 'XF23mm 킷', brand: '후지필름', price: 2349000, rating: 4.96, reviews: 426, note: '레인지파인더 스타일. 단렌즈 킷으로 바로 시작' },
+      { rank: 7, name: '후지필름 X-T30 III', variant: '바디', brand: '후지필름', price: 1326000, rating: 4.99, reviews: 403, note: '별점 4.99, 상위권 중 최고 만족도' },
+      { rank: 8, name: '캐논 EOS R10', variant: '18-45 킷', brand: '캐논', price: 860000, rating: 4.95, reviews: 395, note: '100만 원 아래 유일한 상위권. 렌즈교환식 입문 1순위' },
+      { rank: 9, name: '소니 A7 IV', variant: '바디', brand: '소니', price: 2177990, rating: 4.95, reviews: 389, note: '후속 출시 후에도 가성비로 계속 팔리는 스테디셀러' },
+      { rank: 10, name: '소니 A6700', variant: '바디', brand: '소니', price: 1508400, rating: 4.91, reviews: 379, note: 'APS-C 플래그십. 영상 스펙이 강하다' },
+      { rank: 11, name: '캐논 EOS R8', variant: '바디', brand: '캐논', price: 1722990, rating: 4.92, reviews: 357, note: '가장 싼 풀프레임 미러리스 축' },
+      { rank: 12, name: '소니 ZV-E10 II', variant: '바디', brand: '소니', price: 1169410, rating: 4.93, reviews: 327, note: '브이로그 전용 설계' },
+      { rank: 13, name: '소니 A7CR', variant: '바디', brand: '소니', price: 3172050, rating: 4.97, reviews: 321, note: '6100만 화소 콤팩트 풀프레임' },
+      { rank: 14, name: '니콘 Zf', variant: '40mm SE 킷', brand: '니콘', price: 2790000, rating: 4.97, reviews: 284, note: '필름 카메라 외관의 풀프레임' },
+      { rank: 15, name: '니콘 Z fc', variant: '16-50 킷', brand: '니콘', price: 1020000, rating: 4.93, reviews: 261, note: 'Zf의 APS-C 버전, 100만 원대 초반' },
+      { rank: 16, name: '니콘 Z f', variant: '바디', brand: '니콘', price: 2440000, rating: 4.99, reviews: 228, note: '별점 4.99' },
+      { rank: 17, name: '소니 A7 V', variant: '바디', brand: '소니', price: 3125500, rating: 4.96, reviews: 224, note: '최신 플래그십 스탠더드기' },
+      { rank: 18, name: '니콘 Z5 II', variant: '바디', brand: '니콘', price: 2077740, rating: 4.98, reviews: 213, note: '니콘 풀프레임 입문' },
+      { rank: 19, name: '후지필름 X-S20', variant: '바디', brand: '후지필름', price: 1618840, rating: 4.96, reviews: 208, note: '손떨림 보정 + 영상' },
+    ];
+
+    const COMPACT = [
+      { rank: 1, name: '캐논 파워샷 V1', variant: '', brand: '캐논', price: 1139650, rating: 4.91, reviews: 657, note: '1.4형 센서 + 광각 줌. 브이로그 컴팩트의 새 기준' },
+      { rank: 2, name: '리코 GR III', variant: '', brand: '리코', price: 1980000, rating: 4.94, reviews: 423, note: '스냅 카메라의 대명사. 단종 이슈로 가격이 오히려 상승' },
+      { rank: 3, name: '캐논 G7X Mark III', variant: '', brand: '캐논', price: 1229000, rating: 4.92, reviews: 341, note: '유튜버 표준 디카. 출시 6년이 넘도록 상위권' },
+      { rank: 4, name: '리코 GR IV 모노크롬', variant: '한정판', brand: '리코', price: 2990000, rating: 4.95, reviews: 308, note: '흑백 전용 센서 한정판' },
+      { rank: 5, name: '캐논 파워샷 V10', variant: '', brand: '캐논', price: 516200, rating: 4.85, reviews: 254, note: '50만 원대 세로형 브이로그 카메라' },
+      { rank: 6, name: '소니 ZV-1 II', variant: '', brand: '소니', price: 897890, rating: 4.92, reviews: 225, note: '18mm 초광각, 1인 촬영 특화' },
+      { rank: 7, name: '후지필름 X half', variant: '', brand: '후지필름', price: 798000, rating: 4.93, reviews: 216, note: '하프 프레임 감성. 2026년 최대 화제작' },
+      { rank: 8, name: '리코 GR III Street Edition', variant: '', brand: '리코', price: 1819900, rating: 4.91, reviews: 175, note: 'GR III 스트리트 스냅 에디션' },
+      { rank: 9, name: '소니 RX100 VII', variant: '', brand: '소니', price: 1590000, rating: 4.93, reviews: 108, note: '1형 센서 하이엔드의 오랜 기준점' },
+      { rank: 10, name: '니콘 P950', variant: '', brand: '니콘', price: 898990, rating: 4.83, reviews: 89, note: '83배 초망원 하이브리드' },
+    ];
+
+    const TRENDS = [
+      {
+        no: '01', tone: 'amber', title: '후지필름이 리뷰 순위를 점령했다',
+        body: '미러리스 TOP 10 중 5개가 후지필름(X-T5, X-M5, X-T50, X-E5, X-T30 III)이다. 카페 규모는 소니(28.8만)가 후지(13.5만)의 두 배지만, 실제 구매 리뷰는 후지가 더 많이 쌓인다.',
+        punch: '"카페는 소니, 지갑은 후지"',
+      },
+      {
+        no: '02', tone: 'sky', title: "풀프레임은 '작아져야' 팔린다",
+        body: '1위 A7C II와 상위권 A7CR은 모두 콤팩트 풀프레임이다. 같은 센서를 쓰는 큰 바디보다 작은 바디의 리뷰가 훨씬 많다.',
+        punch: '센서 크기보다 들고 나가는 무게',
+      },
+      {
+        no: '03', tone: 'emerald', title: '브이로그 카메라가 독립 카테고리가 됐다',
+        body: '컴팩트 1위 파워샷 V1, 5위 V10, 6위 ZV-1 II, 미러리스 12위 ZV-E10 II. 사진기가 아니라 촬영 장비로 설계된 기종이 각 순위권에 고르게 들어와 있다.',
+        punch: '찍는 기계에서 만드는 기계로',
+      },
+      {
+        no: '04', tone: 'violet', title: '레트로·필름 감성이 신제품을 움직인다',
+        body: '후지 X half(216), 리코 GR IV 모노크롬(308), 니콘 Zf/Z fc(284/261), 그리고 멤버 13.6만 명의 필름카메라 동호회까지.',
+        punch: '불편함을 콘셉트로 파는 제품이 팔린다',
+      },
+      {
+        no: '05', tone: 'rose', title: '"빌려보고 산다"가 정착했다',
+        body: '리뷰 상위권에 카메라 대여 상품이 다수 섞여 있다(R6 II 세트 694건, GR3x 392건, GR3 344건). 100만~300만 원대 지출 전에 1일 1만~6만 원으로 검증한다.',
+        punch: '구매 전 체험이 기본값',
+      },
+    ];
+
+    const PICKS = [
+      { situation: '렌즈교환식 완전 입문', model: '캐논 EOS R10 18-45 킷', budget: '86만 원', where: '캐논클럽 · 카메라를메라' },
+      { situation: '사진 감성·색감 우선', model: '후지필름 X-M5 / X-T30 III', budget: '130만 원대', where: '후지피플' },
+      { situation: '여행 한 대로 끝내기', model: '소니 A7C II', budget: '210만 원', where: '소니 미러리스 클럽' },
+      { situation: '유튜브·브이로그', model: '캐논 파워샷 V1 / 소니 ZV-E10 II', budget: '110만 원대', where: 'DOF LOOK' },
+      { situation: '매일 들고 다니는 스냅', model: '리코 GR III / 후지 X half', budget: '80만~200만 원', where: '필름카메라 동호회 · 디갤' },
+      { situation: '행사·스포츠·인물', model: '캐논 EOS R6 Mark II', budget: '227만 원', where: '캐논클럽 · 캐논미러리스클럽' },
+      { situation: '예산을 아끼고 싶다', model: '중고 A7 III / X-T30 / EOS R', budget: '—', where: '디갤 · 잇츠카메라 가이드' },
+    ];
+
+    const BRAND_TONE = {
+      '소니': 'sky', '캐논': 'rose', '후지필름': 'emerald', '니콘': 'amber',
+      '리코': 'violet', '종합': 'zinc', '필름': 'violet', '영상': 'sky',
+      '입문': 'emerald', '올림푸스': 'zinc', '펜탁스': 'zinc',
+    };
+
+    const won = (n) => n.toLocaleString('ko-KR') + '원';
+
+    // ========================================
+    // 🧩 Common / Layout Components
+    // ========================================
+
+    const NAV = [
+      { to: '/', label: '개요' },
+      { to: '/cafes', label: '카페' },
+      { to: '/blogs', label: '블로그' },
+      { to: '/ranking', label: '인기 카메라' },
+      { to: '/trends', label: '트렌드 & 추천' },
+    ];
+
+    function Header() {
+      const { path } = useRouter();
+      const [open, setOpen] = useState(false);
+
+      return (
+        <header className="sticky top-0 z-40 border-b border-zinc-800 bg-zinc-950/85 backdrop-blur">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-3.5">
+            <Link to="/" className="flex items-center gap-2.5" aria-label="홈으로">
+              <span className="grid h-8 w-8 place-items-center rounded-lg bg-amber-500 text-base text-zinc-950">📷</span>
+              <span className="text-sm font-bold tracking-tight text-zinc-50 sm:text-base">
+                카메라 리서치 리포트
+              </span>
+            </Link>
+
+            <nav className="hidden items-center gap-1 md:flex" aria-label="주요 메뉴">
+              {NAV.map((n) => (
+                <Link
+                  key={n.to}
+                  to={n.to}
+                  aria-current={path === n.to ? 'page' : undefined}
+                  className={`rounded-lg px-3 py-1.5 text-sm transition-colors ${
+                    path === n.to ? 'bg-zinc-800 font-semibold text-amber-400' : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100'
+                  }`}
+                >
+                  {n.label}
+                </Link>
+              ))}
+            </nav>
+
+            <Button variant="ghost" size="sm" className="md:hidden" onClick={() => setOpen((v) => !v)} aria-expanded={open} aria-label="메뉴 열기">
+              {open ? '✕' : '☰'}
+            </Button>
+          </div>
+
+          {open && (
+            <nav className="border-t border-zinc-800 bg-zinc-950 px-5 py-2 md:hidden" aria-label="모바일 메뉴">
+              {NAV.map((n) => (
+                <Link
+                  key={n.to}
+                  to={n.to}
+                  onClick={() => setOpen(false)}
+                  className={`block rounded-lg px-3 py-2.5 text-sm ${path === n.to ? 'font-semibold text-amber-400' : 'text-zinc-300'}`}
+                >
+                  {n.label}
+                </Link>
+              ))}
+            </nav>
+          )}
+        </header>
+      );
+    }
+
+    function Footer() {
+      return (
+        <footer className="mt-20 border-t border-zinc-800 bg-zinc-950">
+          <div className="mx-auto max-w-6xl px-5 py-10">
+            <p className="text-sm font-semibold text-zinc-200">카메라 입문자를 위한 네이버 커뮤니티 지도 &amp; 인기 디지털카메라 리서치</p>
+            <p className="mt-2 text-xs leading-relaxed text-zinc-500">
+              조사 일시 2026-09-06 · 수집 도구 Playwright 브라우저 자동화 ·
+              출처 네이버 카페검색 / 네이버 블로그 / 네이버 쇼핑 가격비교(리뷰 많은 순)
+            </p>
+            <p className="mt-1 text-xs text-zinc-600">
+              가격과 리뷰 수는 수집 시점 기준이며 수시로 변동합니다. 원본 정리 파일: 카메라-네이버-커뮤니티-리서치.md
+            </p>
+          </div>
+        </footer>
+      );
+    }
+
+    function Page({ children }) {
+      return <main className="fade-up mx-auto max-w-6xl px-5 py-10 sm:py-14">{children}</main>;
+    }
+
+    function Shot({ src, caption }) {
+      return (
+        <figure className="overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900">
+          <img src={src} alt={caption} loading="lazy" className="w-full" />
+          <figcaption className="border-t border-zinc-800 px-4 py-2.5 text-xs text-zinc-500">{caption}</figcaption>
+        </figure>
+      );
+    }
+
+    // ========================================
+    // 📄 Page Components
+    // ========================================
+
+    function HomePage() {
+      return (
+        <Page>
+          <section className="mb-14">
+            <Badge tone="amber">2026-09-06 · Playwright 수집</Badge>
+            <h1 className="mt-4 text-3xl font-bold leading-tight tracking-tight text-zinc-50 sm:text-5xl">
+              카메라는 정보가 없어서가 아니라<br className="hidden sm:block" />
+              <span className="text-amber-400">너무 많아서</span> 못 산다
+            </h1>
+            <p className="mt-5 max-w-2xl text-sm leading-relaxed text-zinc-400 sm:text-base">
+              네이버 카페·블로그에서 <strong className="text-zinc-200">어디를 봐야 하는지</strong>를 먼저 추리고,
+              그 커뮤니티가 다루는 기종이 실제로도 팔리는지 네이버 쇼핑 <strong className="text-zinc-200">리뷰 수</strong>로 교차 검증했습니다.
+            </p>
+            <div className="mt-7 flex flex-wrap gap-2.5">
+              <Link to="/ranking"><Button size="lg">인기 카메라 순위 보기</Button></Link>
+              <Link to="/cafes"><Button variant="secondary" size="lg">커뮤니티부터 보기</Button></Link>
+            </div>
+          </section>
+
+          <section className="mb-14 grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <StatTile value="15" unit="곳" label="정리한 네이버 카페" hint="멤버 4천~28.8만 명" />
+            <StatTile value="13" unit="곳" label="정리한 네이버 블로그" hint="공식 3 + 리뷰 전문 10" />
+            <StatTile value="29" unit="종" label="순위에 올린 카메라" hint="미러리스 19 + 컴팩트 10" />
+            <StatTile value="2,246" unit="건" label="1위 A7C II 리뷰" hint="2위의 약 3배" />
+          </section>
+
+          <section className="mb-14">
+            <SectionTitle
+              eyebrow="Key findings"
+              title="세 줄로 먼저 보는 결론"
+              desc="자세한 근거는 각 페이지에 표와 그래프로 정리했습니다."
+            />
+            <div className="grid gap-4 md:grid-cols-3">
+              <Card className="p-6">
+                <Badge tone="emerald">커뮤니티 ≠ 판매량</Badge>
+                <h3 className="mt-3 text-lg font-bold text-zinc-50">카페는 소니, 지갑은 후지</h3>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+                  소니 카페 멤버는 후지의 2배지만, 미러리스 리뷰 TOP 10에는 후지가 5종으로 가장 많이 올라 있습니다.
+                </p>
+              </Card>
+              <Card className="p-6">
+                <Badge tone="sky">폼팩터</Badge>
+                <h3 className="mt-3 text-lg font-bold text-zinc-50">작은 풀프레임이 이긴다</h3>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+                  1위 A7C II, 13위 A7CR. 같은 센서라면 작고 가벼운 쪽의 리뷰가 압도적으로 많습니다.
+                </p>
+              </Card>
+              <Card className="p-6">
+                <Badge tone="violet">감성 소비</Badge>
+                <h3 className="mt-3 text-lg font-bold text-zinc-50">불편함을 콘셉트로 판다</h3>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+                  X half, GR IV 모노크롬, Zf/Z fc, 그리고 13.6만 명의 필름카메라 동호회.
+                </p>
+              </Card>
+            </div>
+          </section>
+
+          <section className="mb-14">
+            <SectionTitle eyebrow="Method" title="이렇게 조사했습니다" />
+            <Card className="overflow-hidden">
+              <ol className="divide-y divide-zinc-800">
+                {[
+                  ['네이버 카페 검색', '`카메라`, `미러리스` 키워드로 카페 목록을 수집해 멤버 수 내림차순 정리'],
+                  ['네이버 블로그 검색', '블로거 검색으로 카메라 전문 블로그를 추리고, 브랜드 공식 블로그 주소를 확인'],
+                  ['네이버 쇼핑 가격비교', '`미러리스 카메라`, `하이엔드 디지털카메라`를 리뷰 많은 순으로 정렬해 수집'],
+                  ['정제', '렌탈·판매처 패키지 상품을 제외하고 브랜드 카탈로그 단위로만 순위 집계'],
+                ].map(([t, d], i) => (
+                  <li key={t} className="flex gap-4 p-5">
+                    <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-zinc-800 text-xs font-bold text-amber-400">
+                      {i + 1}
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold text-zinc-100">{t}</p>
+                      <p className="mt-1 text-sm leading-relaxed text-zinc-400">{d}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </Card>
+          </section>
+
+          <section>
+            <SectionTitle eyebrow="Evidence" title="수집 화면" desc="Playwright로 직접 열어 캡처한 원본 화면입니다." />
+            <div className="grid gap-4 md:grid-cols-3">
+              <Shot src="수집과정_네이버카페검색.png" caption="네이버 카페 검색 — 멤버 수 수집" />
+              <Shot src="수집과정_네이버블로그검색.png" caption="네이버 블로거 검색 — 카메라 리뷰 블로그" />
+              <Shot src="수집과정_네이버쇼핑_미러리스_리뷰순.png" caption="네이버 쇼핑 — 미러리스 리뷰 많은 순" />
+            </div>
+          </section>
+        </Page>
+      );
+    }
+
+    function CafesPage() {
+      const [q, setQ] = useState('');
+      const [kind, setKind] = useState('전체');
+
+      const filtered = useMemo(() => {
+        const key = q.trim().toLowerCase();
+        return CAFES.filter((c) => {
+          const okKind = kind === '전체' || c.kind === kind;
+          const okQ = !key || (c.name + c.desc + c.brand).toLowerCase().includes(key);
+          return okKind && okQ;
+        });
+      }, [q, kind]);
+
+      const max = CAFES[0].members;
+      const total = CAFES.reduce((s, c) => s + c.members, 0);
+
+      return (
+        <Page>
+          <SectionTitle
+            eyebrow="Part 1 · Cafe"
+            title="카메라 정보를 얻는 네이버 카페 15곳"
+            desc={`멤버 수 합계 ${total.toLocaleString('ko-KR')}명. 브랜드 카페는 기종 질문·중고 시세에, 장르 카페는 강좌·출사에 강합니다.`}
+          />
+
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end">
+            <Input
+              label="카페 검색"
+              placeholder="예: 후지, 중고, 입문, 영상"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              className="sm:max-w-xs"
+            />
+            <div className="flex gap-1.5" role="group" aria-label="카페 분류 필터">
+              {['전체', '브랜드', '장르'].map((k) => (
+                <Button key={k} size="sm" variant={kind === k ? 'primary' : 'secondary'} onClick={() => setKind(k)}>
+                  {k}
+                </Button>
+              ))}
+            </div>
+            <span className="text-xs text-zinc-500 sm:ml-auto sm:pb-2">{filtered.length}곳 표시 중</span>
+          </div>
+
+          {filtered.length === 0 ? (
+            <Card className="p-12 text-center">
+              <p className="text-sm text-zinc-400">검색 결과가 없습니다. 다른 키워드를 입력해 보세요.</p>
+              <Button variant="secondary" size="sm" className="mt-4" onClick={() => { setQ(''); setKind('전체'); }}>
+                필터 초기화
+              </Button>
+            </Card>
+          ) : (
+            <ul className="space-y-3">
+              {filtered.map((c) => (
+                <li key={c.url}>
+                  <Card className="p-5 transition-colors hover:border-zinc-700">
+                    <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-base font-bold text-zinc-50">{c.name}</h3>
+                          <Badge tone={BRAND_TONE[c.brand] || 'zinc'}>{c.brand}</Badge>
+                          {c.badge && <Badge tone="amber">{c.badge}</Badge>}
+                        </div>
+                        <p className="mt-1.5 text-sm leading-relaxed text-zinc-400">{c.desc}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xl font-bold tabular-nums text-amber-400">{c.members.toLocaleString('ko-KR')}</p>
+                        <p className="text-[11px] text-zinc-500">멤버</p>
+                      </div>
+                    </div>
+                    <div className="mt-3.5">
+                      <Bar ratio={c.members / max} tone={BRAND_TONE[c.brand] === 'zinc' ? 'amber' : BRAND_TONE[c.brand]} />
+                    </div>
+                    <a
+                      href={c.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-3 inline-block break-all text-xs text-sky-400 hover:text-sky-300 hover:underline"
+                    >
+                      {c.url} ↗
+                    </a>
+                  </Card>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <Card className="mt-8 border-amber-500/25 bg-amber-500/[0.06] p-6">
+            <h3 className="text-sm font-bold text-amber-300">입문자 동선 추천</h3>
+            <ol className="mt-3 space-y-1.5 text-sm leading-relaxed text-zinc-300">
+              <li>① <strong>카메라를메라</strong>에서 용어와 노출 기초를 잡는다.</li>
+              <li>② 관심 브랜드 카페(소미클 · 캐논클럽 · 후지피플 · 니콘피플)에서 실사용 후기를 읽는다.</li>
+              <li>③ <strong>디갤</strong>에서 중고 시세를 확인한 뒤 구매한다.</li>
+            </ol>
+          </Card>
+        </Page>
+      );
+    }
+
+    function BlogsPage() {
+      return (
+        <Page>
+          <SectionTitle
+            eyebrow="Part 2 · Blog"
+            title="카메라 정보를 얻는 네이버 블로그"
+            desc="검색 상단은 협찬성 생활 블로그가 많아, 블로그 이름 자체에 카메라·렌즈·사진을 내건 곳만 남겼습니다."
+          />
+
+          <h3 className="mb-4 text-sm font-semibold text-zinc-300">제조사 공식 블로그 — 신제품·펌웨어의 1차 출처</h3>
+          <div className="mb-10 grid gap-4 md:grid-cols-3">
+            {OFFICIAL_BLOGS.map((b) => (
+              <Card key={b.id} className="p-5">
+                <Badge tone="amber">공식</Badge>
+                <h4 className="mt-3 text-base font-bold text-zinc-50">{b.name}</h4>
+                <p className="mt-1.5 text-sm leading-relaxed text-zinc-400">{b.desc}</p>
+                <a
+                  href={`https://blog.naver.com/${b.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-block text-xs text-sky-400 hover:text-sky-300 hover:underline"
+                >
+                  blog.naver.com/{b.id} ↗
+                </a>
+              </Card>
+            ))}
+          </div>
+
+          <Card className="mb-10 border-zinc-700 bg-zinc-900 p-5">
+            <p className="text-sm leading-relaxed text-zinc-300">
+              <strong className="text-zinc-100">후지필름은 카메라 부문 공식 블로그가 없습니다.</strong> 대신 멤버 13.5만 명의 카페{' '}
+              <a href="https://cafe.naver.com/fujipeople" target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:underline">후지피플</a>
+              이 사실상 공식 창구 역할을 합니다. 검색에 걸리는 <code className="rounded bg-zinc-800 px-1 py-0.5 text-xs">fujifilm_bi_kr</code>은
+              프린터·복합기를 다루는 비즈니스이노베이션 부문이라 카메라와 무관합니다.
+            </p>
+          </Card>
+
+          <h3 className="mb-4 text-sm font-semibold text-zinc-300">카메라·렌즈 리뷰 전문 블로그 10곳</h3>
+          <div className="grid gap-3 md:grid-cols-2">
+            {REVIEW_BLOGS.map((b) => (
+              <Card key={b.id} className="p-5 transition-colors hover:border-zinc-700">
+                <div className="flex items-start justify-between gap-3">
+                  <h4 className="text-sm font-bold leading-snug text-zinc-50">{b.name}</h4>
+                  <Badge tone="sky">{b.tag}</Badge>
+                </div>
+                <p className="mt-1.5 text-sm leading-relaxed text-zinc-400">{b.desc}</p>
+                <a
+                  href={`https://blog.naver.com/${b.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2.5 inline-block text-xs text-sky-400 hover:text-sky-300 hover:underline"
+                >
+                  blog.naver.com/{b.id} ↗
+                </a>
+              </Card>
+            ))}
+          </div>
+
+          <Card className="mt-8 border-rose-500/25 bg-rose-500/[0.06] p-6">
+            <h3 className="text-sm font-bold text-rose-300">⚠️ 읽을 때 주의</h3>
+            <p className="mt-2 text-sm leading-relaxed text-zinc-300">
+              카메라 검색 상위에는 협찬·제휴 링크 글이 섞여 있습니다. 본문 하단의 <code className="rounded bg-zinc-800 px-1 py-0.5 text-xs">#협찬</code>,
+              <code className="ml-1 rounded bg-zinc-800 px-1 py-0.5 text-xs">#체험단</code>, 쿠팡 파트너스 고지를 먼저 확인하고,
+              <strong className="text-zinc-100"> 작례 원본을 올리는 블로그</strong>를 우선으로 보세요.
+            </p>
+          </Card>
+        </Page>
+      );
+    }
+
+    function RankingPage() {
+      const [tab, setTab] = useState('mirrorless');
+      const [sort, setSort] = useState('reviews');
+
+      const raw = tab === 'mirrorless' ? MIRRORLESS : COMPACT;
+      const maxReviews = Math.max(...raw.map((r) => r.reviews));
+
+      const rows = useMemo(() => {
+        const copy = [...raw];
+        if (sort === 'price') copy.sort((a, b) => a.price - b.price);
+        else if (sort === 'rating') copy.sort((a, b) => b.rating - a.rating);
+        else copy.sort((a, b) => b.reviews - a.reviews);
+        return copy;
+      }, [raw, sort]);
+
+      return (
+        <Page>
+          <SectionTitle
+            eyebrow="Part 3 · Ranking"
+            title="지금 인기 있는 디지털카메라"
+            desc="네이버 쇼핑 가격비교를 리뷰 많은 순으로 정렬해 수집했습니다. 렌탈·판매처 패키지는 제외하고 브랜드 카탈로그(정품 바디/킷)만 집계했습니다."
+          />
+
+          <div className="mb-6 flex flex-wrap items-center gap-3">
+            <div className="flex gap-1.5" role="tablist" aria-label="카메라 종류">
+              <Button role="tab" aria-selected={tab === 'mirrorless'} variant={tab === 'mirrorless' ? 'primary' : 'secondary'} onClick={() => setTab('mirrorless')}>
+                렌즈교환식 미러리스 19
+              </Button>
+              <Button role="tab" aria-selected={tab === 'compact'} variant={tab === 'compact' ? 'primary' : 'secondary'} onClick={() => setTab('compact')}>
+                컴팩트 · 하이엔드 10
+              </Button>
+            </div>
+            <div className="flex items-center gap-1.5 sm:ml-auto">
+              <span className="text-xs text-zinc-500">정렬</span>
+              {[['reviews', '리뷰 많은 순'], ['price', '가격 낮은 순'], ['rating', '별점 높은 순']].map(([k, label]) => (
+                <Button key={k} size="sm" variant={sort === k ? 'primary' : 'ghost'} onClick={() => setSort(k)}>
+                  {label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <ul className="space-y-2.5">
+            {rows.map((r) => (
+              <li key={r.name + r.variant}>
+                <Card className="p-4 transition-colors hover:border-zinc-700 sm:p-5">
+                  <div className="flex items-start gap-4">
+                    <div className="w-9 shrink-0 pt-0.5 text-center">
+                      <span className={`text-lg font-bold tabular-nums ${r.rank <= 3 ? 'text-amber-400' : 'text-zinc-600'}`}>
+                        {r.rank <= 3 ? ['🥇', '🥈', '🥉'][r.rank - 1] : r.rank}
+                      </span>
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-base font-bold text-zinc-50">{r.name}</h3>
+                        {r.variant && <span className="text-xs text-zinc-500">{r.variant}</span>}
+                        <Badge tone={BRAND_TONE[r.brand] || 'zinc'}>{r.brand}</Badge>
+                      </div>
+                      <p className="mt-1.5 text-sm leading-relaxed text-zinc-400">{r.note}</p>
+                      <div className="mt-3 max-w-md">
+                        <Bar ratio={r.reviews / maxReviews} tone={BRAND_TONE[r.brand] === 'zinc' ? 'amber' : BRAND_TONE[r.brand]} />
+                      </div>
+                    </div>
+
+                    <div className="shrink-0 text-right">
+                      <p className="text-sm font-bold tabular-nums text-zinc-100">{won(r.price)}</p>
+                      <p className="mt-0.5 text-xs tabular-nums text-zinc-400">리뷰 {r.reviews.toLocaleString('ko-KR')}</p>
+                      <p className="mt-0.5 text-xs tabular-nums text-amber-500/80">★ {r.rating}</p>
+                    </div>
+                  </div>
+                </Card>
+              </li>
+            ))}
+          </ul>
+
+          <Card className="mt-8 p-6">
+            <h3 className="text-sm font-bold text-zinc-100">이 순위를 읽을 때</h3>
+            <ul className="mt-3 space-y-2 text-sm leading-relaxed text-zinc-400">
+              <li>· 리뷰 수는 <strong className="text-zinc-200">누적값</strong>이라 오래된 기종이 유리합니다. 신제품(A7 V, Z5 II)은 과소평가될 수 있습니다.</li>
+              <li>· 같은 기종도 바디/킷/판매처 패키지로 나뉘어 리뷰가 분산됩니다.</li>
+              <li>· 5만~14만 원대 노네임 "빈티지 디카"도 리뷰 90~300건대로 상위에 올라옵니다. 화질보다 필름 느낌·가벼움·가격을 사는 수요입니다.</li>
+              <li>· 가격은 2026-09-06 기준 최저가입니다.</li>
+            </ul>
+          </Card>
+        </Page>
+      );
+    }
+
+    function TrendsPage() {
+      return (
+        <Page>
+          <SectionTitle
+            eyebrow="Part 4 · Insight"
+            title="데이터에서 읽히는 5가지 흐름"
+            desc="카페 멤버 수와 쇼핑 리뷰 수를 겹쳐 보면 커뮤니티의 규모와 실제 구매가 어긋나는 지점이 보입니다."
+          />
+
+          <div className="mb-16 space-y-4">
+            {TRENDS.map((t) => (
+              <Card key={t.no} className="p-6">
+                <div className="flex flex-col gap-4 sm:flex-row">
+                  <span className="shrink-0 text-3xl font-bold tabular-nums text-zinc-800">{t.no}</span>
+                  <div className="min-w-0">
+                    <h3 className="text-lg font-bold text-zinc-50">{t.title}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-zinc-400">{t.body}</p>
+                    <div className="mt-3">
+                      <Badge tone={t.tone}>{t.punch}</Badge>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          <SectionTitle eyebrow="Part 5 · Pick" title="이렇게 고르면 된다" desc="상황별로 한 대씩. 먼저 볼 커뮤니티까지 같이 적었습니다." />
+          <Card className="overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[640px] text-left text-sm">
+                <thead className="border-b border-zinc-800 bg-zinc-900">
+                  <tr className="text-xs uppercase tracking-wide text-zinc-500">
+                    <th scope="col" className="px-5 py-3 font-medium">상황</th>
+                    <th scope="col" className="px-5 py-3 font-medium">추천 기종</th>
+                    <th scope="col" className="px-5 py-3 text-right font-medium">대략 예산</th>
+                    <th scope="col" className="px-5 py-3 font-medium">먼저 볼 커뮤니티</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-800">
+                  {PICKS.map((p) => (
+                    <tr key={p.situation} className="transition-colors hover:bg-zinc-800/40">
+                      <td className="px-5 py-3.5 font-medium text-zinc-200">{p.situation}</td>
+                      <td className="px-5 py-3.5 text-zinc-300">{p.model}</td>
+                      <td className="whitespace-nowrap px-5 py-3.5 text-right tabular-nums text-amber-400">{p.budget}</td>
+                      <td className="px-5 py-3.5 text-zinc-400">{p.where}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+
+          <div className="mt-10 flex flex-wrap gap-2.5">
+            <Link to="/ranking"><Button>순위 다시 보기</Button></Link>
+            <Link to="/cafes"><Button variant="secondary">카페 목록 보기</Button></Link>
+          </div>
+        </Page>
+      );
+    }
+
+    function NotFoundPage() {
+      return (
+        <Page>
+          <Card className="p-14 text-center">
+            <p className="text-5xl">🔍</p>
+            <h1 className="mt-4 text-xl font-bold text-zinc-50">없는 페이지입니다</h1>
+            <p className="mt-2 text-sm text-zinc-400">주소를 확인해 주세요.</p>
+            <Link to="/"><Button className="mt-6">개요로 돌아가기</Button></Link>
+          </Card>
+        </Page>
+      );
+    }
+
+    // ========================================
+    // 🚀 App
+    // ========================================
+
+    function App() {
+      return (
+        <Router>
+          <div className="flex min-h-screen flex-col">
+            <Header />
+            <div className="flex-1">
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/cafes" element={<CafesPage />} />
+                <Route path="/blogs" element={<BlogsPage />} />
+                <Route path="/ranking" element={<RankingPage />} />
+                <Route path="/trends" element={<TrendsPage />} />
+                <Route path="*" element={<NotFoundPage />} />
+              </Routes>
+            </div>
+            <Footer />
+          </div>
+        </Router>
+      );
+    }
+
+    // ========================================
+    // Rendering
+    // ========================================
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

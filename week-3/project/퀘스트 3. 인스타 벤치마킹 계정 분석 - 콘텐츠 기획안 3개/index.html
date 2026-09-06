@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>안과 백내장 수술 콘텐츠 기획안 3개 | 인스타 벤치마킹 리포트</title>
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <!-- 모든 CDN 버전 고정. Babel 은 반드시 7.x (8.x 는 인라인 text/babel 미지원) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.25.9/babel.min.js"></script>
+  <style>
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in-up { animation: fadeInUp .35s ease-out both; }
+    html { scroll-behavior: smooth; }
+  </style>
+</head>
+<body class="bg-slate-50">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useMemo } = React;
+
+    // ========================================
+    // 🎨 Design System Components
+    // ========================================
+
+    function Button({ variant = 'primary', size = 'md', disabled = false, onClick, className = '', children, ...rest }) {
+      const variants = {
+        primary:   'bg-sky-600 text-white hover:bg-sky-700 focus:ring-sky-500',
+        secondary: 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 focus:ring-slate-400',
+        danger:    'bg-rose-600 text-white hover:bg-rose-700 focus:ring-rose-500',
+        ghost:     'bg-transparent text-slate-600 hover:bg-slate-100 focus:ring-slate-300',
+      };
+      const sizes = { sm: 'px-3 py-1.5 text-sm', md: 'px-4 py-2 text-sm', lg: 'px-6 py-3 text-base' };
+      return (
+        <button
+          type="button"
+          onClick={onClick}
+          disabled={disabled}
+          className={`inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-colors
+            focus:outline-none focus:ring-2 focus:ring-offset-2
+            disabled:opacity-50 disabled:cursor-not-allowed
+            ${variants[variant]} ${sizes[size]} ${className}`}
+          {...rest}
+        >
+          {children}
+        </button>
+      );
+    }
+
+    function Card({ className = '', children }) {
+      return (
+        <div className={`bg-white rounded-2xl shadow-sm ring-1 ring-slate-200/70 ${className}`}>
+          {children}
+        </div>
+      );
+    }
+
+    function Badge({ tone = 'slate', className = '', children }) {
+      const tones = {
+        slate: 'bg-slate-100 text-slate-700 ring-slate-200',
+        sky:   'bg-sky-50 text-sky-700 ring-sky-200',
+        teal:  'bg-teal-50 text-teal-700 ring-teal-200',
+        amber: 'bg-amber-50 text-amber-800 ring-amber-200',
+        rose:  'bg-rose-50 text-rose-700 ring-rose-200',
+      };
+      return (
+        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${tones[tone]} ${className}`}>
+          {children}
+        </span>
+      );
+    }
+
+    function StatTile({ label, value, sub, tone = 'slate' }) {
+      const tones = { slate: 'text-slate-900', sky: 'text-sky-700', teal: 'text-teal-700', rose: 'text-rose-600' };
+      return (
+        <Card className="p-5">
+          <p className="text-xs font-medium text-slate-500">{label}</p>
+          <p className={`mt-1 text-2xl font-bold tabular-nums ${tones[tone]}`}>{value}</p>
+          {sub && <p className="mt-1 text-xs text-slate-500 leading-relaxed">{sub}</p>}
+        </Card>
+      );
+    }
+
+    function Tabs({ items, active, onChange }) {
+      return (
+        <div role="tablist" aria-label="콘텐츠 기획안 선택" className="flex flex-col sm:flex-row gap-2 p-1.5 bg-slate-100 rounded-xl">
+          {items.map((it) => {
+            const selected = it.id === active;
+            return (
+              <button
+                key={it.id}
+                role="tab"
+                aria-selected={selected}
+                onClick={() => onChange(it.id)}
+                className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors text-left sm:text-center
+                  focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-1
+                  ${selected ? 'bg-white text-sky-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+              >
+                <span className="block text-[11px] uppercase tracking-wide opacity-70">기획안 {it.key}</span>
+                {it.tabLabel}
+              </button>
+            );
+          })}
+        </div>
+      );
+    }
+
+    function Section({ id, eyebrow, title, desc, children }) {
+      return (
+        <section id={id} className="scroll-mt-20">
+          <div className="mb-6">
+            {eyebrow && <p className="text-xs font-bold uppercase tracking-widest text-sky-600">{eyebrow}</p>}
+            <h2 className="mt-1 text-2xl sm:text-3xl font-bold text-slate-900">{title}</h2>
+            {desc && <p className="mt-2 text-slate-600 leading-relaxed max-w-3xl">{desc}</p>}
+          </div>
+          {children}
+        </section>
+      );
+    }
+
+    // ========================================
+    // 📊 Data — 벤치마킹 근거 (@minlee0880 최근 15개 게시물, 2026-09-06 수집)
+    // ========================================
+
+    const BENCHMARK = {
+      account: '@minlee0880 · 이종민 "운동하는 의사 닥터벨"',
+      followers: '30.6만',
+      collected: '2026-09-06',
+      range: '2026-05-22 ~ 09-05 · 최근 게시물 15개',
+      medianLikes: 251,
+      medianComments: 18,
+      hits: [
+        { title: '환경호르몬 "당장 버리세요"', date: '07-30', likes: 5420, comments: 3683, ratio: 0.68 },
+        { title: '"기초대사량, 왜 중요할까요?"', date: '08-20', likes: 845, comments: 5546, ratio: 6.56 },
+      ],
+    };
+
+    const FINDINGS = [
+      {
+        no: '①',
+        tone: 'sky',
+        title: '좋아요가 아니라 "댓글"을 목표로 설계했다',
+        body: '폭발한 2개 게시물 모두 "댓글 남기면 정리본 보내드려요" 구조였다. 기초대사량 편은 댓글이 좋아요의 6.6배로, 평시 비율(0.07)의 약 94배다.',
+        apply: '기획안 3개 전부에 "댓글 키워드 → 자료 DM" 장치를 넣는다.',
+      },
+      {
+        no: '②',
+        tone: 'teal',
+        title: '대상 폭이 넓은 생활 주제일 때만 터졌다',
+        body: '제품·광고 게시물 7개는 전부 좋아요 110~372에 머물렀다. 반대로 지식형이라도 대상이 좁으면(수부지 피부 206, 보톡스 내성 124) 실패했다. 성과를 가른 축은 「지식 vs 광고」가 아니라 「대상 폭」이었다.',
+        apply: '"백내장 수술받을 사람"이 아니라 "50대 이상 + 그 자녀 전원"을 대상으로 잡는다.',
+      },
+      {
+        no: '③',
+        tone: 'amber',
+        title: '통념 교정형 훅 + 자격·경험 근거를 함께 세웠다',
+        body: '"~라고 생각하는데, 실제로는 ~"의 오해 교정 프레임에, 「의사」라는 전문성과 「본인이 겪었다」는 경험을 한 문장에 붙였다. 캡션은 정의 → 오해 → 기준 3가지로 구조화되어 있었다.',
+        apply: '"노안인 줄 알았는데" 같은 환자의 실제 말을 인용해 열고, 집도 경험으로 근거를 세운다.',
+      },
+    ];
+
+    // ========================================
+    // 📄 Data — 안과 백내장 수술 콘텐츠 기획안 3개
+    // ========================================
+
+    const PLANS = [
+      {
+        id: 'A', key: 'A', tone: 'sky',
+        tabLabel: '자가 점검 체크리스트',
+        title: '"밤 운전할 때 불빛이 번져 보인다면" — 백내장 자가 점검',
+        subtitle: '생활 증상 점검형 · 벤치마킹 공통점 ②+① 적용',
+        hook: '"이 증상 5개 중 2개면, 노안이 아니라 백내장일 수 있습니다"',
+        format: '릴스 45~60초 (세로 9:16) + 정리본 PDF 1종',
+        target: '50대 이상 본인, 그리고 부모님께 보낼 30~40대 자녀',
+        why: '벤치마킹 계정에서 좋아요 5,420개를 만든 「환경호르몬, 당장 버리세요」와 같은 구조다. "내가 해당되는지 지금 확인할 수 있는" 생활 점검형이라 대상 폭이 가장 넓다.',
+        storyboard: [
+          { t: '0~3초', s: '밤 운전 시야 재현 컷 — 가로등 빛이 갈라져 번지는 화면' },
+          { t: '3~10초', s: '"이걸 노안이라고 넘기는 분이 많습니다" (통념 제시)' },
+          { t: '10~35초', s: '자가 점검 5개 항목을 자막 카드로: ① 밤 불빛 번짐 ② 안경을 바꿔도 흐림 ③ 색이 누렇게 보임 ④ 밝은 곳에서 오히려 더 눈부심 ⑤ 한쪽 눈에 겹쳐 보임' },
+          { t: '35~50초', s: '"2개 이상이면 안과 검사를 권합니다" + 검사 자체는 짧고 부담이 적다는 설명' },
+          { t: '50~60초', s: 'CTA — 댓글 키워드 안내' },
+        ],
+        caption: '"안경만 바꾸면 괜찮아지겠지" 하고 미루시는 분들이 정말 많습니다.\n\n그런데 안경 도수를 바꿔도 흐림이 그대로라면, 그건 노안이 아니라 수정체 자체가 뿌옇게 변한 신호일 수 있습니다.\n\n오늘은 진료실에서 제가 가장 먼저 여쭤보는 5가지를 정리했습니다.\n(진단이 아니라, 검사를 받아볼지 판단하는 기준입니다)',
+        cta: '댓글에 「점검」이라고 남겨주시면 「백내장 자가 점검 체크리스트」를 보내드립니다.',
+        kpi: [
+          { k: '댓글/좋아요 비율', v: '0.30 이상', d: '벤치마킹 히트작 0.68 / 계정 평시 0.07' },
+          { k: '저장 수', v: '좋아요의 15% 이상', d: '부모님께 보내는 공유형 콘텐츠 특성' },
+          { k: '검사 문의 DM', v: '게시 후 7일 내 유입 측정', d: '자료 발송 시 안내 문구 1줄만 포함' },
+        ],
+      },
+      {
+        id: 'B', key: 'B', tone: 'teal',
+        tabLabel: '오해 교정 시리즈',
+        title: '"백내장은 다 익은 뒤에 수술한다"는 말, 어디서 나왔을까요',
+        subtitle: '통념 교정형 · 벤치마킹 공통점 ③+① 적용',
+        hook: '진료실에서 실제로 들은 환자분의 말을 첫 화면에 그대로 인용',
+        format: '릴스 30~45초 + 긴 캡션(정의 → 오해 → 판단 기준 3가지)',
+        target: '수술 시기를 두고 망설이는 환자 본인과 가족 전원',
+        why: '댓글 5,546개를 만든 「기초대사량, 왜 중요할까요?」와 같은 프레임이다. 팔로워가 실제로 쓰는 문장을 인용해 열고, 의학적으로 교정한 뒤, "제가 보는 기준 3가지"로 닫는다.',
+        storyboard: [
+          { t: '0~3초', s: '자막 인용 — "선생님, 더 익어야 수술한다면서요?"' },
+          { t: '3~12초', s: '이 말이 나온 배경 설명 (과거 수술 방식이 기준이던 시절의 맥락)' },
+          { t: '12~30초', s: '현재 기준은 시력 수치보다 「일상에서 겪는 불편」이라는 점' },
+          { t: '30~45초', s: '"제가 수술 시기를 볼 때 확인하는 3가지" + CTA' },
+        ],
+        caption: '"백내장은 다 익어야 수술한다."\n\n진료실에서 일주일에도 몇 번씩 듣는 말입니다.\n\n이 말은 수술 방식이 지금과 달랐던 시절의 기준입니다. 지금은 오히려 너무 오래 기다리면 수정체가 단단해져 수술 부담이 함께 올라갑니다.\n\n제가 수술 시기를 판단할 때 보는 건 이 3가지입니다.\n1. 운전·계단 등 일상에서 위험을 느끼는가\n2. 안경 교정으로 더 이상 개선되지 않는가\n3. 다른 눈 질환의 진단과 치료를 가리고 있지 않은가\n\n※ 개인차가 크므로 반드시 검사 후에 판단해야 합니다.',
+        cta: '댓글에 지금 가장 불편한 상황을 남겨주시면 다음 편에서 다뤄드립니다. (다음 회차 소재도 함께 확보되는 구조)',
+        kpi: [
+          { k: '댓글 수', v: '좋아요 대비 0.5배 이상', d: '질문 유도형이라 A안보다 높게 설계' },
+          { k: '시리즈 지속', v: '월 2회 × 6개월', d: '댓글에서 다음 소재를 뽑아 연재' },
+          { k: '팔로워 순증', v: '회차당 +1%', d: '시리즈 인지 후 팔로우 전환' },
+        ],
+      },
+      {
+        id: 'C', key: 'C', tone: 'amber',
+        tabLabel: '렌즈 선택 기준',
+        title: '"다초점 렌즈, 저는 이 3가지로 결정합니다"',
+        subtitle: '의사결정 지원형 · 벤치마킹 공통점 ①+③ 적용',
+        hook: '"비싼 렌즈가 좋은 렌즈일까요? 저는 이 순서로 봅니다"',
+        format: '캐러셀 이미지 7장 (비교표 중심) + 렌즈 비교표 PDF',
+        target: '수술을 결정한 뒤 렌즈를 고르는 단계의 환자와 보호자',
+        why: '벤치마킹 계정에서 광고성 게시물은 전부 중앙값 이하였던 반면 "제가 보는 기준 3가지" 형식의 정보 게시물은 성과가 높았다. 렌즈는 환자가 가장 크게 혼란을 겪는 지점이라 저장·공유 동기가 강하다.',
+        storyboard: [
+          { t: '1장', s: '표지 — "렌즈 종류보다 먼저 정해야 하는 것"' },
+          { t: '2장', s: '단초점 / 다초점 / 연속초점의 차이를 한 장 표로' },
+          { t: '3장', s: '기준 1 — 하루 중 가장 오래 보는 거리(운전·독서·모니터)' },
+          { t: '4장', s: '기준 2 — 야간 빛 번짐을 감수할 수 있는 생활인가' },
+          { t: '5장', s: '기준 3 — 각막·망막 상태가 그 렌즈를 감당하는가' },
+          { t: '6장', s: '"모든 눈에 맞는 최고의 렌즈는 없습니다" (과장 표현 회피)' },
+          { t: '7장', s: 'CTA — 댓글 키워드 안내' },
+        ],
+        caption: '렌즈 상담에서 가장 많이 받는 질문은 "제일 좋은 렌즈로 해주세요"입니다.\n\n그런데 렌즈는 성능 순위가 아니라, 그 사람의 하루에 맞추는 선택입니다. 밤 운전이 많은 분과 하루 종일 책을 보는 분에게 같은 답이 나올 수 없습니다.\n\n제가 상담에서 확인하는 순서를 그대로 정리했습니다.\n\n※ 렌즈 종류와 비용은 개인의 눈 상태에 따라 달라지며, 검사 없이 결정할 수 없습니다.',
+        cta: '댓글에 「렌즈」라고 남겨주시면 「렌즈 종류별 비교표」를 보내드립니다.',
+        kpi: [
+          { k: '저장 수', v: '좋아요의 25% 이상', d: '비교표는 저장 동기가 가장 큰 포맷' },
+          { k: '댓글/좋아요 비율', v: '0.25 이상', d: '키워드 댓글 유도' },
+          { k: '상담 전환', v: '자료 수신자의 5%', d: 'DM 자료 하단 예약 안내' },
+        ],
+      },
+    ];
+
+    const CAUTIONS = [
+      {
+        title: '의료광고 사전심의 대상 여부를 먼저 확인할 것',
+        body: '의료기관 개설자·의료인이 운영하는 SNS 게시물은 의료법상 의료광고에 해당할 수 있고, 일정 요건에서는 사전심의 대상입니다. 3개 기획안 모두 게시 전 의료광고심의 기준을 확인한 뒤 집행해야 합니다.',
+      },
+      {
+        title: '치료 경험담·수술 전후 사진은 쓰지 않는다',
+        body: '환자의 치료경험담을 이용한 광고와 수술 전후 비교 사진은 규제 대상입니다. 본 기획안 3개는 모두 「증상 설명·판단 기준」 중심으로 설계해 경험담과 전후 사진을 배제했습니다.',
+      },
+      {
+        title: '"최고·유일·완치" 표현 금지',
+        body: '기획안 C의 6번째 장을 "모든 눈에 맞는 최고의 렌즈는 없습니다"로 둔 이유입니다. 최상급 표현 대신 선택 기준을 제시하는 방식이 규제상 안전하고, 벤치마킹 결과상 반응도 더 좋았습니다.',
+      },
+      {
+        title: '댓글→DM 자동 발송 도구의 정책·개인정보 처리 확인',
+        body: '벤치마킹 계정의 핵심 장치인 자료 자동 발송은 서드파티 도구를 쓰는 경우가 많습니다. 인스타그램 플랫폼 정책과 개인정보 수집·이용 동의 절차를 함께 검토해야 합니다.',
+      },
+      {
+        title: '자료(정리본)는 진단이 아니라 "검사 판단 기준"으로 한정',
+        body: '체크리스트가 자가진단 도구로 읽히면 안 됩니다. 모든 자료 상단에 "본 자료는 진단을 대체하지 않으며, 검사 여부 판단을 돕기 위한 것"이라는 고지를 넣습니다.',
+      },
+    ];
+
+    // ========================================
+    // 🧩 Common / Layout Components
+    // ========================================
+
+    function Header() {
+      return (
+        <header className="bg-gradient-to-br from-sky-900 via-slate-900 to-slate-800 text-white">
+          <div className="max-w-5xl mx-auto px-5 sm:px-8 py-14 sm:py-20">
+            <Badge tone="sky" className="bg-sky-400/20 text-sky-100 ring-sky-300/50">
+              week-3 · 퀘스트 3 · 인스타 벤치마킹 계정 분석
+            </Badge>
+            <h1 className="mt-5 text-3xl sm:text-5xl font-bold leading-tight tracking-tight">
+              안과 의사를 위한<br className="hidden sm:block" /> 백내장 수술 콘텐츠 기획안 3개
+            </h1>
+            <p className="mt-5 text-slate-300 leading-relaxed max-w-2xl">
+              팔로워 {BENCHMARK.followers} 의료 인플루언서 <strong className="text-white font-semibold">{BENCHMARK.account}</strong> 의
+              최근 게시물 15개를 Playwright로 수집·분석해 반응이 좋았던 게시물의 공통점 3가지를 도출했습니다.
+              그 3가지를 그대로 백내장 수술 콘텐츠에 옮긴 실행 기획안입니다.
+            </p>
+            <dl className="mt-8 flex flex-wrap gap-x-8 gap-y-3 text-sm">
+              <div><dt className="text-slate-400">수집일</dt><dd className="font-semibold">{BENCHMARK.collected}</dd></div>
+              <div><dt className="text-slate-400">분석 범위</dt><dd className="font-semibold">{BENCHMARK.range}</dd></div>
+              <div><dt className="text-slate-400">수집 방법</dt><dd className="font-semibold">Playwright MCP · 게시물 메타태그 파싱</dd></div>
+            </dl>
+            <div className="mt-9 flex flex-wrap gap-3">
+              <a href="#plans"><Button size="lg">기획안 3개 보기</Button></a>
+              <a href="#findings"><Button size="lg" variant="secondary" className="bg-white/10 text-white border-white/25 hover:bg-white/20">벤치마킹 근거</Button></a>
+            </div>
+          </div>
+        </header>
+      );
+    }
+
+    function Footer() {
+      return (
+        <footer className="bg-slate-900 text-slate-400">
+          <div className="max-w-5xl mx-auto px-5 sm:px-8 py-10 text-sm leading-relaxed">
+            <p className="text-slate-200 font-semibold">week-3 / project / 퀘스트 3. 인스타 벤치마킹 계정 분석 - 콘텐츠 기획안 3개</p>
+            <p className="mt-2">
+              원본 분석: <code className="text-slate-300">인스타-벤치마킹-분석-닥터벨.md</code> ·
+              수집 데이터: <code className="text-slate-300">data/게시물-원본데이터.csv</code>
+            </p>
+            <p className="mt-4 text-xs">
+              본 문서는 콘텐츠 기획 참고용이며 의학적 조언이 아닙니다. 실제 게시 전 의료광고 관련 법령과 사전심의 기준을 반드시 확인하십시오.
+            </p>
+          </div>
+        </footer>
+      );
+    }
+
+    // ========================================
+    // 📄 Page Sections
+    // ========================================
+
+    function BenchmarkSection() {
+      const hitTotal = useMemo(
+        () => BENCHMARK.hits.reduce((acc, h) => acc + h.comments, 0),
+        []
+      );
+      return (
+        <Section
+          id="benchmark"
+          eyebrow="01. 무엇을 근거로 삼았나"
+          title="벤치마킹 계정의 실제 수치"
+          desc="최근 게시물 15개 중 기준선을 넘은 건 단 2개였습니다. 이 계정의 성과는 평균이 아니라 소수의 폭발 게시물이 만든 구조입니다."
+        >
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatTile label="좋아요 중앙값" value={BENCHMARK.medianLikes.toLocaleString()} sub="최근 15개 게시물 기준" />
+            <StatTile label="댓글 중앙값" value={BENCHMARK.medianComments.toLocaleString()} sub="댓글/좋아요 0.07" />
+            <StatTile label="히트작 2개의 댓글 합" value={hitTotal.toLocaleString()} sub="나머지 13개 합계의 수십 배" tone="sky" />
+            <StatTile label="최고 댓글/좋아요 비율" value="6.56" sub="평시 비율의 약 94배" tone="rose" />
+          </div>
+
+          <Card className="mt-6 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[520px]">
+                <caption className="sr-only">기준선을 넘은 게시물 2개의 성과</caption>
+                <thead className="bg-slate-50 text-slate-600">
+                  <tr>
+                    <th scope="col" className="text-left font-semibold px-5 py-3">기준선을 넘은 게시물</th>
+                    <th scope="col" className="text-right font-semibold px-5 py-3">좋아요</th>
+                    <th scope="col" className="text-right font-semibold px-5 py-3">댓글</th>
+                    <th scope="col" className="text-right font-semibold px-5 py-3">댓글/좋아요</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {BENCHMARK.hits.map((h) => (
+                    <tr key={h.title} className="hover:bg-slate-50/60">
+                      <td className="px-5 py-4">
+                        <span className="font-semibold text-slate-900">{h.title}</span>
+                        <span className="ml-2 text-slate-400 text-xs">{h.date}</span>
+                      </td>
+                      <td className="px-5 py-4 text-right tabular-nums font-semibold">{h.likes.toLocaleString()}</td>
+                      <td className="px-5 py-4 text-right tabular-nums font-semibold text-sky-700">{h.comments.toLocaleString()}</td>
+                      <td className="px-5 py-4 text-right tabular-nums">{h.ratio}</td>
+                    </tr>
+                  ))}
+                  <tr className="bg-slate-50/70 text-slate-500">
+                    <td className="px-5 py-3 font-medium">계정 중앙값 (기준선)</td>
+                    <td className="px-5 py-3 text-right tabular-nums">{BENCHMARK.medianLikes}</td>
+                    <td className="px-5 py-3 text-right tabular-nums">{BENCHMARK.medianComments}</td>
+                    <td className="px-5 py-3 text-right tabular-nums">0.07</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </Section>
+      );
+    }
+
+    function FindingsSection() {
+      return (
+        <Section
+          id="findings"
+          eyebrow="02. 반응이 좋았던 게시물의 공통점"
+          title="히트작 2개가 공유한 3가지"
+          desc="이 3가지가 아래 기획안 3개의 설계 원칙이 됩니다."
+        >
+          <div className="grid md:grid-cols-3 gap-5">
+            {FINDINGS.map((f) => (
+              <Card key={f.no} className="p-6 flex flex-col">
+                <div className="flex items-start gap-3">
+                  <span className="text-3xl font-bold text-slate-200 leading-none">{f.no}</span>
+                  <h3 className="font-bold text-slate-900 leading-snug">{f.title}</h3>
+                </div>
+                <p className="mt-4 text-sm text-slate-600 leading-relaxed flex-1">{f.body}</p>
+                <div className="mt-5 pt-4 border-t border-dashed border-slate-200">
+                  <Badge tone={f.tone}>백내장 콘텐츠 적용</Badge>
+                  <p className="mt-2 text-sm text-slate-700 leading-relaxed">{f.apply}</p>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </Section>
+      );
+    }
+
+    function PlanDetail({ plan }) {
+      return (
+        <Card className="p-6 sm:p-8 animate-fade-in-up">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge tone={plan.tone}>기획안 {plan.key}</Badge>
+            <span className="text-sm text-slate-500">{plan.subtitle}</span>
+          </div>
+          <h3 className="mt-3 text-xl sm:text-2xl font-bold text-slate-900 leading-snug">{plan.title}</h3>
+
+          <dl className="mt-6 grid sm:grid-cols-3 gap-4">
+            <div className="rounded-xl bg-slate-50 p-4">
+              <dt className="text-xs font-semibold text-slate-500">훅 (첫 3초)</dt>
+              <dd className="mt-1 text-sm font-medium text-slate-900 leading-relaxed">{plan.hook}</dd>
+            </div>
+            <div className="rounded-xl bg-slate-50 p-4">
+              <dt className="text-xs font-semibold text-slate-500">포맷</dt>
+              <dd className="mt-1 text-sm font-medium text-slate-900 leading-relaxed">{plan.format}</dd>
+            </div>
+            <div className="rounded-xl bg-slate-50 p-4">
+              <dt className="text-xs font-semibold text-slate-500">대상</dt>
+              <dd className="mt-1 text-sm font-medium text-slate-900 leading-relaxed">{plan.target}</dd>
+            </div>
+          </dl>
+
+          <div className="mt-8 grid lg:grid-cols-2 gap-8">
+            <div>
+              <h4 className="text-sm font-bold text-slate-900">구성 · 스토리보드</h4>
+              <ol className="mt-3 space-y-2">
+                {plan.storyboard.map((s) => (
+                  <li key={s.t} className="flex gap-3 text-sm">
+                    <span className="shrink-0 w-16 font-semibold text-sky-700 tabular-nums">{s.t}</span>
+                    <span className="text-slate-700 leading-relaxed">{s.s}</span>
+                  </li>
+                ))}
+              </ol>
+
+              <h4 className="mt-7 text-sm font-bold text-slate-900">캡션 초안</h4>
+              <p className="mt-3 whitespace-pre-wrap text-sm text-slate-700 leading-relaxed bg-slate-50 rounded-xl p-4 ring-1 ring-slate-200">
+                {plan.caption}
+              </p>
+
+              <div className="mt-5 rounded-xl bg-sky-50 ring-1 ring-sky-200 p-4">
+                <p className="text-xs font-bold text-sky-800">댓글 유도 장치 (공통점 ①)</p>
+                <p className="mt-1 text-sm text-sky-900 leading-relaxed">{plan.cta}</p>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-bold text-slate-900">이 기획을 고른 이유</h4>
+              <p className="mt-3 text-sm text-slate-700 leading-relaxed">{plan.why}</p>
+
+              <h4 className="mt-7 text-sm font-bold text-slate-900">성과 목표 (KPI)</h4>
+              <div className="mt-3 space-y-3">
+                {plan.kpi.map((k) => (
+                  <div key={k.k} className="flex items-start justify-between gap-4 rounded-xl ring-1 ring-slate-200 p-4">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">{k.k}</p>
+                      <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{k.d}</p>
+                    </div>
+                    <span className="shrink-0 text-sm font-bold text-sky-700 tabular-nums">{k.v}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </Card>
+      );
+    }
+
+    function PlansSection() {
+      const [active, setActive] = useState(PLANS[0].id);
+      const plan = PLANS.find((p) => p.id === active);
+
+      return (
+        <Section
+          id="plans"
+          eyebrow="03. 실행 기획안"
+          title="백내장 수술 콘텐츠 기획안 3개"
+          desc="세 기획안 모두 ① 댓글 유도 장치, ② 넓은 대상, ③ 통념 교정형 훅을 함께 갖추도록 설계했습니다."
+        >
+          <Tabs items={PLANS} active={active} onChange={setActive} />
+          <div className="mt-6">
+            <PlanDetail plan={plan} />
+          </div>
+        </Section>
+      );
+    }
+
+    function CautionSection() {
+      return (
+        <Section
+          id="cautions"
+          eyebrow="04. 집행 전 확인"
+          title="의료 콘텐츠라서 반드시 짚어야 할 것"
+          desc="일반 인플루언서 전략을 의료 계정에 그대로 옮길 수 없는 지점들입니다. 위 기획안은 아래 항목을 반영해 설계했습니다."
+        >
+          <div className="space-y-3">
+            {CAUTIONS.map((c, i) => (
+              <Card key={c.title} className="p-5 flex gap-4">
+                <span className="shrink-0 mt-0.5 w-7 h-7 rounded-full bg-amber-100 text-amber-800 text-sm font-bold grid place-items-center">
+                  {i + 1}
+                </span>
+                <div>
+                  <h3 className="font-bold text-slate-900">{c.title}</h3>
+                  <p className="mt-1.5 text-sm text-slate-600 leading-relaxed">{c.body}</p>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </Section>
+      );
+    }
+
+    // ========================================
+    // 🚀 App Component
+    // ========================================
+
+    function App() {
+      return (
+        <div className="min-h-screen flex flex-col">
+          <Header />
+          <main className="flex-1 max-w-5xl w-full mx-auto px-5 sm:px-8 py-14 sm:py-20 space-y-16 sm:space-y-24">
+            <BenchmarkSection />
+            <FindingsSection />
+            <PlansSection />
+            <CautionSection />
+          </main>
+          <Footer />
+        </div>
+      );
+    }
+
+    // ========================================
+    // Rendering
+    // ========================================
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
