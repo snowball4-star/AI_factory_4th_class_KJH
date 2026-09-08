@@ -195,8 +195,8 @@ const PROVIDERS = {
   fal:  { id: 'fal',  label: 'fal.ai FLUX', sub: 'FLUX.1 [schnell] · API 키 필요', needsKey: true },
 };
 
-// 수업에서 발급받은 fal.ai 키를 기본값으로 채워 둔다. 설정 창에서 언제든 교체할 수 있다.
-const DEFAULT_FAL_KEY = '0d813dd8-5b20-44e4-83d8-0ef522df51ea:502d998fb68284c2f1cfefc5677a6a8e';
+// API 키는 소스에 담지 않는다. 오른쪽 위 설정 창에서 직접 입력하면 브라우저 localStorage 에만 저장된다.
+const DEFAULT_FAL_KEY = '';
 
 const STORAGE_KEY_GALLERY = 'my-midjourney:gallery';
 const STORAGE_KEY_FAL = 'my-midjourney:fal-key';
