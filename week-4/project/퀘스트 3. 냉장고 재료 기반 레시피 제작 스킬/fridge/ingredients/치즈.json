@@ -1,0 +1,12 @@
+{
+  "id": "치즈",
+  "name": "치즈",
+  "category": "유제품",
+  "quantity": 1,
+  "unit": "개",
+  "storage": "냉장",
+  "purchasedOn": "2026-09-13",
+  "expiresOn": "2027-03-31",
+  "note": "스위스산",
+  "updatedAt": "2026-09-12T16:38:29.491Z"
+}

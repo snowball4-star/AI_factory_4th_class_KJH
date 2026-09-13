@@ -1,0 +1,14 @@
+{
+  "name": "quest-anonymous-pay-compare",
+  "version": "1.0.0",
+  "private": true,
+  "description": "익명 월급/지출 비교 앱 (React CDN + Express + PostgreSQL pay_entries)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "pg": "^8.16.3"
+  }
+}

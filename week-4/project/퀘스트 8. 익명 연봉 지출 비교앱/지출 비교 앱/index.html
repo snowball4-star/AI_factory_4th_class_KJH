@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>익명 월급·지출 비교</title>
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script>
+    // 차트 색은 역할(role) 토큰으로만 쓴다: s1 = 그룹(평균·분포), s2 = 나
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            plane: '#f9f9f7',
+            surface: '#fcfcfb',
+            ink: '#0b0b0b',
+            ink2: '#52514e',
+            muted: '#898781',
+            grid: '#e1e0d9',
+            axis: '#c3c2b7',
+            s1: { DEFAULT: '#2a78d6', dark: '#256abf', light: '#cde2fb', wash: '#eef5fd' },
+            s2: { DEFAULT: '#eb6834', light: '#fbe3d8' },
+          },
+          fontFamily: {
+            sans: ['system-ui', '-apple-system', '"Segoe UI"', '"Apple SD Gothic Neo"', '"Malgun Gothic"', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <!-- ⚠️ 모든 CDN은 버전 고정. Babel 은 반드시 7.x (8.x 는 인라인 text/babel 이 깨진다) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.25.9/babel.min.js"></script>
+  <style>
+    .tabular { font-variant-numeric: tabular-nums; }
+    @keyframes fade-up { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+    .toast-in { animation: fade-up .2s ease-out; }
+    input[type=number]::-webkit-inner-spin-button { opacity: .4; }
+  </style>
+</head>
+<body class="bg-plane text-ink font-sans antialiased">
+  <div id="root"></div>
+  <script type="text/babel">
+    // ========================================
+    // React Hooks
+    // ========================================
+    const { useState, useEffect, useMemo, useCallback, useRef } = React;
+
+    // ========================================
+    // 📡 API & 유틸
+    // ========================================
+    // 브라우저는 자기 서버의 /api 만 호출한다. DB 접속 정보는 서버 환경변수에만 있다.
+    const API_BASE_URL = '/api';
+
+    // 로그인 없는 익명 ID: 이 브라우저에서만 쓰는 무작위 값. 서버는 해시로만 저장한다.
+    const CLIENT_ID = (() => {
+      const make = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`);
+      try {
+        let id = localStorage.getItem('pay-client-id');
+        if (!id) { id = make(); localStorage.setItem('pay-client-id', id); }
+        return id;
+      } catch (_) {
+        return make();
+      }
+    })();
+
+    async function api(path, { method = 'GET', body } = {}) {
+      const res = await fetch(`${API_BASE_URL}${path}`, {
+        method,
+        headers: { 'Content-Type': 'application/json', 'X-Client-Id': CLIENT_ID },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      let json = null;
+      try { json = await res.json(); } catch (_) { /* 비 JSON 응답 */ }
+      if (!res.ok || !json || !json.success) {
+        throw new Error((json && json.message) || `요청에 실패했습니다 (${res.status})`);
+      }
+      return json.data;
+    }
+
+    // 원 → "385만원" / "4.5만원" (10만원 미만은 소수 1자리)
+    const toManwon = (won) => {
+      const m = won / 10000;
+      const abs = Math.abs(m);
+      const text = abs < 10 ? (Math.round(m * 10) / 10).toLocaleString('ko-KR') : Math.round(m).toLocaleString('ko-KR');
+      return text;
+    };
+    const fmtWon = (won) => (won === null || won === undefined ? '-' : `${toManwon(won)}만원`);
+    const fmtDiff = (won) => {
+      if (Math.abs(won) < 5000) return '비슷해요';
+      return `${won > 0 ? '+' : '−'}${toManwon(Math.abs(won))}만원`;
+    };
+    const binLabel = (bin) => (bin.to === null ? `${toManwon(bin.from)}+` : bin.from === 0 ? `~${toManwon(bin.to)}` : toManwon(bin.from));
+    const binRange = (bin) => (bin.to === null ? `${toManwon(bin.from)}만원 이상` : `${toManwon(bin.from)}~${toManwon(bin.to)}만원`);
+    const findBin = (bins, value) => bins.findIndex((b) => value >= b.from && (b.to === null || value < b.to));
+
+    // ========================================
+    // 🎨 Design System Components
+    // ========================================
+    function Button({ variant = 'primary', size = 'md', disabled = false, type = 'button', onClick, className = '', children, ...rest }) {
+      const variants = {
+        primary: 'bg-s1 text-white hover:bg-s1-dark focus-visible:ring-s1',
+        secondary: 'bg-white text-ink border border-grid hover:bg-plane focus-visible:ring-s1',
+        danger: 'bg-[#d03b3b] text-white hover:bg-[#b83333] focus-visible:ring-[#d03b3b]',
+        ghost: 'bg-transparent text-ink2 hover:bg-black/5 focus-visible:ring-s1',
+      };
+      const sizes = { sm: 'h-8 px-3 text-sm', md: 'h-10 px-4 text-sm', lg: 'h-12 px-6 text-base' };
+      return (
+        <button
+          type={type}
+          disabled={disabled}
+          onClick={onClick}
+          className={`inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${variants[variant]} ${sizes[size]} ${className}`}
+          {...rest}
+        >
+          {children}
+        </button>
+      );
+    }
+
+    function Input({ id, type = 'text', label, hint, value, onChange, placeholder, error, disabled = false, suffix, className = '', ...rest }) {
+      return (
+        <div className={className}>
+          {label && (
+            <label htmlFor={id} className="block text-sm font-semibold text-ink mb-1">
+              {label}
+              {hint && <span className="ml-1.5 font-normal text-xs text-ink2">{hint}</span>}
+            </label>
+          )}
+          <div className="relative">
+            <input
+              id={id}
+              type={type}
+              value={value}
+              onChange={onChange}
+              placeholder={placeholder}
+              disabled={disabled}
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? `${id}-error` : undefined}
+              className={`w-full h-10 rounded-lg border bg-white px-3 text-sm tabular text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-s1/40 focus:border-s1 disabled:bg-plane ${suffix ? 'pr-12' : ''} ${error ? 'border-[#d03b3b]' : 'border-grid'}`}
+              {...rest}
+            />
+            {suffix && <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm text-ink2">{suffix}</span>}
+          </div>
+          {error && <p id={`${id}-error`} className="mt-1 text-xs text-[#b83333]">{error}</p>}
+        </div>
+      );
+    }
+
+    function Select({ id, label, value, onChange, options, placeholder, error, className = '' }) {
+      return (
+        <div className={className}>
+          {label && <label htmlFor={id} className="block text-sm font-semibold text-ink mb-1">{label}</label>}
+          <select
+            id={id}
+            value={value}
+            onChange={onChange}
+            aria-invalid={Boolean(error)}
+            className={`w-full h-10 rounded-lg border bg-white px-3 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-s1/40 focus:border-s1 ${error ? 'border-[#d03b3b]' : 'border-grid'}`}
+          >
+            {placeholder !== undefined && <option value="">{placeholder}</option>}
+            {options.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+          {error && <p className="mt-1 text-xs text-[#b83333]">{error}</p>}
+        </div>
+      );
+    }
+
+    function Card({ className = '', children, ...rest }) {
+      return (
+        <section className={`bg-surface rounded-2xl border border-black/10 shadow-sm p-5 sm:p-6 ${className}`} {...rest}>
+          {children}
+        </section>
+      );
+    }
+
+    function CardTitle({ title, subtitle, right }) {
+      return (
+        <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+          <div>
+            <h2 className="text-base sm:text-lg font-bold text-ink">{title}</h2>
+            {subtitle && <p className="text-sm text-ink2 mt-0.5">{subtitle}</p>}
+          </div>
+          {right}
+        </div>
+      );
+    }
+
+    function Badge({ children, className = '' }) {
+      return <span className={`inline-flex items-center rounded-full bg-black/5 px-2.5 py-0.5 text-xs font-semibold text-ink2 ${className}`}>{children}</span>;
+    }
+
+    function Modal({ isOpen, onClose, title, children, size = 'sm' }) {
+      useEffect(() => {
+        if (!isOpen) return;
+        const onKey = (e) => e.key === 'Escape' && onClose();
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+      }, [isOpen, onClose]);
+      if (!isOpen) return null;
+      const sizes = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl' };
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+          <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+          <div className={`relative w-full ${sizes[size]} rounded-2xl bg-white p-6 shadow-xl`}>
+            <h3 id="modal-title" className="text-lg font-bold text-ink mb-2">{title}</h3>
+            {children}
+          </div>
+        </div>
+      );
+    }
+
+    function Tabs({ tabs, active, onChange }) {
+      return (
+        <div role="tablist" className="inline-flex rounded-xl bg-black/5 p-1">
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              role="tab"
+              aria-selected={active === t.id}
+              onClick={() => onChange(t.id)}
+              className={`h-9 px-4 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-s1 ${active === t.id ? 'bg-white text-ink shadow-sm' : 'text-ink2 hover:text-ink'}`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      );
+    }
+
+    function Segmented({ options, value, onChange, label }) {
+      return (
+        <div role="radiogroup" aria-label={label} className="inline-flex rounded-lg border border-grid bg-white p-0.5">
+          {options.map((o) => (
+            <button
+              key={o.value}
+              role="radio"
+              aria-checked={value === o.value}
+              onClick={() => onChange(o.value)}
+              className={`h-8 px-3 rounded-md text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-s1 ${value === o.value ? 'bg-ink text-white' : 'text-ink2 hover:text-ink'}`}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      );
+    }
+
+    function Spinner({ className = '' }) {
+      return <span className={`inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent ${className}`} aria-hidden="true" />;
+    }
+
+    function EmptyState({ icon, title, description, action }) {
+      return (
+        <div className="flex flex-col items-center text-center py-10 px-4">
+          <div className="text-4xl mb-3" aria-hidden="true">{icon}</div>
+          <p className="font-bold text-ink">{title}</p>
+          {description && <p className="text-sm text-ink2 mt-1 max-w-md">{description}</p>}
+          {action && <div className="mt-4">{action}</div>}
+        </div>
+      );
+    }
+
+    function Toast({ message }) {
+      if (!message) return null;
+      return (
+        <div role="status" className="toast-in fixed bottom-6 left-1/2 -translate-x-1/2 z-50 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-white shadow-lg">
+          {message}
+        </div>
+      );
+    }
+
+    // 범례 칩: 색은 옆의 점이 담당하고 글자는 항상 텍스트 색
+    function LegendKey({ color, label }) {
+      return (
+        <span className="inline-flex items-center gap-1.5 text-xs text-ink2">
+          <span className={`h-2.5 w-2.5 rounded-sm ${color}`} aria-hidden="true" />
+          {label}
+        </span>
+      );
+    }
+
+    // ========================================
+    // 📊 Chart Components
+    // ========================================
+    function StatTile({ label, value, sub }) {
+      return (
+        <div className="bg-surface rounded-2xl border border-black/10 shadow-sm p-4 sm:p-5">
+          <p className="text-xs sm:text-sm text-ink2">{label}</p>
+          <p className="mt-1 text-xl sm:text-2xl font-bold text-ink">{value}</p>
+          {sub && <p className="mt-1 text-xs text-ink2">{sub}</p>}
+        </div>
+      );
+    }
+
+    // 내 위치 미터: 왼쪽 = 하위, 오른쪽 = 상위. 주황 점이 내 위치.
+    function PositionMeter({ title, top, detail }) {
+      const x = Math.min(100, Math.max(0, 100 - top));
+      return (
+        <div>
+          <div className="flex items-baseline justify-between gap-2">
+            <p className="text-sm text-ink2">{title}</p>
+            <p className="text-lg font-bold text-ink">상위 {top}%</p>
+          </div>
+          <div className="relative mt-3 h-2 rounded-full bg-s1-light" role="img" aria-label={`${title} 상위 ${top}%`}>
+            <div className="absolute inset-y-0 left-0 rounded-full bg-s1" style={{ width: `${x}%` }} />
+            <span className="absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-s2 ring-2 ring-surface" style={{ left: `${x}%` }} />
+          </div>
+          <div className="mt-1.5 flex justify-between text-[11px] text-muted"><span>하위</span><span>중간</span><span>상위</span></div>
+          {detail && <p className="mt-1 text-xs text-ink2">{detail}</p>}
+        </div>
+      );
+    }
+
+    function Histogram({ bins, myValue, caption }) {
+      const [hover, setHover] = useState(null);
+      const total = bins.reduce((s, b) => s + b.count, 0);
+      const max = Math.max(1, ...bins.map((b) => b.count));
+      const mine = myValue === undefined || myValue === null ? -1 : findBin(bins, myValue);
+      const peak = bins.findIndex((b) => b.count === max);
+
+      return (
+        <div>
+          <div className="relative h-52 flex items-end border-b border-axis" onMouseLeave={() => setHover(null)}>
+            {/* 가로 그리드 (헤어라인) */}
+            {[0.5, 1].map((r) => (
+              <div key={r} className="pointer-events-none absolute left-0 right-0 border-t border-grid" style={{ bottom: `${r * 88}%` }} />
+            ))}
+            {bins.map((b, i) => {
+              const h = (b.count / max) * 88;
+              const isMine = i === mine;
+              const showLabel = b.count > 0 && (isMine || i === peak);
+              return (
+                <div
+                  key={i}
+                  tabIndex={0}
+                  role="img"
+                  aria-label={`${binRange(b)}: ${b.count}명${isMine ? ' (내 구간)' : ''}`}
+                  className="relative flex-1 h-full flex items-end justify-center px-[1px] focus:outline-none focus-visible:bg-s1-wash"
+                  onMouseEnter={() => setHover(i)}
+                  onFocus={() => setHover(i)}
+                  onBlur={() => setHover(null)}
+                >
+                  {showLabel && (
+                    <span className="absolute text-[11px] font-semibold text-ink2 tabular" style={{ bottom: `calc(${h}% + 4px)` }}>
+                      {b.count}명
+                    </span>
+                  )}
+                  <div
+                    className={`w-full max-w-[24px] rounded-t-[4px] transition-opacity ${isMine ? 'bg-s2' : 'bg-s1'} ${hover !== null && hover !== i ? 'opacity-60' : ''}`}
+                    style={{ height: `${h}%` }}
+                  />
+                  {hover === i && (
+                    <div className="absolute z-10 bottom-full mb-1 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-ink px-2.5 py-1.5 text-xs text-white shadow-lg">
+                      <p className="font-semibold">{binRange(b)}</p>
+                      <p className="tabular">{b.count}명 · {total ? Math.round((b.count / total) * 1000) / 10 : 0}%{isMine ? ' · 내 구간' : ''}</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <div className="flex mt-1.5">
+            {bins.map((b, i) => (
+              <span key={i} className="flex-1 text-center text-[10px] sm:text-[11px] text-muted tabular">{binLabel(b)}</span>
+            ))}
+          </div>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs text-muted">{caption}</p>
+            {mine >= 0 && (
+              <div className="flex gap-3">
+                <LegendKey color="bg-s1" label="참여자 수" />
+                <LegendKey color="bg-s2" label="내 구간" />
+              </div>
+            )}
+          </div>
+          {/* 스크린리더용 표 */}
+          <div className="sr-only">
+          <table>
+            <caption>{caption}</caption>
+            <thead><tr><th>구간</th><th>인원</th></tr></thead>
+            <tbody>{bins.map((b, i) => <tr key={i}><td>{binRange(b)}</td><td>{b.count}</td></tr>)}</tbody>
+          </table>
+          </div>
+        </div>
+      );
+    }
+
+    // 카테고리별: 그룹 평균(파랑) vs 나(주황) 가로 막대
+    function CategoryCompare({ categories, averages, mine }) {
+      const avgTotal = categories.reduce((s, c) => s + (averages[c.key] || 0), 0);
+      const max = Math.max(1, ...categories.map((c) => Math.max(averages[c.key] || 0, mine ? mine[c.key] || 0 : 0)));
+      return (
+        <div>
+          <div className="flex gap-3 mb-4">
+            <LegendKey color="bg-s1" label="그룹 평균" />
+            {mine && <LegendKey color="bg-s2" label="나" />}
+          </div>
+          <ul className="space-y-4">
+            {categories.map((c) => {
+              const avg = averages[c.key] || 0;
+              const my = mine ? mine[c.key] || 0 : null;
+              const share = avgTotal ? Math.round((avg / avgTotal) * 100) : 0;
+              return (
+                <li key={c.key} className="grid grid-cols-1 sm:grid-cols-[9rem_1fr_6rem] items-center gap-x-4 gap-y-1.5">
+                  <div className="flex items-baseline justify-between sm:block">
+                    <p className="text-sm font-semibold text-ink"><span aria-hidden="true">{c.emoji}</span> {c.label}</p>
+                    <p className="text-xs text-ink2">평균 지출의 {share}%</p>
+                  </div>
+                  <div className="space-y-[2px]">
+                    <BarRow value={avg} max={max} color="bg-s1" label={`${c.label} 그룹 평균`} />
+                    {mine && <BarRow value={my} max={max} color="bg-s2" label={`${c.label} 나`} />}
+                  </div>
+                  {mine && (
+                    <p className={`text-sm tabular sm:text-right ${Math.abs(my - avg) < 5000 ? 'text-ink2' : 'font-semibold text-ink'}`}>
+                      {my - avg >= 5000 ? '▲ ' : my - avg <= -5000 ? '▼ ' : ''}{fmtDiff(my - avg)}
+                    </p>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      );
+    }
+
+    function BarRow({ value, max, color, label }) {
+      const w = (value / max) * 100;
+      return (
+        // 값 라벨은 막대 끝(tip)에 붙인다. 라벨 자리(4.5rem)를 뺀 폭 안에서 막대 길이를 잡는다.
+        <div className="flex items-center gap-1.5" title={`${label}: ${fmtWon(value)}`}>
+          <div className={`h-3 shrink-0 rounded-r-[4px] ${color}`} style={{ width: `calc((100% - 4.5rem) * ${Math.max(w, value > 0 ? 1 : 0) / 100})` }} />
+          <span className="shrink-0 text-xs text-ink2 tabular">{fmtWon(value)}</span>
+        </div>
+      );
+    }
+
+    function BreakdownTable({ title, subtitle, data, minGroupSize, highlightKey }) {
+      const max = Math.max(1, ...data.rows.map((r) => r.avgSalary));
+      return (
+        <Card>
+          <CardTitle title={title} subtitle={subtitle} />
+          {data.rows.length === 0 ? (
+            <p className="text-sm text-ink2 py-6 text-center">{minGroupSize}명 이상 모인 그룹이 아직 없어요.</p>
+          ) : (
+            <div className="overflow-x-auto -mx-1">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-ink2 border-b border-grid">
+                    <th className="py-2 px-1 font-medium">구분</th>
+                    <th className="py-2 px-1 font-medium text-right">인원</th>
+                    <th className="py-2 px-1 font-medium">평균 월급</th>
+                    <th className="py-2 px-1 font-medium text-right">평균 지출</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.rows.map((r) => (
+                    <tr key={r.key} className={`border-b border-grid last:border-0 ${String(r.key) === String(highlightKey) ? 'bg-s2-light/50' : ''}`}>
+                      <td className="py-2.5 px-1 font-medium text-ink whitespace-nowrap">
+                        {r.label}
+                        {String(r.key) === String(highlightKey) && <Badge className="ml-1.5 !bg-s2-light !text-ink">나</Badge>}
+                      </td>
+                      <td className="py-2.5 px-1 text-right text-ink2 tabular">{r.count}</td>
+                      <td className="py-2.5 px-1 min-w-[9rem]">
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-2"><div className="h-2 rounded-r-[4px] bg-s1" style={{ width: `${(r.avgSalary / max) * 100}%` }} /></div>
+                          <span className="w-14 text-right text-ink tabular">{toManwon(r.avgSalary)}</span>
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-1 text-right text-ink tabular whitespace-nowrap">{toManwon(r.avgExpense)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="mt-3 text-xs text-muted">
+                단위: 만원{data.hiddenGroups > 0 && ` · 참여자 ${minGroupSize}명 미만인 ${data.hiddenGroups}개 그룹은 숨김`}
+              </p>
+            </div>
+          )}
+        </Card>
+      );
+    }
+
+    // ========================================
+    // 🧩 Layout Components
+    // ========================================
+    function Header({ total }) {
+      return (
+        <header className="pt-8 sm:pt-12 pb-6">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <Badge>🔒 이름·이메일 없이 익명</Badge>
+            {typeof total === 'number' && <Badge className="tabular">참여자 {total.toLocaleString('ko-KR')}명</Badge>}
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-ink">💸 익명 월급·지출 비교</h1>
+          <p className="mt-2 text-sm sm:text-base text-ink2">
+            내 월급과 지출을 익명으로 남기고, 같은 직군·연차 사람들 사이에서 내 위치를 확인해 보세요.
+          </p>
+        </header>
+      );
+    }
+
+    function Footer({ minGroupSize }) {
+      return (
+        <footer className="py-10 text-center text-xs text-muted space-y-1">
+          <p>개별 제출값은 누구에게도 공개되지 않으며, {minGroupSize}명 미만인 그룹의 통계는 표시하지 않아요.</p>
+          <p>월급은 세후 실수령액 기준 · 참여자가 직접 입력한 값이라 실제 통계와 다를 수 있어요.</p>
+        </footer>
+      );
+    }
+
+    // ========================================
+    // 📄 Page: 입력 폼
+    // ========================================
+    const emptyForm = (categories) => ({
+      job: '', company: '', years: '', salary: '',
+      expenses: Object.fromEntries(categories.map((c) => [c.key, ''])),
+    });
+
+    const entryToForm = (entry, categories) => ({
+      job: entry.job,
+      company: entry.company,
+      years: String(entry.years),
+      salary: String(entry.salary / 10000),
+      expenses: Object.fromEntries(categories.map((c) => [c.key, entry.expenses[c.key] ? String(entry.expenses[c.key] / 10000) : ''])),
+    });
+
+    const manwonToWon = (v) => Math.round((parseFloat(v) || 0) * 10000);
+
+    function EntryPage({ meta, myEntry, onSubmitted, onDeleted, notify }) {
+      const [form, setForm] = useState(() => (myEntry ? entryToForm(myEntry, meta.categories) : emptyForm(meta.categories)));
+      const [errors, setErrors] = useState({});
+      const [saving, setSaving] = useState(false);
+      const [serverError, setServerError] = useState('');
+      const [confirmOpen, setConfirmOpen] = useState(false);
+      const [deleting, setDeleting] = useState(false);
+
+      useEffect(() => {
+        setForm(myEntry ? entryToForm(myEntry, meta.categories) : emptyForm(meta.categories));
+      }, [myEntry, meta.categories]);
+
+      const set = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
+      const setExpense = (key) => (e) => setForm((f) => ({ ...f, expenses: { ...f.expenses, [key]: e.target.value } }));
+
+      const salaryWon = manwonToWon(form.salary);
+      const expenseWon = meta.categories.reduce((s, c) => s + manwonToWon(form.expenses[c.key]), 0);
+      const savingsRate = salaryWon > 0 ? Math.round(((salaryWon - expenseWon) / salaryWon) * 1000) / 10 : null;
+
+      const validate = () => {
+        const { limits } = meta;
+        const next = {};
+        if (!form.job) next.job = '직군을 선택해 주세요.';
+        if (!form.company) next.company = '기업 규모를 선택해 주세요.';
+        const y = Number(form.years);
+        if (form.years === '' || !Number.isInteger(y) || y < 0 || y > limits.yearsMax) next.years = `0~${limits.yearsMax} 사이 정수`;
+        if (form.salary === '' || salaryWon < limits.salaryMin || salaryWon > limits.salaryMax) next.salary = '50만원 ~ 1억원 사이로 입력해 주세요.';
+        meta.categories.forEach((c) => {
+          const v = form.expenses[c.key];
+          if (v !== '' && (Number(v) < 0 || manwonToWon(v) > limits.categoryMax)) next[`exp_${c.key}`] = '0 ~ 5,000만원';
+        });
+        if (expenseWon <= 0) next.expenses = '카테고리 중 하나 이상 지출을 입력해 주세요.';
+        setErrors(next);
+        return Object.keys(next).length === 0;
+      };
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        setServerError('');
+        if (!validate()) return;
+        setSaving(true);
+        try {
+          const data = await api('/entries', {
+            method: 'POST',
+            body: {
+              job: form.job,
+              company: form.company,
+              years: Number(form.years),
+              salary: salaryWon,
+              expenses: Object.fromEntries(meta.categories.map((c) => [c.key, manwonToWon(form.expenses[c.key])])),
+            },
+          });
+          notify(data.updated ? '제출 내용을 수정했어요' : '익명으로 제출했어요 🎉');
+          onSubmitted(data.entry);
+        } catch (err) {
+          setServerError(err.message);
+        } finally {
+          setSaving(false);
+        }
+      };
+
+      const handleDelete = async () => {
+        setDeleting(true);
+        try {
+          await api('/entries/me', { method: 'DELETE' });
+          setConfirmOpen(false);
+          notify('내 데이터를 삭제했어요');
+          onDeleted();
+        } catch (err) {
+          setServerError(err.message);
+          setConfirmOpen(false);
+        } finally {
+          setDeleting(false);
+        }
+      };
+
+      return (
+        <form onSubmit={handleSubmit} noValidate className="grid gap-5 lg:grid-cols-[1fr_20rem] items-start">
+          <div className="space-y-5">
+            <Card>
+              <CardTitle title="👤 기본 정보" subtitle="개인을 특정할 수 있는 정보는 받지 않아요." />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Select id="job" label="직군" value={form.job} onChange={set('job')} placeholder="선택하세요" error={errors.job}
+                  options={meta.jobs.map((j) => ({ value: j, label: j }))} />
+                <Select id="company" label="기업 규모" value={form.company} onChange={set('company')} placeholder="선택하세요" error={errors.company}
+                  options={meta.companies.map((c) => ({ value: c, label: c }))} />
+                <Input id="years" type="number" inputMode="numeric" min="0" max={meta.limits.yearsMax} step="1"
+                  label="경력 연차" hint="1년 미만은 0" value={form.years} onChange={set('years')} placeholder="예: 3" suffix="년" error={errors.years} />
+                <Input id="salary" type="number" inputMode="decimal" min="50" step="1"
+                  label="월 실수령액" hint="세후" value={form.salary} onChange={set('salary')} placeholder="예: 320" suffix="만원" error={errors.salary} />
+              </div>
+            </Card>
+
+            <Card>
+              <CardTitle title="🧾 한 달 지출" subtitle="평소 한 달 기준으로 대략 입력해 주세요. 없는 항목은 비워 두면 0원이에요." />
+              <div className="grid gap-4 sm:grid-cols-2">
+                {meta.categories.map((c) => (
+                  <Input key={c.key} id={`exp-${c.key}`} type="number" inputMode="decimal" min="0" step="0.1"
+                    label={`${c.emoji} ${c.label}`} hint={c.hint} value={form.expenses[c.key]} onChange={setExpense(c.key)}
+                    placeholder="0" suffix="만원" error={errors[`exp_${c.key}`]} />
+                ))}
+              </div>
+              {errors.expenses && <p className="mt-3 text-sm text-[#b83333]">{errors.expenses}</p>}
+            </Card>
+          </div>
+
+          <div className="lg:sticky lg:top-6 space-y-4">
+            <Card>
+              <h2 className="text-base font-bold text-ink mb-4">요약</h2>
+              <dl className="space-y-3 text-sm">
+                <div className="flex justify-between"><dt className="text-ink2">월 실수령액</dt><dd className="font-semibold tabular">{fmtWon(salaryWon)}</dd></div>
+                <div className="flex justify-between"><dt className="text-ink2">총 월지출</dt><dd className="font-semibold tabular">{fmtWon(expenseWon)}</dd></div>
+                <div className="flex justify-between border-t border-grid pt-3"><dt className="text-ink2">남는 돈</dt><dd className="font-semibold tabular">{fmtWon(salaryWon - expenseWon)}</dd></div>
+                <div className="flex justify-between"><dt className="text-ink2">저축 가능 비율</dt><dd className="font-bold text-lg tabular">{savingsRate === null ? '-' : `${savingsRate}%`}</dd></div>
+              </dl>
+              {serverError && <p role="alert" className="mt-4 rounded-lg bg-[#fbe9e9] px-3 py-2 text-sm text-[#b83333]">{serverError}</p>}
+              <Button type="submit" size="lg" className="w-full mt-5" disabled={saving}>
+                {saving && <Spinner />}{myEntry ? '수정해서 다시 제출' : '익명으로 제출하고 결과 보기'}
+              </Button>
+              {myEntry && (
+                <Button variant="ghost" size="sm" className="w-full mt-2" onClick={() => setConfirmOpen(true)}>내 데이터 삭제</Button>
+              )}
+            </Card>
+            <p className="text-xs text-ink2 leading-relaxed px-1">
+              🔒 이 브라우저에만 저장된 무작위 ID(서버에는 해시로만 저장)로 1건만 기록돼요. 다시 제출하면 덮어쓰고, 언제든 삭제할 수 있어요.
+            </p>
+          </div>
+
+          <Modal isOpen={confirmOpen} onClose={() => setConfirmOpen(false)} title="내 데이터를 삭제할까요?">
+            <p className="text-sm text-ink2">제출한 월급·지출 기록이 DB에서 완전히 지워지고 통계에서도 빠져요.</p>
+            <div className="mt-6 flex justify-end gap-2">
+              <Button variant="secondary" onClick={() => setConfirmOpen(false)}>취소</Button>
+              <Button variant="danger" onClick={handleDelete} disabled={deleting}>{deleting && <Spinner />}삭제</Button>
+            </div>
+          </Modal>
+        </form>
+      );
+    }
+
+    // ========================================
+    // 📄 Page: 통계
+    // ========================================
+    function StatsPage({ meta, stats, loading, error, filters, setFilters, onGoForm, onRetry }) {
+      const [histMode, setHistMode] = useState('salary');
+      const me = stats && stats.me;
+      const group = stats && stats.group;
+      const hasFilter = filters.job || filters.company || filters.career !== '';
+
+      const setFilter = (key) => (e) => setFilters((f) => ({ ...f, [key]: e.target.value }));
+      const groupName = [filters.job, filters.company, filters.career !== '' && meta.careers[Number(filters.career)]?.label]
+        .filter(Boolean).join(' · ') || '전체';
+
+      return (
+        <div className="space-y-5">
+          {/* 필터 바 */}
+          <Card className="!p-4">
+            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-[1fr_1fr_1fr_auto] items-end">
+              <Select id="f-job" label="직군" value={filters.job} onChange={setFilter('job')} placeholder="전체 직군"
+                options={meta.jobs.map((j) => ({ value: j, label: j }))} />
+              <Select id="f-company" label="기업 규모" value={filters.company} onChange={setFilter('company')} placeholder="전체 규모"
+                options={meta.companies.map((c) => ({ value: c, label: c }))} />
+              <Select id="f-career" label="연차" value={filters.career} onChange={setFilter('career')} placeholder="전체 연차"
+                options={meta.careers.map((c) => ({ value: String(c.id), label: c.label }))} />
+              <div className="flex gap-2 sm:col-span-3 lg:col-span-1">
+                {me && (
+                  <Button variant="secondary" onClick={() => setFilters({ job: me.entry.job, company: '', career: String(me.entry.career) })}>
+                    나와 같은 직군·연차
+                  </Button>
+                )}
+                {hasFilter && <Button variant="ghost" onClick={() => setFilters({ job: '', company: '', career: '' })}>초기화</Button>}
+              </div>
+            </div>
+          </Card>
+
+          {error && (
+            <Card>
+              <EmptyState icon="⚠️" title="통계를 불러오지 못했어요" description={error} action={<Button onClick={onRetry}>다시 시도</Button>} />
+            </Card>
+          )}
+
+          {!error && !stats && (
+            <Card><div className="flex items-center justify-center gap-2 py-16 text-ink2"><Spinner /> 통계를 불러오는 중…</div></Card>
+          )}
+
+          {!error && stats && (
+            <div className={`space-y-5 transition-opacity ${loading ? 'opacity-60' : ''}`} aria-busy={loading}>
+              {!group.enough ? (
+                <Card>
+                  <EmptyState
+                    icon={stats.total === 0 ? '🌱' : '🙈'}
+                    title={stats.total === 0 ? '아직 참여자가 없어요' : group.count === 0 ? `「${groupName}」 참여자가 아직 없어요` : `「${groupName}」 참여자가 ${group.count}명뿐이에요`}
+                    description={`익명성을 지키기 위해 ${meta.minGroupSize}명 이상 모인 그룹만 통계를 보여줘요. ${hasFilter ? '조건을 넓혀 보거나 ' : ''}주변에 공유해 참여자를 모아 보세요.`}
+                    action={!me ? <Button onClick={onGoForm}>첫 참여자 되기</Button> : hasFilter ? <Button variant="secondary" onClick={() => setFilters({ job: '', company: '', career: '' })}>전체 보기</Button> : null}
+                  />
+                </Card>
+              ) : (
+                <>
+                  {/* KPI */}
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                    <StatTile label={`참여자 (${groupName})`} value={`${group.count.toLocaleString('ko-KR')}명`} sub={`전체 ${stats.total.toLocaleString('ko-KR')}명 중`} />
+                    <StatTile label="평균 월 실수령액" value={fmtWon(group.salary.avg)} sub={`중앙값 ${fmtWon(group.salary.median)}`} />
+                    <StatTile label="평균 월지출" value={fmtWon(group.expense.avg)} sub={`중앙값 ${fmtWon(group.expense.median)}`} />
+                    <StatTile label="저축 가능 비율" value={`${group.savingsRate}%`} sub="중앙값 · (월급−지출)÷월급" />
+                  </div>
+
+                  {/* 내 위치 */}
+                  <Card>
+                    <CardTitle
+                      title="📍 내 위치"
+                      subtitle={me ? (me.position && !me.position.inGroup ? `나는 이 그룹 조건과 달라요 — 나를 「${groupName}」에 넣었다고 가정한 순위예요.` : `「${groupName}」 ${group.count}명 중 내 순위`) : null}
+                    />
+                    {me && !me.position ? (
+                      <div className="flex items-center justify-center gap-2 py-8 text-ink2"><Spinner /> 순위를 계산하는 중…</div>
+                    ) : !me ? (
+                      <EmptyState icon="🧭" title="내 정보를 입력하면 순위를 보여드려요" description="월급·지출 상위 몇 %인지, 카테고리별로 평균보다 얼마나 더 쓰는지 알 수 있어요." action={<Button onClick={onGoForm}>내 정보 입력하기</Button>} />
+                    ) : (
+                      <div className="grid gap-6 md:grid-cols-3">
+                        <PositionMeter title="월 실수령액" top={me.position.salaryTop}
+                          detail={`내 월급 ${fmtWon(me.entry.salary)} · 평균 대비 ${fmtDiff(me.entry.salary - group.salary.avg)}`} />
+                        <PositionMeter title="월지출 (많이 쓰는 순)" top={me.position.expenseTop}
+                          detail={`내 지출 ${fmtWon(me.entry.expense)} · 평균 대비 ${fmtDiff(me.entry.expense - group.expense.avg)}`} />
+                        <PositionMeter title="저축 가능 비율" top={me.position.savingsTop}
+                          detail={`나 ${Math.round(((me.entry.salary - me.entry.expense) / me.entry.salary) * 1000) / 10}% · 그룹 중앙값 ${group.savingsRate}%`} />
+                      </div>
+                    )}
+                  </Card>
+
+                  {/* 분포 */}
+                  <Card>
+                    <CardTitle
+                      title="📊 분포"
+                      subtitle={histMode === 'salary' ? '월 실수령액 구간별 참여자 수' : '월지출 구간별 참여자 수'}
+                      right={<Segmented label="분포 기준" value={histMode} onChange={setHistMode} options={[{ value: 'salary', label: '월급' }, { value: 'expense', label: '월지출' }]} />}
+                    />
+                    <Histogram
+                      bins={histMode === 'salary' ? group.salaryHistogram : group.expenseHistogram}
+                      myValue={me ? (histMode === 'salary' ? me.entry.salary : me.entry.expense) : null}
+                      caption={`단위: 만원 · 막대에 마우스를 올리면 인원과 비율이 보여요 · 월급 25~75% 구간 ${toManwon(group.salary.p25)}~${toManwon(group.salary.p75)}만원`}
+                    />
+                  </Card>
+
+                  {/* 카테고리 */}
+                  <Card>
+                    <CardTitle title="🧾 카테고리별 평균 지출" subtitle={me ? `「${groupName}」 평균과 내 지출 비교` : `「${groupName}」 평균`} />
+                    <CategoryCompare categories={meta.categories} averages={group.categories} mine={me ? me.entry.expenses : null} />
+                  </Card>
+                </>
+              )}
+
+              {/* 직군별 / 연차별 */}
+              {stats.total > 0 && (
+                <div className="grid gap-5 lg:grid-cols-2">
+                  <BreakdownTable title="💼 직군별 평균" subtitle="전체 참여자 기준" data={stats.byJob} minGroupSize={meta.minGroupSize} highlightKey={me && me.entry.job} />
+                  <BreakdownTable title="📈 연차별 평균" subtitle="전체 참여자 기준" data={stats.byCareer} minGroupSize={meta.minGroupSize} highlightKey={me && me.entry.career} />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ========================================
+    // 🚀 App Component
+    // ========================================
+    function App() {
+      const [meta, setMeta] = useState(null);
+      const [metaError, setMetaError] = useState('');
+      const [stats, setStats] = useState(null);
+      const [statsLoading, setStatsLoading] = useState(false);
+      const [statsError, setStatsError] = useState('');
+      const [filters, setFilters] = useState({ job: '', company: '', career: '' });
+      const [tab, setTab] = useState(null);
+      const [toast, setToast] = useState('');
+      const requestSeq = useRef(0);
+
+      const notify = useCallback((msg) => setToast(msg), []);
+      useEffect(() => {
+        if (!toast) return;
+        const t = setTimeout(() => setToast(''), 2500);
+        return () => clearTimeout(t);
+      }, [toast]);
+
+      useEffect(() => {
+        api('/meta').then(setMeta).catch((err) => setMetaError(err.message));
+      }, []);
+
+      const loadStats = useCallback(async () => {
+        const seq = ++requestSeq.current;
+        setStatsLoading(true);
+        setStatsError('');
+        try {
+          const params = new URLSearchParams();
+          Object.entries(filters).forEach(([k, v]) => v !== '' && params.set(k, v));
+          const qs = params.toString();
+          const data = await api(`/stats${qs ? `?${qs}` : ''}`);
+          if (seq === requestSeq.current) setStats(data);
+        } catch (err) {
+          if (seq === requestSeq.current) setStatsError(err.message);
+        } finally {
+          if (seq === requestSeq.current) setStatsLoading(false);
+        }
+      }, [filters]);
+
+      useEffect(() => { loadStats(); }, [loadStats]);
+
+      // 첫 로딩 후: 이미 제출한 사람은 통계 탭, 처음 온 사람은 입력 탭
+      useEffect(() => {
+        if (tab === null && stats) setTab(stats.me ? 'stats' : 'form');
+        if (tab === null && statsError) setTab('form');
+      }, [stats, statsError, tab]);
+
+      const myEntry = stats && stats.me ? stats.me.entry : null;
+
+      const handleSubmitted = (entry) => {
+        setFilters({ job: '', company: '', career: '' });
+        setTab('stats');
+        loadStats();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+
+      const handleDeleted = () => {
+        setStats((s) => (s ? { ...s, me: null } : s));
+        loadStats();
+      };
+
+      if (metaError) {
+        return (
+          <main className="max-w-5xl mx-auto px-4">
+            <Header />
+            <Card><EmptyState icon="🔌" title="서버에 연결하지 못했어요" description={metaError} action={<Button onClick={() => location.reload()}>새로고침</Button>} /></Card>
+          </main>
+        );
+      }
+
+      if (!meta || tab === null) {
+        return (
+          <main className="max-w-5xl mx-auto px-4">
+            <Header />
+            <div className="flex items-center justify-center gap-2 py-24 text-ink2"><Spinner /> 불러오는 중…</div>
+          </main>
+        );
+      }
+
+      return (
+        <main className="max-w-5xl mx-auto px-4">
+          <Header total={stats ? stats.total : undefined} />
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+            <Tabs
+              active={tab}
+              onChange={setTab}
+              tabs={[
+                { id: 'form', label: myEntry ? '✏️ 내 정보 수정' : '✏️ 내 정보 입력' },
+                { id: 'stats', label: '📊 통계 보기' },
+              ]}
+            />
+            {myEntry && <p className="text-xs text-ink2">마지막 제출 {new Date(myEntry.updatedAt).toLocaleString('ko-KR', { dateStyle: 'medium', timeStyle: 'short' })}</p>}
+          </div>
+
+          {tab === 'form' ? (
+            <EntryPage meta={meta} myEntry={myEntry} onSubmitted={handleSubmitted} onDeleted={handleDeleted} notify={notify} />
+          ) : (
+            <StatsPage
+              meta={meta}
+              stats={stats}
+              loading={statsLoading}
+              error={statsError}
+              filters={filters}
+              setFilters={setFilters}
+              onGoForm={() => setTab('form')}
+              onRetry={loadStats}
+            />
+          )}
+
+          <Footer minGroupSize={meta.minGroupSize} />
+          <Toast message={toast} />
+        </main>
+      );
+    }
+
+    // ========================================
+    // Rendering
+    // ========================================
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+node_modules/
+.env
+
+# 자리표시자만 담긴 예시 파일은 커밋한다 (루트 .gitignore 의 .env.* 규칙 예외)
+!.env.example

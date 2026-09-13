@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>메모장</title>
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <!-- CDN 버전 고정: Babel 은 반드시 7.x (8.x 는 인라인 text/babel 미지원) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.25.9/babel.min.js"></script>
+  <style>
+    /* Tailwind 유틸리티로 표현하기 어려운 애니메이션·말줄임만 정의 */
+    @keyframes floatUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .animate-float-up { animation: floatUp .24s ease-out both; }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(.97); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    .animate-pop-in { animation: popIn .18s ease-out both; }
+
+    /* 목록 카드 본문 3줄 미리보기 */
+    .clamp-3 {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body class="bg-stone-100 text-stone-800">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, useCallback, useRef, useContext, createContext } = React;
+
+    // ========================================
+    // 📡 API 설정
+    // ========================================
+    // 같은 서버(server.js)의 REST API 를 상대 경로로 호출한다.
+    // DB 접속 정보(DATABASE_URL)는 서버에만 있고 브라우저로 내려오지 않는다.
+    const API_BASE_URL = '/api';
+
+    const MAX_TITLE = 120;
+    const MAX_CONTENT = 20000;
+
+    // 서버 응답 형식({ success, data, message })을 한 곳에서 풀어낸다.
+    async function apiRequest(endpoint, options = {}) {
+      const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+        headers: options.body ? { 'Content-Type': 'application/json' } : undefined,
+        ...options,
+      });
+      let json = null;
+      try { json = await res.json(); } catch (_) { /* 본문 없는 응답 */ }
+      if (!res.ok || !json || json.success === false) {
+        throw new Error((json && json.message) || `요청에 실패했습니다 (HTTP ${res.status})`);
+      }
+      return json.data;
+    }
+
+    // ========================================
+    // 🛠️ 유틸
+    // ========================================
+
+    function formatDateTime(iso) {
+      return new Date(iso).toLocaleString('ko-KR', {
+        year: 'numeric', month: 'long', day: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      });
+    }
+
+    function formatRelative(iso) {
+      const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+      if (diff < 60) return '방금 전';
+      if (diff < 3600) return `${Math.floor(diff / 60)}분 전`;
+      if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`;
+      if (diff < 86400 * 7) return `${Math.floor(diff / 86400)}일 전`;
+      return new Date(iso).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
+    }
+
+    // 검색어를 공백 기준 키워드로 자른다 (서버의 parseKeywords 와 같은 규칙)
+    const MAX_KEYWORDS = 5;
+    function parseKeywords(raw) {
+      return String(raw || '').trim().split(/\s+/).filter(Boolean).slice(0, MAX_KEYWORDS);
+    }
+
+    // 여러 키워드와 일치하는 구간을 찾아 하이라이트용 조각으로 나눈다.
+    // 키워드끼리 겹치는 구간("메모", "모장" → "메모장")은 하나로 합친다.
+    function highlightParts(text, keywords) {
+      if (!keywords.length || !text) return [{ text, match: false }];
+
+      const lower = text.toLowerCase();
+      const hits = [];
+      for (const word of keywords) {
+        const needle = word.toLowerCase();
+        let at = lower.indexOf(needle);
+        while (at !== -1) {
+          hits.push([at, at + needle.length]);
+          at = lower.indexOf(needle, at + needle.length);
+        }
+      }
+      if (!hits.length) return [{ text, match: false }];
+
+      hits.sort((a, b) => a[0] - b[0]);
+      const merged = [hits[0].slice()];
+      for (let i = 1; i < hits.length; i++) {
+        const last = merged[merged.length - 1];
+        if (hits[i][0] <= last[1]) last[1] = Math.max(last[1], hits[i][1]);
+        else merged.push(hits[i].slice());
+      }
+
+      const parts = [];
+      let from = 0;
+      for (const [start, end] of merged) {
+        if (start > from) parts.push({ text: text.slice(from, start), match: false });
+        parts.push({ text: text.slice(start, end), match: true });
+        from = end;
+      }
+      if (from < text.length) parts.push({ text: text.slice(from), match: false });
+      return parts;
+    }
+
+    // ========================================
+    // 🎨 Design System Components
+    // ========================================
+
+    function Button({ variant = 'primary', size = 'md', className = '', children, ...props }) {
+      const base = 'inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition ' +
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/60 focus-visible:ring-offset-2 ' +
+        'disabled:opacity-40 disabled:cursor-not-allowed';
+      const variants = {
+        primary: 'bg-amber-600 text-white hover:bg-amber-500 active:bg-amber-700 shadow-sm',
+        secondary: 'bg-white text-stone-700 border border-stone-300 hover:bg-stone-50',
+        danger: 'bg-rose-600 text-white hover:bg-rose-500 active:bg-rose-700',
+        ghost: 'text-stone-600 hover:bg-stone-200/70 hover:text-stone-900',
+      };
+      const sizes = { sm: 'text-xs px-2.5 py-1.5', md: 'text-sm px-4 py-2', lg: 'text-base px-5 py-2.5' };
+      return (
+        <button className={`${base} ${variants[variant]} ${sizes[size]} ${className}`} {...props}>
+          {children}
+        </button>
+      );
+    }
+
+    const Input = React.forwardRef(function Input({ label, error, className = '', ...props }, ref) {
+      return (
+        <label className={`block ${className}`}>
+          {label && <span className="mb-1.5 block text-xs font-medium text-stone-500">{label}</span>}
+          <input
+            ref={ref}
+            className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm text-stone-800
+                        placeholder-stone-400 outline-none transition
+                        focus:ring-2 focus:ring-amber-500/25 ${
+                          error ? 'border-rose-400 focus:border-rose-500' : 'border-stone-300 focus:border-amber-500'
+                        }`}
+            {...props}
+          />
+          {error && <span className="mt-1 block text-xs text-rose-600">{error}</span>}
+        </label>
+      );
+    });
+
+    function Textarea({ label, error, className = '', rows = 12, ...props }) {
+      return (
+        <label className={`block ${className}`}>
+          {label && <span className="mb-1.5 block text-xs font-medium text-stone-500">{label}</span>}
+          <textarea
+            rows={rows}
+            className={`w-full resize-y rounded-lg border bg-white px-3.5 py-2.5 text-sm leading-relaxed
+                        text-stone-800 placeholder-stone-400 outline-none transition
+                        focus:ring-2 focus:ring-amber-500/25 ${
+                          error ? 'border-rose-400 focus:border-rose-500' : 'border-stone-300 focus:border-amber-500'
+                        }`}
+            {...props}
+          />
+          {error && <span className="mt-1 block text-xs text-rose-600">{error}</span>}
+        </label>
+      );
+    }
+
+    function Card({ className = '', children, ...props }) {
+      return (
+        <div className={`rounded-xl border border-stone-200 bg-white shadow-sm ${className}`} {...props}>
+          {children}
+        </div>
+      );
+    }
+
+    function Badge({ children, className = '' }) {
+      return (
+        <span className={`inline-flex items-center gap-1 rounded-md bg-stone-100 px-2 py-0.5 text-[11px]
+                          font-medium text-stone-600 ring-1 ring-inset ring-stone-200 ${className}`}>
+          {children}
+        </span>
+      );
+    }
+
+    // 검색어와 일치하는 부분에 형광펜을 칠해 보여 준다
+    function Highlighted({ text, keywords = [] }) {
+      const parts = useMemo(() => highlightParts(text, keywords), [text, keywords]);
+      return (
+        <>
+          {parts.map((part, i) => (
+            part.match
+              ? <mark key={i} className="rounded bg-amber-200/80 px-0.5 text-stone-900">{part.text}</mark>
+              : <React.Fragment key={i}>{part.text}</React.Fragment>
+          ))}
+        </>
+      );
+    }
+
+    function Modal({ isOpen, onClose, title, size = 'sm', children }) {
+      useEffect(() => {
+        if (!isOpen) return;
+        const onKey = e => { if (e.key === 'Escape') onClose(); };
+        window.addEventListener('keydown', onKey);
+        const prev = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => {
+          window.removeEventListener('keydown', onKey);
+          document.body.style.overflow = prev;
+        };
+      }, [isOpen, onClose]);
+
+      if (!isOpen) return null;
+      const sizes = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-3xl' };
+
+      return (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/40 p-4 backdrop-blur-sm"
+          onClick={onClose}
+          role="dialog"
+          aria-modal="true"
+          aria-label={title}
+        >
+          <div
+            className={`w-full ${sizes[size]} rounded-xl bg-white shadow-2xl animate-pop-in`}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-stone-200 px-5 py-3.5">
+              <h2 className="text-sm font-semibold text-stone-800">{title}</h2>
+              <button
+                onClick={onClose}
+                aria-label="닫기"
+                className="rounded-md p-1.5 text-stone-400 transition hover:bg-stone-100 hover:text-stone-700"
+              >✕</button>
+            </div>
+            <div className="p-5">{children}</div>
+          </div>
+        </div>
+      );
+    }
+
+    function Spinner({ label = '불러오는 중…' }) {
+      return (
+        <div className="flex flex-col items-center justify-center gap-3 py-16" role="status" aria-live="polite">
+          <span className="h-7 w-7 animate-spin rounded-full border-2 border-stone-300 border-t-amber-600" />
+          <span className="text-xs text-stone-500">{label}</span>
+        </div>
+      );
+    }
+
+    function ErrorBox({ message, onRetry }) {
+      return (
+        <Card className="border-rose-200 bg-rose-50/60 p-5">
+          <p className="text-sm font-medium text-rose-700">문제가 발생했습니다</p>
+          <p className="mt-1 break-words text-xs leading-relaxed text-rose-600">{message}</p>
+          {onRetry && <Button size="sm" variant="secondary" className="mt-3" onClick={onRetry}>다시 시도</Button>}
+        </Card>
+      );
+    }
+
+    function EmptyState({ icon, title, description, action }) {
+      return (
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-stone-300
+                        bg-white/60 px-6 py-20 text-center">
+          <div className="mb-3 text-4xl opacity-60" aria-hidden="true">{icon}</div>
+          <p className="text-sm font-medium text-stone-700">{title}</p>
+          <p className="mt-1 max-w-sm text-xs leading-relaxed text-stone-500">{description}</p>
+          {action && <div className="mt-5">{action}</div>}
+        </div>
+      );
+    }
+
+    function Toast({ toast }) {
+      if (!toast) return null;
+      const tone = toast.tone === 'error'
+        ? 'bg-rose-600 text-white'
+        : 'bg-stone-800 text-white';
+      return (
+        <div className="fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 animate-float-up" role="status" aria-live="polite">
+          <div className={`rounded-full px-4 py-2 text-xs shadow-xl ${tone}`}>{toast.message}</div>
+        </div>
+      );
+    }
+
+    // ========================================
+    // 🔀 Router — 해시 기반 경량 라우터
+    // ========================================
+
+    const RouterContext = createContext({ path: '/', navigate: () => {} });
+    const ParamsContext = createContext({});
+    const useRouter = () => useContext(RouterContext);
+    const useParams = () => useContext(ParamsContext);
+
+    // '/memo/:id' 같은 패턴을 현재 경로와 맞춰 본다
+    function matchRoute(pattern, path) {
+      if (pattern === '*') return null;
+      const patternParts = pattern.split('/').filter(Boolean);
+      const pathParts = path.split('/').filter(Boolean);
+      if (patternParts.length !== pathParts.length) return null;
+
+      const params = {};
+      for (let i = 0; i < patternParts.length; i++) {
+        const p = patternParts[i];
+        if (p.startsWith(':')) {
+          params[p.slice(1)] = decodeURIComponent(pathParts[i]);
+        } else if (p !== pathParts[i]) {
+          return null;
+        }
+      }
+      return params;
+    }
+
+    function Router({ children }) {
+      const [path, setPath] = useState(() => window.location.hash.slice(1) || '/');
+
+      useEffect(() => {
+        const onHashChange = () => setPath(window.location.hash.slice(1) || '/');
+        window.addEventListener('hashchange', onHashChange);
+        if (!window.location.hash) window.location.hash = '#/';
+        return () => window.removeEventListener('hashchange', onHashChange);
+      }, []);
+
+      const navigate = useCallback(to => { window.location.hash = '#' + to; }, []);
+
+      return (
+        <RouterContext.Provider value={{ path, navigate }}>
+          {children}
+        </RouterContext.Provider>
+      );
+    }
+
+    function Routes({ children }) {
+      const { path } = useRouter();
+      const routes = React.Children.toArray(children);
+
+      let matched = null;
+      let matchedParams = {};
+      for (const route of routes) {
+        const result = matchRoute(route.props.path, path);
+        if (result) {
+          matched = route;
+          matchedParams = result;
+          break;
+        }
+      }
+      if (!matched) matched = routes.find(r => r.props.path === '*');
+      if (!matched) return null;
+
+      // 매칭된 파라미터를 그 자리에서 컨텍스트로 내려 useParams() 가 첫 렌더부터 값을 갖게 한다
+      return (
+        <ParamsContext.Provider value={matchedParams}>
+          {matched.props.element}
+        </ParamsContext.Provider>
+      );
+    }
+
+    function Route() { return null; }
+
+    function Link({ to, className = '', children, ...props }) {
+      const { navigate } = useRouter();
+      return (
+        <a href={'#' + to} onClick={e => { e.preventDefault(); navigate(to); }} className={className} {...props}>
+          {children}
+        </a>
+      );
+    }
+
+    // ========================================
+    // 🗄️ Store — memos 테이블과 통신하는 전역 상태
+    // ========================================
+
+    const StoreContext = createContext(null);
+    const useStore = () => useContext(StoreContext);
+
+    function StoreProvider({ children }) {
+      const [memos, setMemos] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState(null);
+      const [query, setQuery] = useState('');
+      const [sort, setSort] = useState('newest');
+      const [toast, setToast] = useState(null);
+
+      const notify = useCallback((message, tone = 'info') => setToast({ id: Date.now(), message, tone }), []);
+
+      useEffect(() => {
+        if (!toast) return;
+        const t = setTimeout(() => setToast(null), 2400);
+        return () => clearTimeout(t);
+      }, [toast]);
+
+      // 검색어·정렬이 바뀌면 서버에 다시 물어본다 (검색은 300ms 디바운스)
+      const refresh = useCallback(async (signal) => {
+        const params = new URLSearchParams();
+        if (query.trim()) params.set('q', query.trim());
+        if (sort !== 'newest') params.set('sort', sort);
+        const suffix = params.toString() ? `?${params}` : '';
+
+        try {
+          setError(null);
+          const data = await apiRequest(`/memos${suffix}`, { signal });
+          setMemos(data);
+        } catch (err) {
+          if (err.name === 'AbortError') return;
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      }, [query, sort]);
+
+      useEffect(() => {
+        const controller = new AbortController();
+        const timer = setTimeout(() => refresh(controller.signal), query ? 300 : 0);
+        return () => { clearTimeout(timer); controller.abort(); };
+      }, [refresh]);
+
+      const createMemo = useCallback(async ({ title, content }) => {
+        const created = await apiRequest('/memos', {
+          method: 'POST',
+          body: JSON.stringify({ title, content }),
+        });
+        setMemos(prev => (sort === 'oldest' ? [...prev, created] : [created, ...prev]));
+        notify('메모를 저장했습니다');
+        return created;
+      }, [sort, notify]);
+
+      const updateMemo = useCallback(async (id, patch) => {
+        const updated = await apiRequest(`/memos/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify(patch),
+        });
+        setMemos(prev => prev.map(m => (m.id === updated.id ? updated : m)));
+        notify('메모를 수정했습니다');
+        return updated;
+      }, [notify]);
+
+      const deleteMemo = useCallback(async (id) => {
+        await apiRequest(`/memos/${id}`, { method: 'DELETE' });
+        setMemos(prev => prev.filter(m => m.id !== id));
+        notify('메모를 삭제했습니다');
+      }, [notify]);
+
+      const value = {
+        memos, loading, error, query, setQuery, sort, setSort,
+        refresh, createMemo, updateMemo, deleteMemo, notify, toast,
+      };
+      return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
+    }
+
+    // ========================================
+    // 🧩 Common / Layout Components
+    // ========================================
+
+    function Header() {
+      const { memos, loading } = useStore();
+      return (
+        <header className="sticky top-0 z-40 border-b border-stone-200 bg-stone-100/90 backdrop-blur">
+          <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3 sm:px-6">
+            <Link to="/" className="flex items-center gap-2.5">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-600 text-base
+                               text-white shadow-sm" aria-hidden="true">📝</span>
+              <span>
+                <span className="block text-sm font-semibold leading-tight text-stone-800">메모장</span>
+                <span className="block text-[11px] leading-tight text-stone-500">
+                  {loading ? '불러오는 중…' : `${memos.length}개의 메모`}
+                </span>
+              </span>
+            </Link>
+            <div className="ml-auto">
+              <Link to="/new">
+                <Button size="sm">＋ 새 메모</Button>
+              </Link>
+            </div>
+          </div>
+        </header>
+      );
+    }
+
+    function MemoCard({ memo, keywords = [] }) {
+      // 본문이 길면 첫 일치 지점 주변만 잘라서 보여 준다 (검색 결과에서 맥락이 보이도록)
+      const preview = useMemo(() => {
+        if (!keywords.length || !memo.content) return memo.content;
+        const lower = memo.content.toLowerCase();
+        let at = -1;
+        for (const word of keywords) {
+          const found = lower.indexOf(word.toLowerCase());
+          if (found !== -1 && (at === -1 || found < at)) at = found;
+        }
+        if (at <= 60) return memo.content;
+        return '…' + memo.content.slice(Math.max(0, at - 30));
+      }, [memo.content, keywords]);
+
+      return (
+        <Link
+          to={`/memo/${memo.id}`}
+          className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/60
+                     focus-visible:ring-offset-2 rounded-xl"
+        >
+          <Card className="flex h-full flex-col p-4 transition hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md">
+            <h3 className="break-words text-sm font-semibold text-stone-800">
+              <Highlighted text={memo.title} keywords={keywords} />
+            </h3>
+            {memo.content
+              ? <p className="clamp-3 mt-2 whitespace-pre-wrap break-words text-xs leading-relaxed text-stone-500">
+                  <Highlighted text={preview} keywords={keywords} />
+                </p>
+              : <p className="mt-2 text-xs italic text-stone-400">(내용 없음)</p>}
+            <div className="mt-auto flex items-center gap-2 pt-3">
+              <Badge>#{memo.id}</Badge>
+              <span className="text-[11px] text-stone-400" title={formatDateTime(memo.createdAt)}>
+                {formatRelative(memo.createdAt)}
+              </span>
+            </div>
+          </Card>
+        </Link>
+      );
+    }
+
+    // ========================================
+    // 📄 Page — 목록
+    // ========================================
+
+    function ListPage() {
+      const { memos, loading, error, query, setQuery, sort, setSort, refresh } = useStore();
+      const searchRef = useRef(null);
+      const keywords = useMemo(() => parseKeywords(query), [query]);
+
+      // 어디서든 '/' 또는 Ctrl/⌘+K 로 검색창에 바로 커서를 둔다
+      useEffect(() => {
+        const onKeyDown = (e) => {
+          const tag = (e.target.tagName || '').toLowerCase();
+          const typing = tag === 'input' || tag === 'textarea';
+          const shortcut = (e.key === '/' && !typing) || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k');
+          if (!shortcut) return;
+          e.preventDefault();
+          searchRef.current?.focus();
+          searchRef.current?.select();
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+      }, []);
+
+      return (
+        <div className="space-y-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative flex-1">
+              <Input
+                ref={searchRef}
+                type="text"
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Escape' && query) { e.preventDefault(); setQuery(''); } }}
+                placeholder="키워드로 검색 (여러 개는 공백으로 구분)"
+                aria-label="메모 검색"
+                className="[&_input]:pl-9 [&_input]:pr-9"
+              />
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-stone-400"
+                    aria-hidden="true">🔍</span>
+              {query ? (
+                <button
+                  type="button"
+                  onClick={() => { setQuery(''); searchRef.current?.focus(); }}
+                  aria-label="검색어 지우기"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full px-1.5 py-0.5 text-xs
+                             text-stone-400 transition hover:bg-stone-100 hover:text-stone-700"
+                >✕</button>
+              ) : (
+                <kbd className="pointer-events-none absolute right-2.5 top-1/2 hidden -translate-y-1/2 rounded
+                                border border-stone-200 bg-stone-50 px-1.5 py-0.5 text-[10px] text-stone-400 sm:block">
+                  /
+                </kbd>
+              )}
+            </div>
+            <div className="inline-flex rounded-lg bg-white p-1 ring-1 ring-inset ring-stone-200">
+              {[{ value: 'newest', label: '최신순' }, { value: 'oldest', label: '오래된순' }].map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setSort(opt.value)}
+                  aria-pressed={sort === opt.value}
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
+                    sort === opt.value ? 'bg-stone-800 text-white' : 'text-stone-500 hover:text-stone-800'
+                  }`}
+                >{opt.label}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* 검색 중일 때만 무엇을 몇 건 찾았는지 알려 준다 */}
+          {keywords.length > 0 && !loading && !error && (
+            <p className="flex flex-wrap items-center gap-1.5 text-xs text-stone-500">
+              {keywords.map(word => (
+                <Badge key={word} className="bg-amber-100 text-amber-800 ring-amber-200">{word}</Badge>
+              ))}
+              <span>
+                {keywords.length > 1 && <span className="text-stone-400">모두 포함 · </span>}
+                검색 결과 <strong className="font-semibold text-stone-700">{memos.length}</strong>건
+              </span>
+            </p>
+          )}
+
+          {loading && <Spinner />}
+
+          {!loading && error && <ErrorBox message={error} onRetry={() => refresh()} />}
+
+          {!loading && !error && memos.length === 0 && (
+            <EmptyState
+              icon={keywords.length ? '🔍' : '🗒️'}
+              title={keywords.length ? '검색 결과가 없어요' : '아직 메모가 없어요'}
+              description={keywords.length
+                ? '키워드를 줄이거나 다른 단어로 찾아보세요. 여러 키워드는 모두 포함된 메모만 보여 줍니다.'
+                : '떠오른 생각을 첫 메모로 남겨보세요. 저장한 메모는 memos 테이블에 쌓입니다.'}
+              action={keywords.length
+                ? <Button size="sm" variant="secondary" onClick={() => setQuery('')}>검색어 지우기</Button>
+                : <Link to="/new"><Button size="sm">첫 메모 작성하기</Button></Link>}
+            />
+          )}
+
+          {!loading && !error && memos.length > 0 && (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {memos.map(memo => (
+                <div key={memo.id} className="animate-float-up">
+                  <MemoCard memo={memo} keywords={keywords} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ========================================
+    // 📄 Page — 새 메모 작성
+    // ========================================
+
+    function NewPage() {
+      const { createMemo, notify } = useStore();
+      const { navigate } = useRouter();
+      const [title, setTitle] = useState('');
+      const [content, setContent] = useState('');
+      const [errors, setErrors] = useState({});
+      const [saving, setSaving] = useState(false);
+      const titleRef = useRef(null);
+
+      useEffect(() => { titleRef.current?.focus(); }, []);
+
+      const submit = async (e) => {
+        e.preventDefault();
+        const nextErrors = {};
+        if (!title.trim()) nextErrors.title = '제목을 입력해 주세요.';
+        else if (title.trim().length > MAX_TITLE) nextErrors.title = `제목은 ${MAX_TITLE}자 이내로 입력해 주세요.`;
+        if (content.length > MAX_CONTENT) nextErrors.content = `내용은 ${MAX_CONTENT}자 이내로 입력해 주세요.`;
+        setErrors(nextErrors);
+        if (Object.keys(nextErrors).length > 0) return;
+
+        setSaving(true);
+        try {
+          const created = await createMemo({ title, content });
+          navigate(`/memo/${created.id}`);
+        } catch (err) {
+          notify(err.message, 'error');
+        } finally {
+          setSaving(false);
+        }
+      };
+
+      return (
+        <form onSubmit={submit} className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Link to="/"><Button type="button" variant="ghost" size="sm">← 목록</Button></Link>
+            <h2 className="text-lg font-semibold text-stone-800">새 메모</h2>
+          </div>
+
+          <Card className="space-y-4 p-4 sm:p-5">
+            <Input
+              ref={titleRef}
+              label="제목"
+              value={title}
+              onChange={e => { setTitle(e.target.value); if (errors.title) setErrors({ ...errors, title: null }); }}
+              placeholder="메모 제목"
+              maxLength={MAX_TITLE}
+              error={errors.title}
+            />
+            <div>
+              <Textarea
+                label="내용"
+                value={content}
+                onChange={e => setContent(e.target.value)}
+                placeholder="자유롭게 적어보세요"
+                error={errors.content}
+              />
+              <p className="mt-1 text-right text-[11px] tabular-nums text-stone-400">
+                {content.length.toLocaleString()} / {MAX_CONTENT.toLocaleString()}자
+              </p>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Link to="/"><Button type="button" variant="secondary" size="md">취소</Button></Link>
+              <Button type="submit" size="md" disabled={saving}>
+                {saving ? '저장 중…' : '저장하기'}
+              </Button>
+            </div>
+          </Card>
+        </form>
+      );
+    }
+
+    // ========================================
+    // 📄 Page — 상세 / 편집
+    // ========================================
+
+    function DetailPage() {
+      const { id } = useParams();
+      const { memos, updateMemo, deleteMemo, notify } = useStore();
+      const { navigate } = useRouter();
+
+      const [memo, setMemo] = useState(() => memos.find(m => String(m.id) === String(id)) || null);
+      const [loading, setLoading] = useState(!memo);
+      const [loadError, setLoadError] = useState(null);
+      const [editing, setEditing] = useState(false);
+      const [draft, setDraft] = useState({ title: '', content: '' });
+      const [errors, setErrors] = useState({});
+      const [saving, setSaving] = useState(false);
+      const [confirmOpen, setConfirmOpen] = useState(false);
+      const [deleting, setDeleting] = useState(false);
+
+      // 목록에 없는 메모(새로고침·직접 접근)는 서버에서 단건으로 가져온다
+      const load = useCallback(async () => {
+        setLoading(true);
+        setLoadError(null);
+        try {
+          const data = await apiRequest(`/memos/${id}`);
+          setMemo(data);
+        } catch (err) {
+          setLoadError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      }, [id]);
+
+      useEffect(() => {
+        const cached = memos.find(m => String(m.id) === String(id));
+        if (cached) {
+          setMemo(cached);
+          setLoading(false);
+        } else {
+          load();
+        }
+      }, [id]);
+
+      const startEdit = () => {
+        setDraft({ title: memo.title, content: memo.content });
+        setErrors({});
+        setEditing(true);
+      };
+
+      const save = async (e) => {
+        e.preventDefault();
+        const nextErrors = {};
+        if (!draft.title.trim()) nextErrors.title = '제목을 입력해 주세요.';
+        else if (draft.title.trim().length > MAX_TITLE) nextErrors.title = `제목은 ${MAX_TITLE}자 이내로 입력해 주세요.`;
+        if (draft.content.length > MAX_CONTENT) nextErrors.content = `내용은 ${MAX_CONTENT}자 이내로 입력해 주세요.`;
+        setErrors(nextErrors);
+        if (Object.keys(nextErrors).length > 0) return;
+
+        setSaving(true);
+        try {
+          const updated = await updateMemo(memo.id, { title: draft.title, content: draft.content });
+          setMemo(updated);
+          setEditing(false);
+        } catch (err) {
+          notify(err.message, 'error');
+        } finally {
+          setSaving(false);
+        }
+      };
+
+      const remove = async () => {
+        setDeleting(true);
+        try {
+          await deleteMemo(memo.id);
+          setConfirmOpen(false);
+          navigate('/');
+        } catch (err) {
+          notify(err.message, 'error');
+          setDeleting(false);
+        }
+      };
+
+      if (loading) return <Spinner label="메모를 불러오는 중…" />;
+
+      if (loadError) {
+        return (
+          <div className="space-y-4">
+            <Link to="/"><Button variant="ghost" size="sm">← 목록</Button></Link>
+            <ErrorBox message={loadError} onRetry={load} />
+          </div>
+        );
+      }
+
+      if (!memo) {
+        return (
+          <EmptyState
+            icon="🧭"
+            title="메모를 찾을 수 없어요"
+            description="삭제되었거나 존재하지 않는 메모입니다."
+            action={<Link to="/"><Button size="sm">목록으로</Button></Link>}
+          />
+        );
+      }
+
+      return (
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <Link to="/"><Button variant="ghost" size="sm">← 목록</Button></Link>
+            <div className="ml-auto flex items-center gap-2">
+              {!editing && <Button variant="secondary" size="sm" onClick={startEdit}>✏️ 수정</Button>}
+              <Button variant="danger" size="sm" onClick={() => setConfirmOpen(true)}>🗑 삭제</Button>
+            </div>
+          </div>
+
+          <Card className="p-5 sm:p-6">
+            {editing ? (
+              <form onSubmit={save} className="space-y-4">
+                <Input
+                  label="제목"
+                  value={draft.title}
+                  onChange={e => { setDraft({ ...draft, title: e.target.value }); if (errors.title) setErrors({ ...errors, title: null }); }}
+                  maxLength={MAX_TITLE}
+                  error={errors.title}
+                />
+                <div>
+                  <Textarea
+                    label="내용"
+                    value={draft.content}
+                    onChange={e => setDraft({ ...draft, content: e.target.value })}
+                    error={errors.content}
+                  />
+                  <p className="mt-1 text-right text-[11px] tabular-nums text-stone-400">
+                    {draft.content.length.toLocaleString()} / {MAX_CONTENT.toLocaleString()}자
+                  </p>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="secondary" size="md" onClick={() => setEditing(false)}>취소</Button>
+                  <Button type="submit" size="md" disabled={saving}>{saving ? '저장 중…' : '저장하기'}</Button>
+                </div>
+              </form>
+            ) : (
+              <>
+                <h1 className="break-words text-xl font-semibold text-stone-800">{memo.title}</h1>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <Badge>#{memo.id}</Badge>
+                  <span className="text-xs text-stone-500">{formatDateTime(memo.createdAt)}</span>
+                  <span className="text-xs text-stone-400">· {formatRelative(memo.createdAt)}</span>
+                </div>
+                <hr className="my-4 border-stone-200" />
+                {memo.content ? (
+                  <p className="whitespace-pre-wrap break-words text-sm leading-7 text-stone-700">{memo.content}</p>
+                ) : (
+                  <p className="text-sm italic text-stone-400">내용이 없는 메모입니다.</p>
+                )}
+              </>
+            )}
+          </Card>
+
+          <Modal isOpen={confirmOpen} onClose={() => !deleting && setConfirmOpen(false)} title="메모 삭제">
+            <p className="text-sm leading-relaxed text-stone-600">
+              <strong className="font-semibold text-stone-800">{memo.title}</strong> 메모를 삭제할까요?<br />
+              삭제한 메모는 되돌릴 수 없습니다.
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <Button variant="secondary" size="sm" onClick={() => setConfirmOpen(false)} disabled={deleting}>취소</Button>
+              <Button variant="danger" size="sm" onClick={remove} disabled={deleting}>
+                {deleting ? '삭제 중…' : '삭제하기'}
+              </Button>
+            </div>
+          </Modal>
+        </div>
+      );
+    }
+
+    // ========================================
+    // 🚀 App
+    // ========================================
+
+    function AppShell() {
+      const { toast } = useStore();
+      return (
+        <div className="min-h-screen">
+          <Header />
+          <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
+            <Routes>
+              <Route path="/" element={<ListPage />} />
+              <Route path="/new" element={<NewPage />} />
+              <Route path="/memo/:id" element={<DetailPage />} />
+              <Route path="*" element={
+                <EmptyState
+                  icon="🧭"
+                  title="없는 페이지예요"
+                  description="주소를 다시 확인해 주세요."
+                  action={<Link to="/"><Button size="sm">목록으로</Button></Link>}
+                />
+              } />
+            </Routes>
+          </main>
+          <footer className="px-4 py-8 text-center text-[11px] text-stone-400">
+            메모장 · PostgreSQL memos 테이블(id / title / content / created_at)에 저장됩니다.
+          </footer>
+          <Toast toast={toast} />
+        </div>
+      );
+    }
+
+    function App() {
+      return (
+        <Router>
+          <StoreProvider>
+            <AppShell />
+          </StoreProvider>
+        </Router>
+      );
+    }
+
+    // ========================================
+    // Rendering
+    // ========================================
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

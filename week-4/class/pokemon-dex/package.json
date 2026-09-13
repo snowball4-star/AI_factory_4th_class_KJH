@@ -1,0 +1,13 @@
+{
+  "name": "pokemon-dex",
+  "version": "1.0.0",
+  "private": true,
+  "description": "직접 만든 Node.js API 서버로 동작하는 포켓몬 도감",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}

@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>비트코인 모의투자</title>
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <!-- CDN 버전 고정: Babel 은 반드시 7.x (8.x 는 인라인 text/babel 미지원) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.25.9/babel.min.js"></script>
+  <style>
+    /* Tailwind 유틸리티로 표현할 수 없는 것만 정의 */
+    @keyframes flash-up   { 0% { background-color: rgba(244,63,94,.22); } 100% { background-color: transparent; } }
+    @keyframes flash-down { 0% { background-color: rgba(56,189,248,.22); } 100% { background-color: transparent; } }
+    .flash-up   { animation: flash-up .5s ease-out; }
+    .flash-down { animation: flash-down .5s ease-out; }
+    @keyframes toast-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+    .toast-in { animation: toast-in .18s ease-out; }
+    /* 숫자가 흔들리지 않도록 등폭 숫자 */
+    .tnum { font-variant-numeric: tabular-nums; }
+    /* 주문 내역 스크롤바 */
+    .thin-scroll::-webkit-scrollbar { width: 6px; }
+    .thin-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+  </style>
+</head>
+<body class="bg-slate-950">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useCallback } = React;
+
+    // ========================================
+    // ⚙️ Constants & Utils
+    // ========================================
+
+    // 브라우저는 자기 서버(/api)만 호출한다. 거래소 API 호출과 DB 접속은 전부 서버 몫.
+    const API_BASE_URL = '/api';
+    const POLL_MS      = 3000;          // 시세 갱신 주기
+    const INITIAL_CASH = 10000000;      // 초기 자본 1,000만원 (표시용, 실제 기준값은 서버)
+    const FEE_RATE     = 0.0005;        // 거래 수수료 0.05% (표시용, 실제 계산은 서버)
+    const MAX_TICKS    = 60;            // 스파크라인에 보관할 시세 개수
+
+    const fmtKRW = (n) => (Math.round(n) || 0).toLocaleString('ko-KR');
+
+    const fmtBTC = (n, digits = 8) =>
+      (n || 0).toLocaleString('ko-KR', { minimumFractionDigits: 0, maximumFractionDigits: digits });
+
+    const fmtPct = (n) => (n >= 0 ? '+' : '') + (n || 0).toFixed(2) + '%';
+
+    const fmtTime = (ts) => new Date(ts).toLocaleTimeString('ko-KR', { hour12: false });
+
+    const fmtDateTime = (ts) => {
+      const d = new Date(ts);
+      const p = (v) => String(v).padStart(2, '0');
+      return `${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+    };
+
+    // 손익 방향 색상 (국내 거래소 관례: 상승 빨강 / 하락 파랑)
+    const toneClass = (v) => (v > 0 ? 'text-rose-400' : v < 0 ? 'text-sky-400' : 'text-slate-300');
+
+    // ========================================
+    // 🎨 Design System Components
+    // ========================================
+
+    function Button({ variant = 'primary', size = 'md', disabled = false, onClick, className = '', children, ...rest }) {
+      const base = 'inline-flex items-center justify-center font-semibold rounded-lg transition-colors ' +
+                   'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-950 ' +
+                   'disabled:opacity-40 disabled:cursor-not-allowed';
+      const variants = {
+        primary:   'bg-rose-600 hover:bg-rose-500 text-white focus:ring-rose-500',
+        secondary: 'bg-sky-600 hover:bg-sky-500 text-white focus:ring-sky-500',
+        danger:    'bg-red-700 hover:bg-red-600 text-white focus:ring-red-500',
+        ghost:     'bg-slate-800 hover:bg-slate-700 text-slate-200 focus:ring-slate-500',
+      };
+      const sizes = { sm: 'px-2.5 py-1 text-xs', md: 'px-4 py-2 text-sm', lg: 'px-5 py-3 text-base' };
+      return (
+        <button
+          type="button"
+          onClick={onClick}
+          disabled={disabled}
+          className={`${base} ${variants[variant]} ${sizes[size]} ${className}`}
+          {...rest}
+        >
+          {children}
+        </button>
+      );
+    }
+
+    function Input({ label, value, onChange, placeholder, suffix, error, disabled = false, className = '', ...rest }) {
+      const id = useRef('in-' + Math.random().toString(36).slice(2)).current;
+      return (
+        <div className={className}>
+          {label && <label htmlFor={id} className="block mb-1.5 text-xs font-medium text-slate-400">{label}</label>}
+          <div className="relative">
+            <input
+              id={id}
+              type="text"
+              inputMode="decimal"
+              value={value}
+              onChange={onChange}
+              placeholder={placeholder}
+              disabled={disabled}
+              aria-invalid={!!error}
+              className={`w-full bg-slate-950 border rounded-lg px-3 py-2.5 tnum text-right text-slate-100
+                          placeholder:text-slate-600 focus:outline-none focus:ring-2 disabled:opacity-50
+                          ${suffix ? 'pr-14' : ''}
+                          ${error ? 'border-red-500 focus:ring-red-500' : 'border-slate-700 focus:ring-slate-500'}`}
+              {...rest}
+            />
+            {suffix && (
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 pointer-events-none">
+                {suffix}
+              </span>
+            )}
+          </div>
+          {error && <p className="mt-1 text-xs text-red-400">{error}</p>}
+        </div>
+      );
+    }
+
+    function Card({ title, right, className = '', bodyClassName = '', children }) {
+      return (
+        <section className={`bg-slate-900/70 border border-slate-800 rounded-xl shadow-lg ${className}`}>
+          {(title || right) && (
+            <header className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-slate-800">
+              <h2 className="text-sm font-semibold text-slate-200">{title}</h2>
+              {right}
+            </header>
+          )}
+          <div className={`p-4 sm:p-5 ${bodyClassName}`}>{children}</div>
+        </section>
+      );
+    }
+
+    function Badge({ tone = 'slate', children, className = '' }) {
+      const tones = {
+        slate: 'bg-slate-800 text-slate-300 border-slate-700',
+        green: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+        red:   'bg-rose-500/10 text-rose-400 border-rose-500/30',
+        blue:  'bg-sky-500/10 text-sky-400 border-sky-500/30',
+        amber: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+      };
+      return (
+        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] font-medium whitespace-nowrap ${tones[tone]} ${className}`}>
+          {children}
+        </span>
+      );
+    }
+
+    function Modal({ isOpen, onClose, title, children, size = 'md' }) {
+      useEffect(() => {
+        if (!isOpen) return;
+        const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+      }, [isOpen, onClose]);
+
+      if (!isOpen) return null;
+      const sizes = { sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-2xl' };
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60" onClick={onClose} aria-hidden="true" />
+          <div role="dialog" aria-modal="true" aria-label={title}
+               className={`relative w-full ${sizes[size]} bg-slate-900 border border-slate-700 rounded-xl shadow-2xl`}>
+            <header className="flex items-center justify-between px-5 py-3 border-b border-slate-800">
+              <h3 className="text-sm font-semibold text-slate-100">{title}</h3>
+              <button onClick={onClose} aria-label="닫기"
+                      className="text-slate-500 hover:text-slate-200 text-lg leading-none">×</button>
+            </header>
+            <div className="p-5">{children}</div>
+          </div>
+        </div>
+      );
+    }
+
+    function Stat({ label, value, sub, valueClass = 'text-slate-100' }) {
+      return (
+        <div>
+          <p className="text-xs text-slate-500 mb-1">{label}</p>
+          <p className={`text-lg sm:text-xl font-bold tnum ${valueClass}`}>{value}</p>
+          {sub && <p className="text-xs text-slate-500 tnum mt-0.5">{sub}</p>}
+        </div>
+      );
+    }
+
+    function Toast({ toast }) {
+      if (!toast) return null;
+      const tones = {
+        success: 'bg-emerald-600/90 border-emerald-400/40',
+        error:   'bg-red-600/90 border-red-400/40',
+        info:    'bg-slate-700/90 border-slate-500/40',
+      };
+      return (
+        <div role="status" aria-live="polite"
+             className={`toast-in fixed top-4 left-1/2 -translate-x-1/2 z-[60] px-4 py-2.5 rounded-lg border
+                         text-sm text-white shadow-xl ${tones[toast.type]}`}>
+          {toast.message}
+        </div>
+      );
+    }
+
+    // ========================================
+    // 📈 Sparkline — 최근 시세 흐름 미니 차트
+    // ========================================
+
+    function Sparkline({ points, className = '' }) {
+      if (!points || points.length < 2) {
+        return <div className={`flex items-center justify-center text-xs text-slate-600 ${className}`}>시세 수집 중…</div>;
+      }
+      const W = 100, H = 100;
+      const min = Math.min(...points);
+      const max = Math.max(...points);
+      const span = max - min || 1;
+      const coords = points.map((p, i) => {
+        const x = (i / (points.length - 1)) * W;
+        const y = H - ((p - min) / span) * (H - 8) - 4;
+        return `${x.toFixed(2)},${y.toFixed(2)}`;
+      });
+      const up = points[points.length - 1] >= points[0];
+      const stroke = up ? '#fb7185' : '#38bdf8';
+      const fill = up ? 'rgba(251,113,133,.15)' : 'rgba(56,189,248,.15)';
+      return (
+        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className={className} aria-hidden="true">
+          <polygon points={`0,${H} ${coords.join(' ')} ${W},${H}`} fill={fill} />
+          <polyline points={coords.join(' ')} fill="none" stroke={stroke} strokeWidth="1.6"
+                    vectorEffect="non-scaling-stroke" strokeLinejoin="round" strokeLinecap="round" />
+        </svg>
+      );
+    }
+
+    // ========================================
+    // 🔌 usePrice — 우리 서버(/api/price)에서 시세를 받아온다
+    // 외부 거래소는 서버가 대신 호출한다 (브라우저는 자기 서버만 부른다)
+    // ========================================
+
+    function usePrice(seedTicker) {
+      const [ticker, setTicker]   = useState(seedTicker || null);
+      const [mode, setMode]       = useState('loading'); // loading | live | demo | offline
+      const [history, setHistory] = useState(seedTicker ? [seedTicker.price] : []);
+
+      // 초기 로드(/api/portfolio)로 받은 첫 시세를 그대로 이어받는다
+      useEffect(() => {
+        if (!seedTicker) return;
+        setTicker(seedTicker);
+        setMode(seedTicker.source === 'demo' ? 'demo' : 'live');
+        setHistory((prev) => (prev.length ? prev : [seedTicker.price]));
+      }, [seedTicker]);
+
+      useEffect(() => {
+        let alive = true;
+
+        const tick = async () => {
+          try {
+            const res = await fetch(`${API_BASE_URL}/price`, { cache: 'no-store' });
+            const json = await res.json();
+            if (!alive) return;
+            if (!res.ok || !json.success) throw new Error(json.message || 'HTTP ' + res.status);
+            const t = json.data;
+            setMode(t.source === 'demo' ? 'demo' : 'live');
+            setTicker(t);
+            setHistory((prev) => [...prev, t.price].slice(-MAX_TICKS));
+          } catch (err) {
+            if (alive) setMode('offline');
+          }
+        };
+
+        tick();
+        const id = setInterval(tick, POLL_MS);
+        return () => { alive = false; clearInterval(id); };
+      }, []);
+
+      return { ticker, mode, history };
+    }
+
+    // ========================================
+    // 💾 usePortfolio — 지갑/주문은 서버(PostgreSQL)가 보관한다
+    // 체결·검증은 전부 서버에서 하고, 화면은 결과를 받아 그린다
+    // ========================================
+
+    const emptyPortfolio = { cash: 0, qty: 0, avgPrice: 0, realized: 0, orders: [] };
+
+    // 서버 응답을 항상 { success, data, message } 로 정규화
+    async function callApi(endpoint, options) {
+      const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
+        ...options,
+      });
+      let json = null;
+      try { json = await res.json(); } catch (err) { /* 본문이 JSON 이 아닌 경우 */ }
+      if (!res.ok || !json || !json.success) {
+        throw new Error((json && json.message) || `요청에 실패했습니다. (HTTP ${res.status})`);
+      }
+      return json.data;
+    }
+
+    function usePortfolio() {
+      const [portfolio, setPortfolio] = useState(emptyPortfolio);
+      const [seedTicker, setSeedTicker] = useState(null);
+      const [loading, setLoading] = useState(true);
+      const [loadError, setLoadError] = useState('');
+
+      // 최초 1회: 지갑 + 주문 내역 + 시세를 한 번에 받아온다
+      useEffect(() => {
+        let alive = true;
+        (async () => {
+          try {
+            const data = await callApi('/portfolio');
+            if (!alive) return;
+            setPortfolio({ ...data.wallet, orders: data.orders });
+            setSeedTicker(data.price);
+            setLoadError('');
+          } catch (err) {
+            if (alive) setLoadError(err.message);
+          } finally {
+            if (alive) setLoading(false);
+          }
+        })();
+        return () => { alive = false; };
+      }, []);
+
+      // 체결 응답(지갑 + 새 주문)을 화면 상태에 반영
+      const applyOrderResult = useCallback((data) => {
+        setPortfolio((prev) => ({
+          ...data.wallet,
+          orders: [data.order, ...prev.orders].slice(0, 200),
+        }));
+      }, []);
+
+      const placeOrder = useCallback(async (body) => {
+        try {
+          const data = await callApi('/orders', { method: 'POST', body: JSON.stringify(body) });
+          applyOrderResult(data);
+          const o = data.order;
+          const label = o.side === 'buy' ? '매수' : '매도';
+          return { ok: true, message: `${label} 체결 · ${fmtBTC(o.qty, 6)} BTC / ${fmtKRW(o.amount)}원` };
+        } catch (err) {
+          return { ok: false, message: err.message };
+        }
+      }, [applyOrderResult]);
+
+      // 매수는 주문금액(원), 매도는 수량(BTC)으로 요청한다. 체결가는 서버가 정한다.
+      const buy  = useCallback((amount, memo) => placeOrder({ side: 'buy', amount, memo }), [placeOrder]);
+      const sell = useCallback((qty, memo)    => placeOrder({ side: 'sell', qty, memo }),   [placeOrder]);
+
+      const reset = useCallback(async () => {
+        try {
+          const wallet = await callApi('/reset', { method: 'POST' });
+          setPortfolio({ ...wallet, orders: [] });
+          return { ok: true, message: `초기 자본 ${fmtKRW(wallet.cash)}원으로 되돌렸습니다.` };
+        } catch (err) {
+          return { ok: false, message: err.message };
+        }
+      }, []);
+
+      return { portfolio, seedTicker, loading, loadError, buy, sell, reset };
+    }
+
+    // ========================================
+    // 🧩 Layout Components
+    // ========================================
+
+    function Header({ mode, updatedAt, onReset }) {
+      const badge =
+        mode === 'live' ? <Badge tone="green">● 실시간 시세 (업비트)</Badge>
+        : mode === 'demo' ? <Badge tone="amber">● 데모 시세 (거래소 연결 실패)</Badge>
+        : mode === 'offline' ? <Badge tone="red">● 서버 응답 없음</Badge>
+        : <Badge tone="slate">● 연결 중…</Badge>;
+
+      return (
+        <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center text-slate-900 font-black text-xl">₿</div>
+            <div>
+              <h1 className="text-lg sm:text-xl font-bold text-slate-100">비트코인 모의투자</h1>
+              <p className="text-xs text-slate-500">
+                초기자본 {fmtKRW(INITIAL_CASH)}원 · 수수료 {(FEE_RATE * 100).toFixed(2)}%
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {badge}
+            {updatedAt && <span className="hidden sm:inline text-xs text-slate-600 tnum">{fmtTime(updatedAt)}</span>}
+            <Button variant="ghost" size="sm" onClick={onReset}>초기화</Button>
+          </div>
+        </header>
+      );
+    }
+
+    // ========================================
+    // 📄 Page Panels
+    // ========================================
+
+    function PricePanel({ ticker, history }) {
+      const prevPriceRef = useRef(null);
+      const [flash, setFlash] = useState('');
+
+      useEffect(() => {
+        if (!ticker) return;
+        const prev = prevPriceRef.current;
+        prevPriceRef.current = ticker.price;
+        if (prev === null || prev === ticker.price) return;
+        setFlash(ticker.price > prev ? 'flash-up' : 'flash-down');
+        const id = setTimeout(() => setFlash(''), 500);
+        return () => clearTimeout(id);
+      }, [ticker]);
+
+      if (!ticker) {
+        return (
+          <Card title="현재가">
+            <div className="h-40 flex items-center justify-center text-sm text-slate-500">시세를 불러오는 중…</div>
+          </Card>
+        );
+      }
+
+      const diff = ticker.price - ticker.prevClose;
+
+      return (
+        <Card title="현재가" right={<span className="text-xs text-slate-500">BTC / KRW</span>}>
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
+            <div>
+              <div className={`inline-block rounded-lg px-2 -mx-2 ${flash}`}>
+                <span className={`text-3xl sm:text-4xl font-extrabold tnum ${toneClass(diff)}`}>
+                  {fmtKRW(ticker.price)}
+                </span>
+                <span className="ml-1.5 text-base font-medium text-slate-500">원</span>
+              </div>
+              <div className={`mt-1.5 text-sm font-semibold tnum ${toneClass(diff)}`}>
+                {fmtPct(ticker.changeRate)}
+                <span className="ml-2 font-normal text-slate-500">
+                  전일대비 {diff >= 0 ? '+' : '−'}{fmtKRW(Math.abs(diff))}원
+                </span>
+              </div>
+              <dl className="mt-4 grid grid-cols-3 gap-4 text-xs">
+                <div>
+                  <dt className="text-slate-500">24h 고가</dt>
+                  <dd className="mt-0.5 font-medium tnum text-rose-400">{fmtKRW(ticker.high)}</dd>
+                </div>
+                <div>
+                  <dt className="text-slate-500">24h 저가</dt>
+                  <dd className="mt-0.5 font-medium tnum text-sky-400">{fmtKRW(ticker.low)}</dd>
+                </div>
+                <div>
+                  <dt className="text-slate-500">전일 종가</dt>
+                  <dd className="mt-0.5 font-medium tnum text-slate-300">{fmtKRW(ticker.prevClose)}</dd>
+                </div>
+              </dl>
+            </div>
+            <div className="w-full lg:w-64 shrink-0">
+              <div className="h-24">
+                <Sparkline points={history} className="w-full h-full" />
+              </div>
+              <p className="mt-1 text-right text-[11px] text-slate-600">
+                최근 {history.length}틱 ({POLL_MS / 1000}초 간격)
+              </p>
+            </div>
+          </div>
+        </Card>
+      );
+    }
+
+    function WalletPanel({ portfolio, price }) {
+      const evalAmount = portfolio.qty * price;               // 평가금액
+      const totalAsset = portfolio.cash + evalAmount;         // 총 자산
+      const totalPnl   = totalAsset - INITIAL_CASH;           // 초기자본 대비 손익
+      const totalRate  = (totalPnl / INITIAL_CASH) * 100;     // 총 수익률
+      const investCost = portfolio.avgPrice * portfolio.qty;  // 매입금액
+      const unrealized = evalAmount - investCost;             // 보유 평가손익
+      const unrealRate = investCost > 0 ? (unrealized / investCost) * 100 : 0;
+
+      return (
+        <Card
+          title="내 지갑"
+          right={
+            <Badge tone={totalPnl > 0 ? 'red' : totalPnl < 0 ? 'blue' : 'slate'}>
+              수익률 {fmtPct(totalRate)}
+            </Badge>
+          }
+        >
+          <div className="grid grid-cols-2 gap-x-4 gap-y-5">
+            <Stat label="보유 현금" value={`${fmtKRW(portfolio.cash)} 원`} />
+            <Stat
+              label="평가금액 (BTC)"
+              value={`${fmtKRW(evalAmount)} 원`}
+              sub={`${fmtBTC(portfolio.qty)} BTC`}
+            />
+            <Stat
+              label="총 자산"
+              value={`${fmtKRW(totalAsset)} 원`}
+              sub={`총 손익 ${totalPnl >= 0 ? '+' : '−'}${fmtKRW(Math.abs(totalPnl))}원`}
+              valueClass={toneClass(totalPnl)}
+            />
+            <Stat
+              label="총 수익률"
+              value={fmtPct(totalRate)}
+              sub={`실현손익 ${portfolio.realized >= 0 ? '+' : '−'}${fmtKRW(Math.abs(portfolio.realized))}원`}
+              valueClass={toneClass(totalPnl)}
+            />
+          </div>
+
+          <div className="mt-5 pt-4 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5 text-xs">
+            <div className="flex justify-between">
+              <span className="text-slate-500">평균 매수가</span>
+              <span className="tnum text-slate-300">{portfolio.qty > 0 ? fmtKRW(portfolio.avgPrice) + '원' : '—'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">매입금액</span>
+              <span className="tnum text-slate-300">{portfolio.qty > 0 ? fmtKRW(investCost) + '원' : '—'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">보유 평가손익</span>
+              <span className={`tnum ${toneClass(unrealized)}`}>
+                {portfolio.qty > 0 ? `${unrealized >= 0 ? '+' : '−'}${fmtKRW(Math.abs(unrealized))}원` : '—'}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">보유 수익률</span>
+              <span className={`tnum ${toneClass(unrealized)}`}>{portfolio.qty > 0 ? fmtPct(unrealRate) : '—'}</span>
+            </div>
+          </div>
+        </Card>
+      );
+    }
+
+    function OrderPanel({ price, portfolio, onBuy, onSell }) {
+      const [side, setSide] = useState('buy');              // buy | sell
+      const [amountInput, setAmountInput] = useState('');   // 매수: 주문금액(원)
+      const [qtyInput, setQtyInput]       = useState('');   // 매도: 주문수량(BTC)
+      const [memoInput, setMemoInput]     = useState('');   // orders.memo 로 저장된다
+      const [submitting, setSubmitting]   = useState(false);
+
+      const parseNum = (s) => {
+        const n = parseFloat(String(s).replace(/,/g, ''));
+        return Number.isFinite(n) && n > 0 ? n : 0;
+      };
+
+      // 수수료까지 포함해 현금 안에서 살 수 있는 최대 주문금액
+      const maxBuyAmount = portfolio.cash / (1 + FEE_RATE);
+
+      const buyAmount = parseNum(amountInput);
+      const buyQty    = price > 0 ? buyAmount / price : 0;
+      const buyFee    = buyAmount * FEE_RATE;
+
+      const sellQty    = parseNum(qtyInput);
+      const sellAmount = sellQty * price;
+      const sellFee    = sellAmount * FEE_RATE;
+
+      const buyError  = buyAmount > 0 && buyAmount + buyFee > portfolio.cash + 1 ? '보유 현금을 초과했습니다.' : '';
+      const sellError = sellQty > 0 && sellQty > portfolio.qty + 1e-8 ? '보유 수량을 초과했습니다.' : '';
+
+      const applyBuyRatio = (r) => setAmountInput(String(Math.floor(maxBuyAmount * r)));
+      const applySellRatio = (r) => {
+        // 반올림으로 보유량을 넘지 않도록 소수점 8자리에서 버림
+        const q = Math.floor(portfolio.qty * r * 1e8) / 1e8;
+        setQtyInput(q > 0 ? String(q) : '');
+      };
+
+      // 체결은 서버가 하므로 응답을 기다린다 (그동안 버튼은 잠근다)
+      const submit = async () => {
+        if (submitting) return;
+        setSubmitting(true);
+        try {
+          const res = side === 'buy'
+            ? await onBuy(buyAmount, memoInput.trim())
+            : await onSell(sellQty, memoInput.trim());
+          if (res.ok) {
+            side === 'buy' ? setAmountInput('') : setQtyInput('');
+            setMemoInput('');
+          }
+        } finally {
+          setSubmitting(false);
+        }
+      };
+
+      const tabClass = (active, tone) =>
+        `flex-1 py-2.5 text-sm font-semibold rounded-lg transition-colors ${
+          active
+            ? tone === 'buy' ? 'bg-rose-600 text-white' : 'bg-sky-600 text-white'
+            : 'text-slate-400 hover:text-slate-200'
+        }`;
+
+      const ratios = [
+        { label: '10%', v: 0.1 }, { label: '25%', v: 0.25 },
+        { label: '50%', v: 0.5 }, { label: '최대', v: 1 },
+      ];
+
+      // 주문 메모 — orders 테이블의 memo 컬럼에 그대로 저장된다
+      const memoField = (
+        <div>
+          <label htmlFor="order-memo" className="block mb-1.5 text-xs font-medium text-slate-400">
+            메모 <span className="text-slate-600">(선택)</span>
+          </label>
+          <input
+            id="order-memo"
+            type="text"
+            maxLength={100}
+            value={memoInput}
+            onChange={(e) => setMemoInput(e.target.value)}
+            placeholder="예: 눌림목 분할 매수"
+            className="w-full px-3 py-2 text-sm border rounded-lg bg-slate-950 border-slate-700 text-slate-100
+                       placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-500"
+          />
+        </div>
+      );
+
+      return (
+        <Card title="주문" right={<span className="text-xs text-slate-500">시장가</span>}>
+          <div role="tablist" aria-label="주문 유형" className="flex gap-1 p-1 mb-4 bg-slate-950 rounded-xl">
+            <button role="tab" aria-selected={side === 'buy'} onClick={() => setSide('buy')}
+                    className={tabClass(side === 'buy', 'buy')}>매수</button>
+            <button role="tab" aria-selected={side === 'sell'} onClick={() => setSide('sell')}
+                    className={tabClass(side === 'sell', 'sell')}>매도</button>
+          </div>
+
+          {side === 'buy' ? (
+            <div className="space-y-3">
+              <div className="flex justify-between text-xs">
+                <span className="text-slate-500">주문 가능</span>
+                <span className="tnum text-slate-300">{fmtKRW(portfolio.cash)} 원</span>
+              </div>
+              <Input
+                label="주문 금액"
+                value={amountInput}
+                onChange={(e) => setAmountInput(e.target.value.replace(/[^0-9.]/g, ''))}
+                placeholder="0"
+                suffix="KRW"
+                error={buyError}
+              />
+              <div className="grid grid-cols-4 gap-1.5">
+                {ratios.map((r) => (
+                  <Button key={r.label} variant="ghost" size="sm"
+                          disabled={portfolio.cash <= 0}
+                          onClick={() => applyBuyRatio(r.v)}>{r.label}</Button>
+                ))}
+              </div>
+              <dl className="pt-3 space-y-1.5 text-xs border-t border-slate-800">
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">예상 수량</dt>
+                  <dd className="tnum text-slate-200">{fmtBTC(buyQty)} BTC</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">수수료</dt>
+                  <dd className="tnum text-slate-400">{fmtKRW(buyFee)} 원</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">총 차감</dt>
+                  <dd className="font-semibold tnum text-slate-200">{fmtKRW(buyAmount + buyFee)} 원</dd>
+                </div>
+              </dl>
+              {memoField}
+              <Button variant="primary" size="lg" className="w-full"
+                      disabled={!price || buyQty <= 0 || !!buyError || submitting}
+                      onClick={submit}>
+                {submitting ? '체결 중…' : '매수하기'}
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex justify-between text-xs">
+                <span className="text-slate-500">주문 가능</span>
+                <span className="tnum text-slate-300">{fmtBTC(portfolio.qty)} BTC</span>
+              </div>
+              <Input
+                label="주문 수량"
+                value={qtyInput}
+                onChange={(e) => setQtyInput(e.target.value.replace(/[^0-9.]/g, ''))}
+                placeholder="0"
+                suffix="BTC"
+                error={sellError}
+              />
+              <div className="grid grid-cols-4 gap-1.5">
+                {ratios.map((r) => (
+                  <Button key={r.label} variant="ghost" size="sm"
+                          disabled={portfolio.qty <= 0}
+                          onClick={() => applySellRatio(r.v)}>{r.label}</Button>
+                ))}
+              </div>
+              <dl className="pt-3 space-y-1.5 text-xs border-t border-slate-800">
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">예상 금액</dt>
+                  <dd className="tnum text-slate-200">{fmtKRW(sellAmount)} 원</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">수수료</dt>
+                  <dd className="tnum text-slate-400">{fmtKRW(sellFee)} 원</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">정산 금액</dt>
+                  <dd className="font-semibold tnum text-slate-200">{fmtKRW(sellAmount - sellFee)} 원</dd>
+                </div>
+              </dl>
+              {memoField}
+              <Button variant="secondary" size="lg" className="w-full"
+                      disabled={!price || sellQty <= 0 || !!sellError || submitting}
+                      onClick={submit}>
+                {submitting ? '체결 중…' : '매도하기'}
+              </Button>
+            </div>
+          )}
+        </Card>
+      );
+    }
+
+    function OrderHistory({ orders }) {
+      return (
+        <Card title="주문 내역" right={<span className="text-xs text-slate-500">{orders.length}건</span>} bodyClassName="p-0">
+          {orders.length === 0 ? (
+            <div className="py-14 text-center">
+              <p className="text-sm text-slate-500">아직 체결된 주문이 없습니다.</p>
+              <p className="mt-1 text-xs text-slate-600">오른쪽 주문 패널에서 첫 매수를 진행해 보세요.</p>
+            </div>
+          ) : (
+            <div className="max-h-96 overflow-auto thin-scroll">
+              <table className="w-full min-w-[720px] text-xs">
+                <thead className="sticky top-0 bg-slate-900 text-slate-500">
+                  <tr className="border-b border-slate-800">
+                    <th scope="col" className="px-4 py-2.5 font-medium text-left">시각</th>
+                    <th scope="col" className="px-2 py-2.5 font-medium text-left">마켓</th>
+                    <th scope="col" className="px-2 py-2.5 font-medium text-left">구분</th>
+                    <th scope="col" className="px-2 py-2.5 font-medium text-right">체결가</th>
+                    <th scope="col" className="px-2 py-2.5 font-medium text-right">수량 (BTC)</th>
+                    <th scope="col" className="px-2 py-2.5 font-medium text-right">거래금액</th>
+                    <th scope="col" className="px-2 py-2.5 font-medium text-right">실현손익</th>
+                    <th scope="col" className="px-4 py-2.5 font-medium text-left">메모</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.map((o) => (
+                    <tr key={o.id} className="border-b border-slate-800/60 hover:bg-slate-800/30">
+                      <td className="px-4 py-2.5 whitespace-nowrap tnum text-slate-500">{fmtDateTime(o.at)}</td>
+                      <td className="px-2 py-2.5 whitespace-nowrap text-slate-500">{o.market}</td>
+                      <td className="px-2 py-2.5">
+                        <Badge tone={o.side === 'buy' ? 'red' : 'blue'}>{o.side === 'buy' ? '매수' : '매도'}</Badge>
+                      </td>
+                      <td className="px-2 py-2.5 text-right tnum text-slate-300">{fmtKRW(o.price)}</td>
+                      <td className="px-2 py-2.5 text-right tnum text-slate-300">{fmtBTC(o.qty)}</td>
+                      <td className="px-2 py-2.5 text-right tnum text-slate-300">
+                        {fmtKRW(o.amount)}
+                        <span className="block text-[10px] text-slate-600">수수료 {fmtKRW(o.fee)}</span>
+                      </td>
+                      <td className={`px-2 py-2.5 text-right font-medium tnum ${o.pnl == null ? 'text-slate-600' : toneClass(o.pnl)}`}>
+                        {o.pnl == null ? '—' : `${o.pnl >= 0 ? '+' : '−'}${fmtKRW(Math.abs(o.pnl))}`}
+                      </td>
+                      <td className="px-4 py-2.5 max-w-[180px] truncate text-slate-400" title={o.memo || ''}>
+                        {o.memo || <span className="text-slate-700">—</span>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      );
+    }
+
+    // ========================================
+    // 🚀 App
+    // ========================================
+
+    function App() {
+      const { portfolio, seedTicker, loading, loadError, buy, sell, reset } = usePortfolio();
+      const { ticker, mode, history } = usePrice(seedTicker);
+      const [toast, setToast] = useState(null);
+      const [resetOpen, setResetOpen] = useState(false);
+      const [resetting, setResetting] = useState(false);
+      const toastTimer = useRef(null);
+
+      const notify = useCallback((type, message) => {
+        setToast({ type, message });
+        clearTimeout(toastTimer.current);
+        toastTimer.current = setTimeout(() => setToast(null), 2600);
+      }, []);
+
+      useEffect(() => () => clearTimeout(toastTimer.current), []);
+
+      const price = ticker ? ticker.price : 0;
+
+      const handleBuy = async (amount, memo) => {
+        const res = await buy(amount, memo);
+        notify(res.ok ? 'success' : 'error', res.message);
+        return res;
+      };
+
+      const handleSell = async (qty, memo) => {
+        const res = await sell(qty, memo);
+        notify(res.ok ? 'success' : 'error', res.message);
+        return res;
+      };
+
+      const handleReset = async () => {
+        setResetting(true);
+        const res = await reset();
+        setResetting(false);
+        setResetOpen(false);
+        notify(res.ok ? 'info' : 'error', res.message);
+      };
+
+      // 지갑을 아직 못 받아온 상태
+      if (loading) {
+        return (
+          <div className="flex items-center justify-center min-h-screen text-sm text-slate-500">
+            지갑을 불러오는 중…
+          </div>
+        );
+      }
+
+      if (loadError) {
+        return (
+          <div className="flex items-center justify-center min-h-screen px-6">
+            <div className="max-w-md text-center">
+              <p className="text-base font-semibold text-red-400">서버에 연결하지 못했습니다.</p>
+              <p className="mt-2 text-sm text-slate-400">{loadError}</p>
+              <p className="mt-4 text-xs text-slate-600">
+                프로젝트 폴더에서 <code className="text-slate-400">node server.js</code> 를 실행한 뒤
+                해당 주소로 접속했는지 확인해 주세요.
+              </p>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="min-h-screen px-4 py-6 text-slate-200 sm:px-6 lg:px-8">
+          <Toast toast={toast} />
+
+          <div className="max-w-6xl mx-auto">
+            <Header mode={mode} updatedAt={ticker && ticker.updatedAt} onReset={() => setResetOpen(true)} />
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
+              <div className="lg:col-span-2 space-y-4 sm:space-y-5">
+                <PricePanel ticker={ticker} history={history} />
+                <WalletPanel portfolio={portfolio} price={price} />
+                <OrderHistory orders={portfolio.orders} />
+              </div>
+              <div className="lg:col-span-1">
+                <div className="lg:sticky lg:top-6">
+                  <OrderPanel price={price} portfolio={portfolio} onBuy={handleBuy} onSell={handleSell} />
+                </div>
+              </div>
+            </div>
+
+            <footer className="mt-8 text-center text-[11px] text-slate-600">
+              실제 거래가 아닌 학습용 모의투자입니다 · 시세는 서버가 업비트에서 조회하고,
+              지갑과 주문은 PostgreSQL의 wallet · orders 테이블에 저장됩니다
+              {mode === 'demo' && ' (거래소 연결 실패로 시뮬레이션 시세 사용 중)'}
+              {mode === 'offline' && ' (서버 시세 갱신 실패 — 마지막 시세 표시 중)'}
+            </footer>
+          </div>
+
+          <Modal isOpen={resetOpen} onClose={() => setResetOpen(false)} title="계좌 초기화" size="sm">
+            <p className="text-sm leading-relaxed text-slate-300">
+              DB의 orders 기록이 모두 삭제되고 wallet 이 초기 자본 {fmtKRW(INITIAL_CASH)}원으로 돌아갑니다.
+              계속할까요?
+            </p>
+            <div className="flex justify-end gap-2 mt-5">
+              <Button variant="ghost" onClick={() => setResetOpen(false)}>취소</Button>
+              <Button variant="danger" disabled={resetting} onClick={handleReset}>
+                {resetting ? '초기화 중…' : '초기화'}
+              </Button>
+            </div>
+          </Modal>
+        </div>
+      );
+    }
+
+    // ========================================
+    // Rendering
+    // ========================================
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "mini-journey",
+  "version": "1.0.0",
+  "private": true,
+  "description": "fal.ai FLUX 로 이미지를 생성하는 미드저니 스타일 웹앱 (키는 서버에서만 사용)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}

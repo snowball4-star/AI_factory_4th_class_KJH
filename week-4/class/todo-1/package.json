@@ -1,0 +1,13 @@
+{
+  "name": "todo-1",
+  "version": "1.0.0",
+  "private": true,
+  "description": "투두를 txt 파일에 저장하는 간단한 할 일 관리 앱 (React CDN + Express)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}

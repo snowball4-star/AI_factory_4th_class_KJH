@@ -1,0 +1,14 @@
+{
+  "name": "quest-fridge-ai-recipe-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "냉장고 재료 기반 AI 레시피 제작앱 (React CDN + Express + PostgreSQL + OpenAI)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "pg": "^8.16.3"
+  }
+}

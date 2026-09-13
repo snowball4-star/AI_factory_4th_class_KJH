@@ -1,0 +1,13 @@
+{
+  "name": "fridge-recipe-skill",
+  "version": "1.0.0",
+  "private": true,
+  "description": "냉장고 재료를 재료당 JSON 파일 하나로 fridge/ingredients 에 저장하는 기입기 (React CDN + Express)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}

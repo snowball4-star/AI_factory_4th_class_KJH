@@ -1,0 +1,5 @@
+# 대용량 영상 파일은 커밋하지 않는다 (GitHub 파일 100MB 제한)
+video.mp4
+*.mp4
+*.m4a
+*.webm

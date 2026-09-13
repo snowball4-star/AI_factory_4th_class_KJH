@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>투두 리스트 · txt 저장</title>
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.25.9/babel.min.js"></script>
+  <style>
+    @keyframes fade-in-up {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .animate-item { animation: fade-in-up 0.18s ease-out; }
+  </style>
+</head>
+<body class="bg-slate-100">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, useCallback, useRef, forwardRef } = React;
+
+    // ========================================
+    // 📡 API
+    // ========================================
+    const API_BASE_URL = '/api';
+
+    async function api(endpoint, options = {}) {
+      const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+        headers: { 'Content-Type': 'application/json' },
+        ...options,
+      });
+      let json = null;
+      try { json = await res.json(); } catch (_) { /* 응답 본문 없음 */ }
+      if (!res.ok || !json || json.success === false) {
+        throw new Error((json && json.message) || `요청에 실패했습니다. (${res.status})`);
+      }
+      return json;
+    }
+
+    // ========================================
+    // 🎨 Design System Components
+    // ========================================
+    function Button({ variant = 'primary', size = 'md', className = '', ...props }) {
+      const base =
+        'inline-flex items-center justify-center gap-1.5 font-medium rounded-lg transition-colors ' +
+        'focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed';
+      const variants = {
+        primary: 'bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-400',
+        secondary: 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 focus:ring-slate-300',
+        danger: 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 focus:ring-red-300',
+        ghost: 'text-slate-500 hover:text-slate-800 hover:bg-slate-100 focus:ring-slate-300',
+      };
+      const sizes = {
+        sm: 'px-2.5 py-1 text-xs',
+        md: 'px-4 py-2 text-sm',
+        lg: 'px-5 py-2.5 text-base',
+      };
+      return <button className={`${base} ${variants[variant]} ${sizes[size]} ${className}`} {...props} />;
+    }
+
+    const Input = forwardRef(function Input({ label, error, className = '', ...props }, ref) {
+      return (
+        <div className="w-full">
+          {label && <label className="block mb-1 text-sm font-medium text-slate-700">{label}</label>}
+          <input
+            ref={ref}
+            className={
+              'w-full px-3.5 py-2.5 text-sm rounded-lg border bg-white transition-colors ' +
+              'focus:outline-none focus:ring-2 disabled:bg-slate-50 ' +
+              (error
+                ? 'border-red-300 focus:ring-red-300'
+                : 'border-slate-300 focus:border-indigo-400 focus:ring-indigo-200') +
+              ` ${className}`
+            }
+            {...props}
+          />
+          {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+        </div>
+      );
+    });
+
+    function Card({ className = '', children }) {
+      return (
+        <div className={`bg-white rounded-2xl shadow-sm border border-slate-200 ${className}`}>
+          {children}
+        </div>
+      );
+    }
+
+    function Badge({ tone = 'slate', children }) {
+      const tones = {
+        slate: 'bg-slate-100 text-slate-600',
+        indigo: 'bg-indigo-50 text-indigo-600',
+        green: 'bg-emerald-50 text-emerald-600',
+      };
+      return (
+        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${tones[tone]}`}>
+          {children}
+        </span>
+      );
+    }
+
+    function Spinner({ className = '' }) {
+      return (
+        <svg className={`animate-spin h-5 w-5 ${className}`} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
+        </svg>
+      );
+    }
+
+    // ========================================
+    // 🧩 Common Components
+    // ========================================
+    function Header({ total, remaining }) {
+      return (
+        <header className="mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">📝 투두 리스트</h1>
+          <p className="mt-1.5 text-sm text-slate-500">
+            입력한 할 일은 서버의 <code className="px-1 py-0.5 bg-slate-200 rounded text-slate-700">todos.txt</code> 파일에 저장됩니다.
+          </p>
+          <div className="mt-3 flex gap-2">
+            <Badge tone="indigo">전체 {total}개</Badge>
+            <Badge tone="green">남은 일 {remaining}개</Badge>
+          </div>
+        </header>
+      );
+    }
+
+    function TodoForm({ onAdd, submitting }) {
+      const [text, setText] = useState('');
+      const [error, setError] = useState('');
+      const inputRef = useRef(null);
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        const value = text.trim();
+        if (!value) {
+          setError('할 일 내용을 입력해 주세요.');
+          return;
+        }
+        setError('');
+        const ok = await onAdd(value);
+        if (ok) {
+          setText('');
+          if (inputRef.current) inputRef.current.focus();
+        }
+      };
+
+      return (
+        <form onSubmit={handleSubmit} className="flex gap-2 items-start">
+          <Input
+            ref={inputRef}
+            value={text}
+            onChange={(e) => { setText(e.target.value); if (error) setError(''); }}
+            placeholder="할 일을 입력하고 Enter"
+            maxLength={200}
+            error={error}
+            aria-label="할 일 입력"
+            disabled={submitting}
+          />
+          <Button type="submit" size="lg" disabled={submitting} className="shrink-0">
+            {submitting ? <Spinner className="text-white" /> : '추가'}
+          </Button>
+        </form>
+      );
+    }
+
+    function FilterTabs({ value, onChange, counts }) {
+      const tabs = [
+        { key: 'all', label: '전체' },
+        { key: 'active', label: '진행중' },
+        { key: 'done', label: '완료' },
+      ];
+      return (
+        <div className="flex gap-1 p-1 bg-slate-100 rounded-lg" role="tablist" aria-label="할 일 필터">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              role="tab"
+              aria-selected={value === tab.key}
+              onClick={() => onChange(tab.key)}
+              className={
+                'flex-1 px-3 py-1.5 text-sm rounded-md transition-colors ' +
+                (value === tab.key
+                  ? 'bg-white text-indigo-600 font-semibold shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700')
+              }
+            >
+              {tab.label} <span className="text-xs">({counts[tab.key]})</span>
+            </button>
+          ))}
+        </div>
+      );
+    }
+
+    function TodoItem({ todo, onToggle, onDelete, busy }) {
+      return (
+        <li className="animate-item flex items-center gap-3 px-4 py-3 border-b border-slate-100 last:border-b-0 hover:bg-slate-50 transition-colors">
+          <input
+            type="checkbox"
+            checked={todo.done}
+            onChange={() => onToggle(todo)}
+            disabled={busy}
+            aria-label={`${todo.text} 완료 표시`}
+            className="w-5 h-5 shrink-0 rounded border-slate-300 text-indigo-600 focus:ring-indigo-400 cursor-pointer"
+          />
+          <div className="flex-1 min-w-0">
+            <p className={`text-sm break-words ${todo.done ? 'line-through text-slate-400' : 'text-slate-800'}`}>
+              {todo.text}
+            </p>
+            <p className="mt-0.5 text-xs text-slate-400">#{todo.id} · {todo.createdAt}</p>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onDelete(todo)}
+            disabled={busy}
+            aria-label={`${todo.text} 삭제`}
+            className="shrink-0"
+          >
+            삭제
+          </Button>
+        </li>
+      );
+    }
+
+    function EmptyState({ filter }) {
+      const messages = {
+        all: '아직 등록된 할 일이 없습니다. 위에 입력해 보세요!',
+        active: '진행 중인 할 일이 없습니다. 🎉',
+        done: '완료한 할 일이 아직 없습니다.',
+      };
+      return (
+        <div className="px-4 py-14 text-center">
+          <p className="text-4xl mb-3">🗂️</p>
+          <p className="text-sm text-slate-500">{messages[filter]}</p>
+        </div>
+      );
+    }
+
+    function FilePreview({ raw, filePath, loading, onRefresh }) {
+      const [open, setOpen] = useState(false);
+      return (
+        <Card className="mt-5 overflow-hidden">
+          <button
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            <span>📄 저장된 txt 파일 보기</span>
+            <span className="text-slate-400">{open ? '▲' : '▼'}</span>
+          </button>
+          {open && (
+            <div className="px-4 pb-4 border-t border-slate-100">
+              <div className="flex items-center justify-between gap-2 py-2">
+                <p className="text-xs text-slate-400 break-all">{filePath}</p>
+                <Button variant="secondary" size="sm" onClick={onRefresh} disabled={loading} className="shrink-0">
+                  새로고침
+                </Button>
+              </div>
+              <pre className="p-3 bg-slate-900 text-slate-100 rounded-lg text-xs overflow-x-auto whitespace-pre">
+                {loading ? '불러오는 중…' : (raw || '(파일이 아직 비어 있습니다)')}
+              </pre>
+            </div>
+          )}
+        </Card>
+      );
+    }
+
+    // ========================================
+    // 📄 Page Component
+    // ========================================
+    function TodoPage() {
+      const [todos, setTodos] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [submitting, setSubmitting] = useState(false);
+      const [busyId, setBusyId] = useState(null);
+      const [error, setError] = useState('');
+      const [filter, setFilter] = useState('all');
+      const [file, setFile] = useState({ raw: '', path: '', loading: false });
+
+      const loadTodos = useCallback(async () => {
+        try {
+          const json = await api('/todos');
+          setTodos(json.data);
+          setError('');
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      }, []);
+
+      const loadFile = useCallback(async () => {
+        setFile((f) => ({ ...f, loading: true }));
+        try {
+          const json = await api('/todos/raw');
+          setFile({ raw: json.data.raw, path: json.data.path, loading: false });
+        } catch (err) {
+          setFile((f) => ({ ...f, loading: false }));
+        }
+      }, []);
+
+      useEffect(() => {
+        loadTodos();
+        loadFile();
+      }, [loadTodos, loadFile]);
+
+      const handleAdd = async (text) => {
+        setSubmitting(true);
+        try {
+          const json = await api('/todos', { method: 'POST', body: JSON.stringify({ text }) });
+          setTodos((prev) => [...prev, json.data]);
+          setError('');
+          loadFile();
+          return true;
+        } catch (err) {
+          setError(err.message);
+          return false;
+        } finally {
+          setSubmitting(false);
+        }
+      };
+
+      const handleToggle = async (todo) => {
+        setBusyId(todo.id);
+        try {
+          const json = await api(`/todos/${todo.id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ done: !todo.done }),
+          });
+          setTodos((prev) => prev.map((t) => (t.id === todo.id ? json.data : t)));
+          setError('');
+          loadFile();
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setBusyId(null);
+        }
+      };
+
+      const handleDelete = async (todo) => {
+        setBusyId(todo.id);
+        try {
+          await api(`/todos/${todo.id}`, { method: 'DELETE' });
+          setTodos((prev) => prev.filter((t) => t.id !== todo.id));
+          setError('');
+          loadFile();
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setBusyId(null);
+        }
+      };
+
+      const handleClearDone = async () => {
+        try {
+          await api('/todos', { method: 'DELETE' });
+          setTodos((prev) => prev.filter((t) => !t.done));
+          setError('');
+          loadFile();
+        } catch (err) {
+          setError(err.message);
+        }
+      };
+
+      const counts = useMemo(() => ({
+        all: todos.length,
+        active: todos.filter((t) => !t.done).length,
+        done: todos.filter((t) => t.done).length,
+      }), [todos]);
+
+      const visible = useMemo(() => {
+        if (filter === 'active') return todos.filter((t) => !t.done);
+        if (filter === 'done') return todos.filter((t) => t.done);
+        return todos;
+      }, [todos, filter]);
+
+      return (
+        <div className="min-h-screen py-8 px-4">
+          <main className="max-w-2xl mx-auto">
+            <Header total={counts.all} remaining={counts.active} />
+
+            <Card className="p-4 sm:p-5">
+              <TodoForm onAdd={handleAdd} submitting={submitting} />
+              <div className="mt-4">
+                <FilterTabs value={filter} onChange={setFilter} counts={counts} />
+              </div>
+            </Card>
+
+            {error && (
+              <div role="alert" className="mt-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                ⚠️ {error}
+              </div>
+            )}
+
+            <Card className="mt-5 overflow-hidden">
+              {loading ? (
+                <div className="flex items-center justify-center gap-2 px-4 py-14 text-slate-400">
+                  <Spinner /> <span className="text-sm">불러오는 중…</span>
+                </div>
+              ) : visible.length === 0 ? (
+                <EmptyState filter={filter} />
+              ) : (
+                <ul>
+                  {visible.map((todo) => (
+                    <TodoItem
+                      key={todo.id}
+                      todo={todo}
+                      onToggle={handleToggle}
+                      onDelete={handleDelete}
+                      busy={busyId === todo.id}
+                    />
+                  ))}
+                </ul>
+              )}
+            </Card>
+
+            {counts.done > 0 && (
+              <div className="mt-3 flex justify-end">
+                <Button variant="danger" size="sm" onClick={handleClearDone}>
+                  완료된 {counts.done}개 삭제
+                </Button>
+              </div>
+            )}
+
+            <FilePreview raw={file.raw} filePath={file.path} loading={file.loading} onRefresh={loadFile} />
+
+            <footer className="mt-8 text-center text-xs text-slate-400">
+              Week 4 · Todo 01 — React(CDN) + Express, 데이터는 txt 파일에 저장
+            </footer>
+          </main>
+        </div>
+      );
+    }
+
+    // ========================================
+    // 🚀 App
+    // ========================================
+    function App() {
+      return <TodoPage />;
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

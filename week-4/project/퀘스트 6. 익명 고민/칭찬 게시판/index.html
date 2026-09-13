@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>마음 우체통 · 익명 고민/칭찬 게시판</title>
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <!-- ⚠️ 모든 CDN은 버전 고정. Babel 은 반드시 7.x (8.x 는 인라인 text/babel 변환이 깨진다) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.25.9/babel.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', 'system-ui', 'sans-serif'] },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { background: radial-gradient(1200px 600px at 10% -10%, #ffe4e6 0%, transparent 60%),
+                        radial-gradient(900px 500px at 110% 0%, #e0f2fe 0%, transparent 55%), #fffaf5; }
+    @keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.35); } 100% { transform: scale(1); } }
+    .animate-pop { animation: pop 320ms ease-out; }
+    @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    .animate-rise { animation: rise 260ms ease-out both; }
+    .no-scrollbar { scrollbar-width: none; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    @media (prefers-reduced-motion: reduce) { .animate-pop, .animate-rise { animation: none; } }
+  </style>
+</head>
+<body class="min-h-screen break-keep font-sans text-stone-800 antialiased">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    // ========================================
+    // React Hooks Destructuring
+    // ========================================
+    const { useState, useEffect, useCallback, useRef, useMemo } = React;
+
+    // ========================================
+    // ⚙️ Config & Helpers
+    // ========================================
+    // 브라우저는 자기 서버의 /api 만 호출한다. DB 접속 정보는 서버 환경변수에만 있다.
+    const API_BASE_URL = '/api';
+    const MAX_CONTENT = 500;
+
+    const CATEGORY_META = {
+      고민: { emoji: '🌧️', badge: 'bg-sky-100 text-sky-800 ring-sky-200', active: 'bg-sky-600 text-white', hint: '털어놓고 싶은 고민이 있나요?' },
+      칭찬: { emoji: '🌟', badge: 'bg-amber-100 text-amber-800 ring-amber-200', active: 'bg-amber-500 text-white', hint: '누군가를, 혹은 나 자신을 칭찬해 주세요.' },
+      응원: { emoji: '📣', badge: 'bg-rose-100 text-rose-800 ring-rose-200', active: 'bg-rose-500 text-white', hint: '힘이 필요한 누군가에게 응원을 보내요.' },
+      감사: { emoji: '💐', badge: 'bg-emerald-100 text-emerald-800 ring-emerald-200', active: 'bg-emerald-600 text-white', hint: '고마웠던 순간을 남겨 보세요.' },
+    };
+    const CATEGORIES = Object.keys(CATEGORY_META);
+
+    const SORT_OPTIONS = [
+      { value: 'latest', label: '최신순' },
+      { value: 'empathy', label: '공감순' },
+    ];
+
+    // 로그인 없이 "한 사람당 공감 한 번"을 구분하기 위한 무작위 익명 ID (비밀정보 아님)
+    function getClientId() {
+      const KEY = 'anon-board-client-id';
+      const make = () => (crypto.randomUUID ? crypto.randomUUID()
+        : Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join(''));
+      try {
+        let id = localStorage.getItem(KEY);
+        if (!id || !/^[A-Za-z0-9-]{16,64}$/.test(id)) {
+          id = make();
+          localStorage.setItem(KEY, id);
+        }
+        return id;
+      } catch (_) {
+        if (!window.__anonClientId) window.__anonClientId = make();
+        return window.__anonClientId;
+      }
+    }
+    const CLIENT_ID = getClientId();
+
+    async function api(endpoint, options = {}) {
+      const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+        ...options,
+        headers: { 'Content-Type': 'application/json', 'X-Client-Id': CLIENT_ID, ...(options.headers || {}) },
+      });
+      let body = null;
+      try { body = await res.json(); } catch (_) { /* 비 JSON 응답 */ }
+      if (!res.ok || !body || !body.success) {
+        throw new Error((body && body.message) || `요청에 실패했습니다. (${res.status})`);
+      }
+      return body.data;
+    }
+
+    function timeAgo(iso) {
+      const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+      if (diff < 60) return '방금 전';
+      if (diff < 3600) return `${Math.floor(diff / 60)}분 전`;
+      if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`;
+      if (diff < 86400 * 7) return `${Math.floor(diff / 86400)}일 전`;
+      return new Date(iso).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+
+    // ========================================
+    // 🎨 Design System Components
+    // ========================================
+    function Button({ variant = 'primary', size = 'md', disabled = false, className = '', children, ...props }) {
+      const variants = {
+        primary: 'bg-stone-900 text-white hover:bg-stone-700 focus-visible:ring-stone-900',
+        secondary: 'bg-white text-stone-700 ring-1 ring-stone-200 hover:bg-stone-50 focus-visible:ring-stone-400',
+        danger: 'bg-rose-600 text-white hover:bg-rose-500 focus-visible:ring-rose-600',
+        ghost: 'text-stone-600 hover:bg-stone-100 focus-visible:ring-stone-300',
+      };
+      const sizes = { sm: 'px-3 py-1.5 text-sm', md: 'px-4 py-2 text-sm', lg: 'px-5 py-3 text-base' };
+      return (
+        <button
+          type="button"
+          disabled={disabled}
+          className={`inline-flex items-center justify-center gap-1.5 rounded-full font-semibold transition
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50
+            ${variants[variant]} ${sizes[size]} ${className}`}
+          {...props}
+        >
+          {children}
+        </button>
+      );
+    }
+
+    function Textarea({ label, value, onChange, placeholder, error, disabled, maxLength, className = '', ...props }) {
+      const id = useMemo(() => `ta-${Math.random().toString(36).slice(2)}`, []);
+      return (
+        <div className={className}>
+          {label && <label htmlFor={id} className="sr-only">{label}</label>}
+          <textarea
+            id={id}
+            value={value}
+            onChange={onChange}
+            placeholder={placeholder}
+            disabled={disabled}
+            maxLength={maxLength}
+            aria-invalid={Boolean(error)}
+            className={`block w-full resize-none rounded-2xl border bg-white/80 px-4 py-3 text-[15px] leading-relaxed
+              placeholder:text-stone-400 focus:outline-none focus:ring-2 disabled:opacity-60
+              ${error ? 'border-rose-300 focus:ring-rose-200' : 'border-stone-200 focus:border-stone-300 focus:ring-stone-200'}`}
+            {...props}
+          />
+          {error && <p role="alert" className="mt-1.5 text-sm text-rose-600">{error}</p>}
+        </div>
+      );
+    }
+
+    function Card({ className = '', children, as: Tag = 'div', ...props }) {
+      return (
+        <Tag className={`rounded-3xl bg-white/90 p-5 shadow-sm ring-1 ring-stone-900/5 backdrop-blur sm:p-6 ${className}`} {...props}>
+          {children}
+        </Tag>
+      );
+    }
+
+    function Badge({ className = '', children }) {
+      return (
+        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${className}`}>
+          {children}
+        </span>
+      );
+    }
+
+    function SegmentedControl({ options, value, onChange, label, className = '' }) {
+      return (
+        <div role="radiogroup" aria-label={label} className={`inline-flex rounded-full bg-stone-100 p-1 ${className}`}>
+          {options.map((opt) => {
+            const selected = opt.value === value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                onClick={() => onChange(opt.value)}
+                className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-400
+                  ${selected ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-800'}`}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+      );
+    }
+
+    function Spinner({ className = '' }) {
+      return <span aria-hidden="true" className={`inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent ${className}`} />;
+    }
+
+    function Toast({ message, tone = 'error', onClose }) {
+      useEffect(() => {
+        if (!message) return;
+        const t = setTimeout(onClose, 3500);
+        return () => clearTimeout(t);
+      }, [message, onClose]);
+      if (!message) return null;
+      const tones = { error: 'bg-rose-600', success: 'bg-stone-900' };
+      return (
+        <div role="status" aria-live="polite" className="fixed inset-x-0 bottom-6 z-50 flex justify-center px-4">
+          <div className={`animate-rise rounded-full px-5 py-3 text-sm font-medium text-white shadow-lg ${tones[tone]}`}>{message}</div>
+        </div>
+      );
+    }
+
+    // ========================================
+    // 🧩 Common/Layout Components
+    // ========================================
+    function Header() {
+      return (
+        <header className="px-4 pb-6 pt-10 text-center sm:pt-14">
+          <p className="text-4xl" aria-hidden="true">💌</p>
+          <h1 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">마음 우체통</h1>
+          <p className="mt-2 text-stone-500">이름 없이 마음을 남기고, 서로의 이야기에 공감을 보내요.</p>
+        </header>
+      );
+    }
+
+    function Footer() {
+      return (
+        <footer className="py-10 text-center text-xs text-stone-400">
+          모든 글은 익명으로 저장됩니다 · 개인정보는 적지 말아 주세요
+        </footer>
+      );
+    }
+
+    // ========================================
+    // 📄 Page Components
+    // ========================================
+    function ComposeForm({ onCreated, onError }) {
+      const [category, setCategory] = useState('고민');
+      const [content, setContent] = useState('');
+      const [error, setError] = useState('');
+      const [submitting, setSubmitting] = useState(false);
+
+      const trimmed = content.trim();
+      const meta = CATEGORY_META[category];
+
+      async function handleSubmit(e) {
+        e.preventDefault();
+        if (!trimmed) return setError('내용을 입력해 주세요.');
+        setSubmitting(true);
+        setError('');
+        try {
+          const post = await api('/posts', { method: 'POST', body: JSON.stringify({ category, content: trimmed }) });
+          setContent('');
+          onCreated(post);
+        } catch (err) {
+          onError(err.message);
+        } finally {
+          setSubmitting(false);
+        }
+      }
+
+      return (
+        <Card as="section" aria-labelledby="compose-title">
+          <form onSubmit={handleSubmit}>
+            <h2 id="compose-title" className="text-lg font-bold">마음 남기기</h2>
+
+            <div role="radiogroup" aria-label="카테고리 선택" className="mt-3 flex flex-wrap gap-2">
+              {CATEGORIES.map((name) => {
+                const selected = name === category;
+                return (
+                  <button
+                    key={name}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => setCategory(name)}
+                    className={`rounded-full px-4 py-2 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-400
+                      ${selected ? `${CATEGORY_META[name].active} shadow-sm` : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}
+                  >
+                    <span aria-hidden="true">{CATEGORY_META[name].emoji}</span> {name}
+                  </button>
+                );
+              })}
+            </div>
+
+            <Textarea
+              className="mt-4"
+              label="내용"
+              rows={4}
+              value={content}
+              maxLength={MAX_CONTENT}
+              placeholder={meta.hint}
+              error={error}
+              disabled={submitting}
+              onChange={(e) => { setContent(e.target.value); if (error) setError(''); }}
+              onKeyDown={(e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') handleSubmit(e); }}
+            />
+
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <span className={`text-xs tabular-nums ${content.length >= MAX_CONTENT ? 'text-rose-600' : 'text-stone-400'}`}>
+                {content.length} / {MAX_CONTENT}
+              </span>
+              <Button type="submit" size="lg" disabled={submitting || !trimmed}>
+                {submitting ? <><Spinner /> 보내는 중</> : '익명으로 올리기'}
+              </Button>
+            </div>
+          </form>
+        </Card>
+      );
+    }
+
+    function EmpathyButton({ post, onToggle }) {
+      const [bump, setBump] = useState(0);
+      return (
+        <button
+          type="button"
+          aria-pressed={post.empathized}
+          aria-label={`공감 ${post.empathyCount}개${post.empathized ? ', 공감함' : ''}`}
+          onClick={() => { if (!post.empathized) setBump((b) => b + 1); onToggle(post); }}
+          className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-semibold ring-1 transition
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400
+            ${post.empathized ? 'bg-rose-50 text-rose-600 ring-rose-200' : 'bg-white text-stone-500 ring-stone-200 hover:text-rose-500 hover:ring-rose-200'}`}
+        >
+          <span key={bump} aria-hidden="true" className={bump ? 'animate-pop inline-block' : 'inline-block'}>
+            {post.empathized ? '❤️' : '🤍'}
+          </span>
+          공감 <span className="tabular-nums">{post.empathyCount}</span>
+        </button>
+      );
+    }
+
+    function PostCard({ post, onToggleEmpathy }) {
+      const meta = CATEGORY_META[post.category] || { emoji: '💬', badge: 'bg-stone-100 text-stone-700 ring-stone-200' };
+      return (
+        <Card as="article" className="animate-rise">
+          <div className="flex items-center justify-between gap-2">
+            <Badge className={meta.badge}><span aria-hidden="true">{meta.emoji}</span>{post.category}</Badge>
+            <time dateTime={post.createdAt} title={new Date(post.createdAt).toLocaleString('ko-KR')} className="text-xs text-stone-400">
+              {timeAgo(post.createdAt)}
+            </time>
+          </div>
+          <p className="mt-3 whitespace-pre-wrap break-words text-[15px] leading-relaxed text-stone-700">{post.content}</p>
+          <div className="mt-4 flex items-center justify-between gap-2">
+            <span className="text-sm text-stone-400">익명의 {post.nickname}</span>
+            <EmpathyButton post={post} onToggle={onToggleEmpathy} />
+          </div>
+        </Card>
+      );
+    }
+
+    function PostListSkeleton() {
+      return (
+        <div className="space-y-4" aria-hidden="true">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="animate-pulse rounded-3xl bg-white/70 p-6 ring-1 ring-stone-900/5">
+              <div className="h-5 w-16 rounded-full bg-stone-200" />
+              <div className="mt-4 h-4 w-11/12 rounded bg-stone-100" />
+              <div className="mt-2 h-4 w-2/3 rounded bg-stone-100" />
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    function BoardPage() {
+      const [sort, setSort] = useState('latest');
+      const [category, setCategory] = useState('');           // '' = 전체
+      const [posts, setPosts] = useState([]);
+      const [hasMore, setHasMore] = useState(false);
+      const [nextOffset, setNextOffset] = useState(0);
+      const [loading, setLoading] = useState(true);
+      const [loadingMore, setLoadingMore] = useState(false);
+      const [loadError, setLoadError] = useState('');
+      const [counts, setCounts] = useState({ categories: [], total: 0 });
+      const [toast, setToast] = useState({ message: '', tone: 'error' });
+      const requestSeq = useRef(0);
+      const pending = useRef(new Set());
+
+      const showToast = useCallback((message, tone = 'error') => setToast({ message, tone }), []);
+      const closeToast = useCallback(() => setToast((t) => ({ ...t, message: '' })), []);
+
+      const loadCounts = useCallback(() => {
+        api('/categories').then(setCounts).catch(() => { /* 탭 숫자는 부가 정보라 조용히 무시 */ });
+      }, []);
+
+      // 정렬/필터가 바뀌면 첫 페이지부터 다시 불러온다 (늦게 도착한 이전 응답은 버림)
+      const loadPosts = useCallback(async () => {
+        const seq = ++requestSeq.current;
+        setLoading(true);
+        setLoadError('');
+        try {
+          const q = new URLSearchParams({ sort, offset: '0' });
+          if (category) q.set('category', category);
+          const data = await api(`/posts?${q}`);
+          if (seq !== requestSeq.current) return;
+          setPosts(data.posts);
+          setHasMore(data.hasMore);
+          setNextOffset(data.nextOffset);
+        } catch (err) {
+          if (seq === requestSeq.current) setLoadError(err.message);
+        } finally {
+          if (seq === requestSeq.current) setLoading(false);
+        }
+      }, [sort, category]);
+
+      useEffect(() => { loadPosts(); }, [loadPosts]);
+      useEffect(() => { loadCounts(); }, [loadCounts]);
+
+      async function loadMore() {
+        const seq = requestSeq.current;
+        setLoadingMore(true);
+        try {
+          const q = new URLSearchParams({ sort, offset: String(nextOffset) });
+          if (category) q.set('category', category);
+          const data = await api(`/posts?${q}`);
+          if (seq !== requestSeq.current) return;
+          // 페이지 사이에 공감 수가 바뀌면 같은 글이 겹칠 수 있어 id 로 중복 제거
+          setPosts((prev) => {
+            const seen = new Set(prev.map((p) => p.id));
+            return [...prev, ...data.posts.filter((p) => !seen.has(p.id))];
+          });
+          setHasMore(data.hasMore);
+          setNextOffset(data.nextOffset);
+        } catch (err) {
+          showToast(err.message);
+        } finally {
+          setLoadingMore(false);
+        }
+      }
+
+      function handleCreated(post) {
+        showToast('마음이 익명으로 전달됐어요 💌', 'success');
+        loadCounts();
+        // 방금 쓴 글이 바로 보이도록 최신순 + (필요하면) 전체로 전환
+        const needsSwitch = sort !== 'latest' || (category && category !== post.category);
+        if (needsSwitch) {
+          setSort('latest');
+          if (category && category !== post.category) setCategory('');
+        } else {
+          setPosts((prev) => [post, ...prev.filter((p) => p.id !== post.id)]);
+          setNextOffset((n) => n + 1);
+        }
+      }
+
+      // 낙관적 업데이트 → 서버 응답으로 확정, 실패 시 되돌림
+      async function handleToggleEmpathy(post) {
+        if (pending.current.has(post.id)) return;
+        pending.current.add(post.id);
+        const patch = (id, fields) => setPosts((prev) => prev.map((p) => (p.id === id ? { ...p, ...fields } : p)));
+        const before = { empathized: post.empathized, empathyCount: post.empathyCount };
+        patch(post.id, { empathized: !post.empathized, empathyCount: post.empathyCount + (post.empathized ? -1 : 1) });
+        try {
+          const data = await api(`/posts/${post.id}/empathy`, { method: 'POST' });
+          patch(post.id, { empathized: data.empathized, empathyCount: data.empathyCount });
+        } catch (err) {
+          patch(post.id, before);
+          showToast(err.message);
+        } finally {
+          pending.current.delete(post.id);
+        }
+      }
+
+      const filterTabs = [{ name: '', label: '전체', count: counts.total }, ...CATEGORIES.map((name) => ({
+        name,
+        label: `${CATEGORY_META[name].emoji} ${name}`,
+        count: (counts.categories.find((c) => c.name === name) || {}).count || 0,
+      }))];
+
+      return (
+        <main className="mx-auto w-full max-w-2xl px-4 sm:px-6">
+          <ComposeForm onCreated={handleCreated} onError={showToast} />
+
+          <section aria-labelledby="list-title" className="mt-10">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h2 id="list-title" className="text-lg font-bold">모두의 이야기</h2>
+              <SegmentedControl label="정렬" options={SORT_OPTIONS} value={sort} onChange={setSort} className="self-start sm:self-auto" />
+            </div>
+
+            <nav aria-label="카테고리 필터" className="no-scrollbar -mx-4 mt-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+              <div className="flex w-max gap-2">
+                {filterTabs.map((tab) => {
+                  const selected = tab.name === category;
+                  return (
+                    <button
+                      key={tab.name || 'all'}
+                      type="button"
+                      aria-pressed={selected}
+                      onClick={() => setCategory(tab.name)}
+                      className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium ring-1 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-400
+                        ${selected ? 'bg-stone-900 text-white ring-stone-900' : 'bg-white/80 text-stone-600 ring-stone-200 hover:bg-white'}`}
+                    >
+                      {tab.label} <span className={`ml-0.5 tabular-nums ${selected ? 'text-stone-300' : 'text-stone-400'}`}>{tab.count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </nav>
+
+            <div className="mt-5" aria-busy={loading}>
+              {loading ? (
+                <PostListSkeleton />
+              ) : loadError ? (
+                <Card className="text-center">
+                  <p className="text-3xl" aria-hidden="true">🥲</p>
+                  <p className="mt-2 font-semibold">글을 불러오지 못했어요</p>
+                  <p className="mt-1 text-sm text-stone-500">{loadError}</p>
+                  <Button variant="secondary" className="mt-4" onClick={loadPosts}>다시 시도</Button>
+                </Card>
+              ) : posts.length === 0 ? (
+                <Card className="py-12 text-center">
+                  <p className="text-4xl" aria-hidden="true">📭</p>
+                  <p className="mt-3 font-semibold">{category ? `아직 '${category}' 글이 없어요` : '아직 글이 없어요'}</p>
+                  <p className="mt-1 text-sm text-stone-500">첫 번째 마음을 남겨 주세요.</p>
+                </Card>
+              ) : (
+                <ul className="space-y-4">
+                  {posts.map((post) => (
+                    <li key={post.id}><PostCard post={post} onToggleEmpathy={handleToggleEmpathy} /></li>
+                  ))}
+                </ul>
+              )}
+
+              {!loading && !loadError && hasMore && (
+                <div className="mt-6 flex justify-center">
+                  <Button variant="secondary" onClick={loadMore} disabled={loadingMore}>
+                    {loadingMore ? <><Spinner /> 불러오는 중</> : '더 보기'}
+                  </Button>
+                </div>
+              )}
+            </div>
+          </section>
+
+          <Toast message={toast.message} tone={toast.tone} onClose={closeToast} />
+        </main>
+      );
+    }
+
+    // ========================================
+    // 🚀 App Component
+    // ========================================
+    function App() {
+      return (
+        <div className="flex min-h-screen flex-col">
+          <Header />
+          <BoardPage />
+          <Footer />
+        </div>
+      );
+    }
+
+    // ========================================
+    // Rendering
+    // ========================================
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "cat-food-shop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "고양이 사료 상품 상세 페이지 + 문의하기 폼 (React CDN + Express + PostgreSQL)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "pg": "^8.16.3"
+  }
+}

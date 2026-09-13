@@ -1,0 +1,5 @@
+node_modules/
+todos.txt
+
+# DB 접속 문자열 메모 (비밀번호 포함, 커밋 금지)
+Untitled-1.txt

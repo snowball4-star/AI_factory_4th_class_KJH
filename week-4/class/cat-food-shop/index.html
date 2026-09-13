@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>냐옹밥상 | 그레인프리 연어&닭가슴살 고양이 사료</title>
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <!-- ⚠️ 모든 CDN 은 버전을 명시적으로 고정한다. Babel 은 반드시 7.x -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.25.9/babel.min.js"></script>
+  <style>
+    /* Tailwind 유틸리티로 표현할 수 없는 것만 */
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-up { animation: fade-up .35s ease-out both; }
+    html { scroll-behavior: smooth; }
+  </style>
+</head>
+<body class="bg-stone-50 text-stone-800">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    // ========================================
+    // React Hooks
+    // ========================================
+    const { useState, useEffect, useMemo, useRef, useCallback } = React;
+
+    const API_BASE_URL = '/api';
+
+    const won = (n) => n.toLocaleString('ko-KR') + '원';
+
+    // ========================================
+    // 📡 Data hook
+    // ========================================
+    function useFetch(endpoint) {
+      const [data, setData] = useState(null);
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState(null);
+
+      useEffect(() => {
+        let alive = true;
+        setLoading(true);
+        fetch(`${API_BASE_URL}${endpoint}`)
+          .then((res) => res.json())
+          .then((json) => {
+            if (!alive) return;
+            if (json.success) setData(json.data);
+            else setError(new Error(json.message || '요청에 실패했습니다.'));
+          })
+          .catch((err) => alive && setError(err))
+          .finally(() => alive && setLoading(false));
+        return () => { alive = false; };
+      }, [endpoint]);
+
+      return { data, loading, error };
+    }
+
+    // ========================================
+    // 🎨 Design System Components
+    // ========================================
+    function Button({ variant = 'primary', size = 'md', disabled, onClick, type = 'button', className = '', children }) {
+      const variants = {
+        primary: 'bg-orange-500 text-white hover:bg-orange-600 focus-visible:outline-orange-500',
+        secondary: 'bg-white text-orange-600 border border-orange-300 hover:bg-orange-50 focus-visible:outline-orange-500',
+        danger: 'bg-red-500 text-white hover:bg-red-600 focus-visible:outline-red-500',
+        ghost: 'bg-transparent text-stone-600 hover:bg-stone-100 focus-visible:outline-stone-400',
+      };
+      const sizes = { sm: 'px-3 py-1.5 text-sm', md: 'px-4 py-2.5 text-sm', lg: 'px-6 py-3.5 text-base' };
+      return (
+        <button
+          type={type}
+          onClick={onClick}
+          disabled={disabled}
+          className={`inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition
+                      focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
+                      disabled:opacity-40 disabled:cursor-not-allowed ${variants[variant]} ${sizes[size]} ${className}`}
+        >
+          {children}
+        </button>
+      );
+    }
+
+    function Card({ className = '', children }) {
+      return (
+        <div className={`bg-white rounded-2xl shadow-sm ring-1 ring-stone-200/70 ${className}`}>
+          {children}
+        </div>
+      );
+    }
+
+    function Badge({ tone = 'orange', className = '', children }) {
+      const tones = {
+        orange: 'bg-orange-100 text-orange-700',
+        stone: 'bg-stone-100 text-stone-600',
+        green: 'bg-emerald-100 text-emerald-700',
+        red: 'bg-red-100 text-red-600',
+      };
+      return (
+        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${tones[tone]} ${className}`}>
+          {children}
+        </span>
+      );
+    }
+
+    const fieldBase =
+      'w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm text-stone-800 placeholder-stone-400 transition ' +
+      'focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 disabled:bg-stone-100';
+
+    function Field({ label, htmlFor, required, error, hint, children }) {
+      return (
+        <div>
+          <label htmlFor={htmlFor} className="mb-1.5 block text-sm font-semibold text-stone-700">
+            {label}
+            {required && <span className="ml-0.5 text-orange-500">*</span>}
+          </label>
+          {children}
+          {error
+            ? <p id={`${htmlFor}-error`} role="alert" className="mt-1.5 text-xs font-medium text-red-600">{error}</p>
+            : hint ? <p className="mt-1.5 text-xs text-stone-400">{hint}</p> : null}
+        </div>
+      );
+    }
+
+    function Input({ id, label, type = 'text', value, onChange, placeholder, error, hint, required, disabled }) {
+      return (
+        <Field label={label} htmlFor={id} required={required} error={error} hint={hint}>
+          <input
+            id={id}
+            type={type}
+            value={value}
+            onChange={onChange}
+            placeholder={placeholder}
+            disabled={disabled}
+            aria-invalid={!!error}
+            aria-describedby={error ? `${id}-error` : undefined}
+            className={`${fieldBase} ${error ? 'border-red-400' : 'border-stone-300'}`}
+          />
+        </Field>
+      );
+    }
+
+    function Textarea({ id, label, value, onChange, placeholder, error, hint, required, disabled, rows = 5 }) {
+      return (
+        <Field label={label} htmlFor={id} required={required} error={error} hint={hint}>
+          <textarea
+            id={id}
+            rows={rows}
+            value={value}
+            onChange={onChange}
+            placeholder={placeholder}
+            disabled={disabled}
+            aria-invalid={!!error}
+            aria-describedby={error ? `${id}-error` : undefined}
+            className={`${fieldBase} resize-y ${error ? 'border-red-400' : 'border-stone-300'}`}
+          />
+        </Field>
+      );
+    }
+
+    function Select({ id, label, value, onChange, options, error, required, disabled, placeholder }) {
+      return (
+        <Field label={label} htmlFor={id} required={required} error={error}>
+          <select
+            id={id}
+            value={value}
+            onChange={onChange}
+            disabled={disabled}
+            aria-invalid={!!error}
+            aria-describedby={error ? `${id}-error` : undefined}
+            className={`${fieldBase} ${error ? 'border-red-400' : 'border-stone-300'}`}
+          >
+            <option value="">{placeholder || '선택해 주세요'}</option>
+            {options.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+          </select>
+        </Field>
+      );
+    }
+
+    function Stars({ rating, className = '' }) {
+      return (
+        <span className={`text-orange-400 ${className}`} aria-label={`5점 만점에 ${rating}점`}>
+          {'★'.repeat(Math.round(rating))}
+          <span className="text-stone-300">{'★'.repeat(5 - Math.round(rating))}</span>
+        </span>
+      );
+    }
+
+    function Spinner({ className = '' }) {
+      return (
+        <span
+          className={`inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent ${className}`}
+          aria-hidden="true"
+        />
+      );
+    }
+
+    // ========================================
+    // 🧩 Layout Components
+    // ========================================
+    function Header() {
+      const links = [
+        { href: '#detail', text: '상품 상세' },
+        { href: '#review', text: '리뷰' },
+        { href: '#inquiry', text: '문의하기' },
+      ];
+      return (
+        <header className="sticky top-0 z-30 border-b border-stone-200 bg-white/90 backdrop-blur">
+          <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+            <a href="#top" className="flex items-center gap-2 text-lg font-extrabold tracking-tight text-stone-900">
+              <span className="text-2xl" aria-hidden="true">🐱</span> 냐옹밥상
+            </a>
+            <nav className="flex items-center gap-1" aria-label="주요 메뉴">
+              {links.map((l) => (
+                <a key={l.href} href={l.href}
+                   className="rounded-lg px-3 py-2 text-sm font-medium text-stone-600 transition hover:bg-stone-100 hover:text-stone-900">
+                  {l.text}
+                </a>
+              ))}
+            </nav>
+          </div>
+        </header>
+      );
+    }
+
+    function Footer() {
+      return (
+        <footer className="mt-20 border-t border-stone-200 bg-white">
+          <div className="mx-auto max-w-6xl px-4 py-10 text-sm text-stone-500">
+            <p className="font-bold text-stone-700">🐱 냐옹밥상</p>
+            <p className="mt-2 leading-relaxed">
+              고객센터 1588-0000 (평일 10:00–17:00, 점심 12:30–13:30) · 반품주소 서울시 어딘가 12길 3<br />
+              본 페이지는 수업 실습용 예시 상품 페이지입니다. 실제 판매 상품이 아닙니다.
+            </p>
+            <p className="mt-4 text-xs text-stone-400">© 2026 냐옹밥상 · AI Factory 4기 week-4 실습</p>
+          </div>
+        </footer>
+      );
+    }
+
+    // ========================================
+    // 📄 상품 이미지 (인라인 SVG 일러스트)
+    // ========================================
+    function ProductImage() {
+      return (
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-orange-100 via-amber-50 to-rose-100 p-6">
+          <svg viewBox="0 0 320 320" className="mx-auto h-72 w-full max-w-sm" role="img" aria-label="고양이 사료 패키지 일러스트">
+            {/* 사료 봉투 */}
+            <defs>
+              <linearGradient id="bag" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#fb923c" />
+                <stop offset="100%" stopColor="#ea580c" />
+              </linearGradient>
+            </defs>
+            <ellipse cx="160" cy="288" rx="96" ry="12" fill="#000" opacity="0.08" />
+            <path d="M86 96 h148 a10 10 0 0 1 10 10 v168 a10 10 0 0 1 -10 10 h-148 a10 10 0 0 1 -10 -10 v-168 a10 10 0 0 1 10 -10 z" fill="url(#bag)" />
+            <path d="M86 96 h148 l-14 -26 h-120 z" fill="#c2410c" />
+            <rect x="100" y="128" width="120" height="86" rx="12" fill="#fff7ed" />
+            <circle cx="160" cy="166" r="26" fill="#fed7aa" />
+            <path d="M143 150 l-4 -18 16 10 z M177 150 l4 -18 -16 10 z" fill="#fdba74" />
+            <circle cx="151" cy="164" r="3.4" fill="#7c2d12" />
+            <circle cx="169" cy="164" r="3.4" fill="#7c2d12" />
+            <path d="M156 174 q4 5 8 0" stroke="#7c2d12" strokeWidth="2.6" fill="none" strokeLinecap="round" />
+            <text x="160" y="204" textAnchor="middle" fontSize="13" fontWeight="bold" fill="#9a3412">GRAIN FREE</text>
+            <text x="160" y="240" textAnchor="middle" fontSize="17" fontWeight="bold" fill="#fff7ed">연어 &amp; 닭가슴살</text>
+            <text x="160" y="262" textAnchor="middle" fontSize="12" fill="#ffedd5">전연령 고양이용 · 2kg</text>
+            {/* 흩어진 사료 알갱이 */}
+            <g fill="#d97706" opacity="0.85">
+              <circle cx="62" cy="268" r="6" /><circle cx="44" cy="282" r="5" /><circle cx="74" cy="288" r="4.5" />
+              <circle cx="258" cy="276" r="6" /><circle cx="276" cy="288" r="5" />
+            </g>
+          </svg>
+          <div className="absolute left-5 top-5 flex flex-col gap-1.5">
+            <Badge tone="red">23% SALE</Badge>
+            <Badge tone="green">무료배송</Badge>
+          </div>
+        </div>
+      );
+    }
+
+    // ========================================
+    // 📄 구매 영역
+    // ========================================
+    function PurchasePanel({ product }) {
+      const [optionId, setOptionId] = useState('kg2');
+      const [qty, setQty] = useState(1);
+      const [added, setAdded] = useState(false);
+
+      const option = product.options.find((o) => o.id === optionId);
+      const soldOut = option.stock === 0;
+      const total = option.price * qty;
+      const discount = Math.round((1 - product.price / product.listPrice) * 100);
+
+      useEffect(() => {
+        setQty(1);
+        setAdded(false);
+      }, [optionId]);
+
+      const handleAdd = () => {
+        setAdded(true);
+        window.setTimeout(() => setAdded(false), 2000);
+      };
+
+      return (
+        <div className="flex flex-col gap-5">
+          <div>
+            <div className="flex flex-wrap gap-1.5">
+              {product.badges.map((b) => <Badge key={b} tone="stone">{b}</Badge>)}
+            </div>
+            <h1 className="mt-3 text-2xl font-extrabold leading-snug text-stone-900 sm:text-3xl">{product.name}</h1>
+            <p className="mt-1.5 text-sm text-stone-500">{product.subtitle}</p>
+            <div className="mt-3 flex items-center gap-2 text-sm">
+              <Stars rating={product.rating} />
+              <span className="font-semibold text-stone-700">{product.rating.toFixed(1)}</span>
+              <a href="#review" className="text-stone-400 underline-offset-2 hover:underline">
+                리뷰 {product.reviewCount.toLocaleString('ko-KR')}개
+              </a>
+            </div>
+          </div>
+
+          <div className="flex items-end gap-3">
+            <span className="text-3xl font-extrabold text-stone-900">{won(product.price)}</span>
+            <span className="pb-1 text-base text-stone-400 line-through">{won(product.listPrice)}</span>
+            <Badge tone="red" className="mb-1.5">{discount}%</Badge>
+          </div>
+
+          <fieldset>
+            <legend className="mb-2 text-sm font-semibold text-stone-700">중량 선택</legend>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {product.options.map((opt) => {
+                const selected = opt.id === optionId;
+                const out = opt.stock === 0;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => !out && setOptionId(opt.id)}
+                    disabled={out}
+                    aria-pressed={selected}
+                    className={`rounded-xl border px-3 py-2.5 text-left text-sm transition
+                      ${selected ? 'border-orange-500 bg-orange-50 ring-1 ring-orange-300' : 'border-stone-300 bg-white hover:border-stone-400'}
+                      ${out ? 'cursor-not-allowed opacity-45' : ''}`}
+                  >
+                    <span className="block font-semibold text-stone-800">{opt.label}</span>
+                    <span className="block text-xs text-stone-500">{out ? '품절' : won(opt.price)}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          <div className="flex items-center justify-between rounded-xl bg-stone-100 px-4 py-3">
+            <span className="text-sm font-semibold text-stone-700">수량</span>
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" size="sm" onClick={() => setQty((q) => Math.max(1, q - 1))} disabled={qty <= 1}>−</Button>
+              <span className="w-8 text-center font-semibold" aria-live="polite">{qty}</span>
+              <Button variant="ghost" size="sm" onClick={() => setQty((q) => Math.min(10, q + 1))} disabled={qty >= 10}>＋</Button>
+            </div>
+          </div>
+
+          <div className="flex items-baseline justify-between border-t border-stone-200 pt-4">
+            <span className="text-sm text-stone-500">총 결제 금액</span>
+            <span className="text-2xl font-extrabold text-orange-600">{won(total)}</span>
+          </div>
+
+          <div className="flex gap-2">
+            <Button variant="secondary" size="lg" className="flex-1" onClick={handleAdd} disabled={soldOut}>
+              {added ? '담았어요 ✓' : '장바구니'}
+            </Button>
+            <Button variant="primary" size="lg" className="flex-[1.4]" disabled={soldOut}>
+              {soldOut ? '품절된 옵션입니다' : '바로 구매하기'}
+            </Button>
+          </div>
+
+          <p className="text-xs leading-relaxed text-stone-400">
+            오늘 오후 2시 이전 주문 시 당일 출고 · 3만원 이상 무료배송 ·
+            개봉 후에도 7일 이내 100% 환불 보장
+          </p>
+        </div>
+      );
+    }
+
+    // ========================================
+    // 📄 상세 정보 탭
+    // ========================================
+    function DetailTabs({ product }) {
+      const [tab, setTab] = useState('info');
+      const tabs = [
+        { id: 'info', label: '상품 정보' },
+        { id: 'nutrition', label: '영양성분' },
+        { id: 'feeding', label: '급여 가이드' },
+      ];
+
+      return (
+        <section id="detail" className="scroll-mt-20">
+          <h2 className="mb-4 text-xl font-extrabold text-stone-900">상품 상세</h2>
+          <Card className="overflow-hidden">
+            <div role="tablist" aria-label="상품 상세 정보" className="flex border-b border-stone-200">
+              {tabs.map((t) => (
+                <button
+                  key={t.id}
+                  role="tab"
+                  aria-selected={tab === t.id}
+                  onClick={() => setTab(t.id)}
+                  className={`flex-1 px-4 py-3.5 text-sm font-semibold transition
+                    ${tab === t.id ? 'border-b-2 border-orange-500 text-orange-600' : 'text-stone-500 hover:bg-stone-50'}`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="p-5 sm:p-6" role="tabpanel">
+              {tab === 'info' && (
+                <div className="animate-fade-up">
+                  <p className="leading-relaxed text-stone-600">{product.summary}</p>
+                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                    {product.features.map((f) => (
+                      <div key={f.title} className="flex gap-3 rounded-xl bg-stone-50 p-4">
+                        <span className="text-2xl" aria-hidden="true">{f.icon}</span>
+                        <div>
+                          <p className="font-semibold text-stone-800">{f.title}</p>
+                          <p className="mt-0.5 text-sm text-stone-500">{f.desc}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {tab === 'nutrition' && (
+                <dl className="animate-fade-up grid gap-x-6 sm:grid-cols-2">
+                  {product.nutrition.map((n) => (
+                    <div key={n.key} className="flex justify-between border-b border-stone-100 py-2.5 text-sm">
+                      <dt className="text-stone-500">{n.key}</dt>
+                      <dd className="font-semibold text-stone-800">{n.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+
+              {tab === 'feeding' && (
+                <div className="animate-fade-up">
+                  <table className="w-full text-sm">
+                    <caption className="mb-3 text-left text-stone-500">1일 권장 급여량 (하루 2~3회 나누어 급여)</caption>
+                    <thead>
+                      <tr className="border-b border-stone-200 text-left text-stone-500">
+                        <th scope="col" className="py-2 font-medium">체중 / 상태</th>
+                        <th scope="col" className="py-2 text-right font-medium">권장량</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {product.feedingGuide.map((g) => (
+                        <tr key={g.weight} className="border-b border-stone-100">
+                          <td className="py-2.5 text-stone-700">{g.weight}</td>
+                          <td className="py-2.5 text-right font-semibold text-stone-800">{g.amount}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <p className="mt-4 text-xs leading-relaxed text-stone-400">
+                    * 기존 사료에서 교체할 때는 7일에 걸쳐 비율을 조금씩 늘려 주세요.
+                    항상 신선한 물을 함께 제공해 주시기 바랍니다.
+                  </p>
+                </div>
+              )}
+            </div>
+          </Card>
+        </section>
+      );
+    }
+
+    // ========================================
+    // 📄 리뷰
+    // ========================================
+    function ReviewSection({ product }) {
+      return (
+        <section id="review" className="scroll-mt-20">
+          <div className="mb-4 flex items-baseline gap-3">
+            <h2 className="text-xl font-extrabold text-stone-900">구매자 리뷰</h2>
+            <span className="text-sm text-stone-500">
+              <Stars rating={product.rating} className="mr-1" />
+              {product.rating.toFixed(1)} / {product.reviewCount.toLocaleString('ko-KR')}개
+            </span>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {product.reviews.map((r) => (
+              <Card key={r.id} className="p-5">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-stone-800">{r.author}</span>
+                  <span className="text-xs text-stone-400">{r.date}</span>
+                </div>
+                <Stars rating={r.rating} className="mt-1 text-sm" />
+                <p className="mt-2.5 text-sm leading-relaxed text-stone-600">{r.body}</p>
+              </Card>
+            ))}
+          </div>
+        </section>
+      );
+    }
+
+    // ========================================
+    // 📄 문의하기 폼
+    // ========================================
+    const EMPTY_FORM = { name: '', email: '', phone: '', category: '', message: '' };
+
+    function validate(form) {
+      const errors = {};
+      if (!form.name.trim()) errors.name = '이름을 입력해 주세요.';
+      else if (form.name.trim().length > 30) errors.name = '이름은 30자 이내로 입력해 주세요.';
+
+      if (!form.email.trim()) errors.email = '이메일을 입력해 주세요.';
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) errors.email = '올바른 이메일 형식이 아닙니다.';
+
+      if (form.phone.trim() && !/^[0-9-+() ]{7,20}$/.test(form.phone.trim()))
+        errors.phone = '숫자와 - 만 사용해 7자 이상 입력해 주세요.';
+
+      if (!form.category) errors.category = '문의 유형을 선택해 주세요.';
+
+      const msg = form.message.trim();
+      if (!msg) errors.message = '문의 내용을 입력해 주세요.';
+      else if (msg.length < 5) errors.message = '문의 내용을 5자 이상 입력해 주세요.';
+      else if (msg.length > 1000) errors.message = '문의 내용은 1000자 이내로 입력해 주세요.';
+
+      return errors;
+    }
+
+    function InquiryForm({ categories, onSubmitted }) {
+      const [form, setForm] = useState(EMPTY_FORM);
+      const [errors, setErrors] = useState({});
+      const [submitting, setSubmitting] = useState(false);
+      const [serverError, setServerError] = useState(null);
+      const [done, setDone] = useState(false);
+      const firstErrorRef = useRef(null);
+
+      const set = (key) => (e) => {
+        const value = e.target.value;
+        setForm((prev) => ({ ...prev, [key]: value }));
+        setErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev));
+      };
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        setServerError(null);
+
+        const nextErrors = validate(form);
+        setErrors(nextErrors);
+        if (Object.keys(nextErrors).length > 0) {
+          const first = document.getElementById(Object.keys(nextErrors)[0]);
+          first && first.focus();
+          return;
+        }
+
+        setSubmitting(true);
+        try {
+          const res = await fetch(`${API_BASE_URL}/inquiries`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: form.name.trim(),
+              email: form.email.trim(),
+              phone: form.phone.trim(),
+              category: form.category,
+              message: form.message.trim(),
+            }),
+          });
+          const json = await res.json();
+          if (!res.ok || !json.success) throw new Error(json.message || '문의 등록에 실패했습니다.');
+
+          setForm(EMPTY_FORM);
+          setDone(true);
+          onSubmitted && onSubmitted(json.data);
+        } catch (err) {
+          setServerError(err.message);
+        } finally {
+          setSubmitting(false);
+        }
+      };
+
+      if (done) {
+        return (
+          <Card className="animate-fade-up p-8 text-center">
+            <p className="text-4xl" aria-hidden="true">🐾</p>
+            <h3 className="mt-3 text-lg font-extrabold text-stone-900">문의가 정상적으로 접수되었습니다</h3>
+            <p className="mt-2 text-sm leading-relaxed text-stone-500">
+              영업일 기준 1일 이내에 입력하신 이메일로 답변드릴게요.<br />
+              문의 내역은 아래 목록에서 확인하실 수 있습니다.
+            </p>
+            <Button variant="secondary" className="mt-5" onClick={() => setDone(false)}>
+              추가로 문의하기
+            </Button>
+          </Card>
+        );
+      }
+
+      return (
+        <Card className="p-5 sm:p-7">
+          <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Input id="name" label="이름" required value={form.name} onChange={set('name')}
+                     placeholder="홍길동" error={errors.name} disabled={submitting} />
+              <Input id="email" label="이메일" type="email" required value={form.email} onChange={set('email')}
+                     placeholder="cat@example.com" hint="답변을 받으실 주소를 정확히 입력해 주세요."
+                     error={errors.email} disabled={submitting} />
+              <Input id="phone" label="연락처" value={form.phone} onChange={set('phone')}
+                     placeholder="010-1234-5678 (선택)" error={errors.phone} disabled={submitting} />
+              <Select id="category" label="문의 유형" required value={form.category} onChange={set('category')}
+                      options={categories} error={errors.category} disabled={submitting} />
+            </div>
+
+            <Textarea id="message" label="문의 내용" required rows={6} value={form.message} onChange={set('message')}
+                      placeholder="예) 3.5kg 노령묘에게 급여하려고 합니다. 알갱이 크기가 어느 정도인가요?"
+                      hint={`${form.message.trim().length} / 1000자`}
+                      error={errors.message} disabled={submitting} />
+
+            {serverError && (
+              <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
+                {serverError}
+              </p>
+            )}
+
+            <label className="flex items-start gap-2 text-xs leading-relaxed text-stone-500">
+              <input type="checkbox" required disabled={submitting}
+                     className="mt-0.5 h-4 w-4 rounded border-stone-300 text-orange-500 focus:ring-orange-400" />
+              <span>답변을 위한 개인정보(이름·이메일·연락처) 수집 및 이용에 동의합니다. 문의 처리 후 3년간 보관됩니다.</span>
+            </label>
+
+            <Button type="submit" variant="primary" size="lg" disabled={submitting} className="w-full sm:w-auto sm:self-end">
+              {submitting ? <><Spinner /> 접수 중…</> : '문의 접수하기'}
+            </Button>
+          </form>
+        </Card>
+      );
+    }
+
+    // ========================================
+    // 📄 최근 문의 목록
+    // ========================================
+    function InquiryList({ items, loading, error }) {
+      if (loading) {
+        return <p className="flex items-center gap-2 py-6 text-sm text-stone-400"><Spinner /> 문의 내역을 불러오는 중…</p>;
+      }
+      if (error) {
+        return (
+          <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
+            문의 내역을 불러오지 못했습니다. ({error})
+          </p>
+        );
+      }
+      if (items.length === 0) {
+        return (
+          <div className="rounded-xl border border-dashed border-stone-300 py-10 text-center text-sm text-stone-400">
+            아직 등록된 문의가 없습니다. 첫 문의를 남겨보세요! 🐈
+          </div>
+        );
+      }
+      return (
+        <ul className="flex flex-col gap-2">
+          {items.map((q) => (
+            <li key={q.id}>
+              <Card className="p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge tone="orange">{q.category}</Badge>
+                  <Badge tone={q.answered ? 'green' : 'stone'}>{q.answered ? '답변완료' : '접수됨'}</Badge>
+                  <span className="text-xs text-stone-500">{q.name}</span>
+                  <span className="ml-auto text-xs text-stone-400">
+                    {new Date(q.createdAt).toLocaleString('ko-KR', { dateStyle: 'medium', timeStyle: 'short' })}
+                  </span>
+                </div>
+                <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-stone-600">{q.message}</p>
+              </Card>
+            </li>
+          ))}
+        </ul>
+      );
+    }
+
+    function InquirySection({ categories }) {
+      const [items, setItems] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState(null);
+
+      const load = useCallback(() => {
+        setLoading(true);
+        fetch(`${API_BASE_URL}/inquiries?limit=10`)
+          .then((res) => res.json())
+          .then((json) => {
+            if (json.success) { setItems(json.data); setError(null); }
+            else setError(json.message);
+          })
+          .catch((err) => setError(err.message))
+          .finally(() => setLoading(false));
+      }, []);
+
+      useEffect(() => { load(); }, [load]);
+
+      return (
+        <section id="inquiry" className="scroll-mt-20">
+          <h2 className="text-xl font-extrabold text-stone-900">상품 문의하기</h2>
+          <p className="mt-1.5 text-sm text-stone-500">
+            급여량·성분·배송 무엇이든 물어보세요. 영업일 기준 1일 이내에 이메일로 답변드립니다.
+          </p>
+
+          <div className="mt-4 grid gap-6 lg:grid-cols-[1.15fr_1fr]">
+            <InquiryForm categories={categories} onSubmitted={load} />
+            <div>
+              <h3 className="mb-3 text-sm font-bold text-stone-700">최근 문의 내역</h3>
+              <InquiryList items={items} loading={loading} error={error} />
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    // ========================================
+    // 🚀 App
+    // ========================================
+    function App() {
+      const { data: product, loading, error } = useFetch('/product');
+
+      if (loading) {
+        return (
+          <div className="flex min-h-screen items-center justify-center gap-2 text-stone-400">
+            <Spinner /> 상품 정보를 불러오는 중…
+          </div>
+        );
+      }
+
+      if (error || !product) {
+        return (
+          <div className="flex min-h-screen items-center justify-center px-4">
+            <Card className="max-w-md p-8 text-center">
+              <p className="text-4xl" aria-hidden="true">😿</p>
+              <h1 className="mt-3 text-lg font-extrabold text-stone-900">상품 정보를 불러오지 못했습니다</h1>
+              <p className="mt-2 text-sm text-stone-500">{error ? error.message : '잠시 후 다시 시도해 주세요.'}</p>
+              <Button variant="secondary" className="mt-5" onClick={() => window.location.reload()}>다시 시도</Button>
+            </Card>
+          </div>
+        );
+      }
+
+      return (
+        <div id="top">
+          <Header />
+          <main className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
+            <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
+              <ProductImage />
+              <PurchasePanel product={product} />
+            </div>
+
+            <div className="mt-16 flex flex-col gap-16">
+              <DetailTabs product={product} />
+              <ReviewSection product={product} />
+              <InquirySection categories={product.inquiryCategories} />
+            </div>
+          </main>
+          <Footer />
+        </div>
+      );
+    }
+
+    // ========================================
+    // Rendering
+    // ========================================
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
