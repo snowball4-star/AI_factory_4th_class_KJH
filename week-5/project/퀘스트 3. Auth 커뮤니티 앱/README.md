@@ -58,6 +58,18 @@ DB의 `CHECK` 제약과 서버 검증 양쪽에서 막는다.
 - 정적 서빙은 `index.html`만 명시적으로 한다. `app.use(express.static(__dirname))`을 쓰면
   같은 폴더의 `.env`가 `/.env`로 노출되기 때문이다.
 
+## 배포 (Vercel)
+
+GitHub 저장소를 Vercel에 Import 하고, **Root Directory** 를
+`week-5/project/퀘스트 3. Auth 커뮤니티 앱` 으로 지정한 뒤 프로젝트 환경변수에
+`DATABASE_URL`(필수)과 `SEED_USERS`(선택)를 등록한다. `PORT` 는 Vercel에서 무시된다.
+
+**로컬 폴더에서 `vercel deploy` 를 직접 실행하지 않는다.** Vercel CLI는 `.vercelignore` 에
+`.env` 를 적어 두어도 `.env` 를 배포 번들에 포함시킨다(실측으로 확인했다 — `.env` 를 둔
+채 배포하면 플랫폼 환경변수를 등록하지 않아도 DB에 붙는다). 저장소에는 `.env` 가
+없으므로 GitHub Import 경로는 안전하다. 추가 안전장치로 `server.js` 는
+`process.env.VERCEL` 이 있으면 `.env` 를 아예 읽지 않는다.
+
 ## DB 스키마
 
 | 테이블 | 주요 컬럼 |

@@ -1,4 +1,7 @@
-# 비밀정보는 배포 번들에 절대 올리지 않는다 (Vercel 환경변수로 설정)
+# ⚠️ 주의: Vercel CLI는 여기에 .env 를 적어도 배포 번들에 포함시킨다 (실측 확인).
+# 따라서 .env 가 있는 폴더에서 `vercel deploy` 를 실행하지 말고,
+# GitHub Import(저장소에는 .env 가 없음) + 프로젝트 환경변수 설정으로 배포한다.
+# server.js 도 process.env.VERCEL 이 있으면 .env 를 읽지 않는다.
 .env
 .env.*
 
@@ -6,6 +9,6 @@
 node_modules
 .playwright-mcp
 
-# 문서·스크린샷은 서버 동작에 필요 없다
+# 문서·스크린샷은 서버 동작에 필요 없다 (이 항목들은 정상적으로 제외된다)
 README.md
 *.png

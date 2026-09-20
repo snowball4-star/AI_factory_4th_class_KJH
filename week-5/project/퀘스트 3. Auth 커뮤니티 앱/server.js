@@ -15,15 +15,19 @@ const crypto = require('crypto');
 const { Pool, types } = require('pg');
 
 // ── Env (.env 직접 파싱, dotenv 의존성 없음) ────
-// 로컬 개발용. Vercel 등에서는 대시보드에 설정한 환경변수를 그대로 쓴다
-try {
-  fs.readFileSync(path.join(__dirname, '.env'), 'utf8').split(/\r?\n/).forEach((line) => {
-    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/i);
-    if (m && !line.trim().startsWith('#') && process.env[m[1]] === undefined) {
-      process.env[m[1]] = m[2].replace(/^['"]|['"]$/g, '');
-    }
-  });
-} catch { /* .env 없음 → 시스템 환경변수 사용 */ }
+// 로컬 개발 전용. 배포 환경에서는 플랫폼에 설정한 환경변수만 쓴다.
+// Vercel은 .vercelignore에 .env를 적어도 배포 번들에 포함시키므로, 여기서 읽지 않도록
+// 막아야 번들에 딸려 들어간 .env가 조용히 사용되는 일을 막을 수 있다
+if (!process.env.VERCEL) {
+  try {
+    fs.readFileSync(path.join(__dirname, '.env'), 'utf8').split(/\r?\n/).forEach((line) => {
+      const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/i);
+      if (m && !line.trim().startsWith('#') && process.env[m[1]] === undefined) {
+        process.env[m[1]] = m[2].replace(/^['"]|['"]$/g, '');
+      }
+    });
+  } catch { /* .env 없음 → 시스템 환경변수 사용 */ }
+}
 
 // ── App init & config ────────────────────────
 const app = express();
