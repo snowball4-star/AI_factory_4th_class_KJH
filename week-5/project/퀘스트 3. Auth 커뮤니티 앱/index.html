@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>우리가족 커뮤니티</title>
+
+  <!-- ⚠️ 모든 CDN 버전 고정. Babel 은 반드시 7.x (8.x 는 인라인 text/babel 미지원) -->
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.25.9/babel.min.js"></script>
+
+  <style>
+    /* Tailwind 유틸리티로 표현하기 어려운 것만 */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-up { animation: fadeUp 0.22s ease-out both; }
+  </style>
+</head>
+<body class="bg-slate-100">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, useMemo, useContext, createContext, useRef } = React;
+
+    // ========================================
+    // ⚙️ 설정 & API 헬퍼
+    // ========================================
+
+    const API_BASE_URL = '/api'; // 절대 localhost 하드코딩 금지
+    const CATEGORIES = ['맛집정보', '여행정보', '생활정보', '포트폴리오'];
+
+    // 토큰을 localStorage에 저장하던 이전 버전의 흔적을 지운다
+    try { localStorage.removeItem('family-community-token'); } catch (e) { /* 저장소 접근 불가 */ }
+
+    const CATEGORY_STYLE = {
+      '맛집정보': 'bg-rose-100 text-rose-700 ring-rose-200',
+      '여행정보': 'bg-sky-100 text-sky-700 ring-sky-200',
+      '생활정보': 'bg-emerald-100 text-emerald-700 ring-emerald-200',
+      '포트폴리오': 'bg-violet-100 text-violet-700 ring-violet-200',
+    };
+
+    // 로그인 세션은 서버가 내려주는 HttpOnly 쿠키로만 오간다.
+    // 아이디·비밀번호는 물론 토큰도 localStorage 등 브라우저 저장소에 남기지 않는다
+    async function apiRequest(endpoint, options = {}) {
+      const headers = { ...(options.headers || {}) };
+      if (options.body) headers['Content-Type'] = 'application/json';
+
+      const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+        ...options,
+        credentials: 'same-origin',
+        headers,
+        body: options.body ? JSON.stringify(options.body) : undefined,
+      });
+
+      let payload = null;
+      try {
+        payload = await res.json();
+      } catch (e) {
+        payload = null;
+      }
+
+      if (!res.ok || !payload || payload.success === false) {
+        const message = (payload && payload.message) || `요청에 실패했습니다. (${res.status})`;
+        const error = new Error(message);
+        error.status = res.status;
+        throw error;
+      }
+      return payload;
+    }
+
+    function formatDateTime(iso) {
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return '-';
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+
+    function formatRelative(iso) {
+      const diff = Date.now() - new Date(iso).getTime();
+      const minute = 60 * 1000;
+      if (diff < minute) return '방금 전';
+      if (diff < 60 * minute) return `${Math.floor(diff / minute)}분 전`;
+      if (diff < 24 * 60 * minute) return `${Math.floor(diff / (60 * minute))}시간 전`;
+      if (diff < 7 * 24 * 60 * minute) return `${Math.floor(diff / (24 * 60 * minute))}일 전`;
+      return formatDateTime(iso);
+    }
+
+    // ========================================
+    // 🎨 Design System Components
+    // ========================================
+
+    function Button({ variant = 'primary', size = 'md', type = 'button', disabled = false, onClick, className = '', children, ...rest }) {
+      const base = 'inline-flex items-center justify-center gap-1.5 rounded-lg font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed';
+      const variants = {
+        primary: 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm',
+        secondary: 'bg-white text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50',
+        danger: 'bg-rose-600 text-white hover:bg-rose-700 shadow-sm',
+        ghost: 'text-slate-600 hover:bg-slate-100',
+      };
+      const sizes = { sm: 'px-3 py-1.5 text-sm', md: 'px-4 py-2 text-sm', lg: 'px-5 py-2.5 text-base' };
+
+      return (
+        <button
+          type={type}
+          disabled={disabled}
+          onClick={onClick}
+          className={`${base} ${variants[variant]} ${sizes[size]} ${className}`}
+          {...rest}
+        >
+          {children}
+        </button>
+      );
+    }
+
+    function Input({ label, type = 'text', value, onChange, placeholder, error, disabled = false, id, className = '', ...rest }) {
+      const inputId = id || `input-${label || placeholder || 'field'}`;
+      return (
+        <div className={className}>
+          {label && (
+            <label htmlFor={inputId} className="block text-sm font-medium text-slate-700 mb-1.5">{label}</label>
+          )}
+          <input
+            id={inputId}
+            type={type}
+            value={value}
+            onChange={onChange}
+            placeholder={placeholder}
+            disabled={disabled}
+            aria-invalid={error ? 'true' : 'false'}
+            className={`w-full rounded-lg border px-3 py-2 text-sm text-slate-900 placeholder-slate-400 transition focus:outline-none focus:ring-2 disabled:bg-slate-100 ${
+              error ? 'border-rose-400 focus:ring-rose-300' : 'border-slate-300 focus:ring-indigo-300'
+            }`}
+            {...rest}
+          />
+          {error && <p className="mt-1.5 text-xs text-rose-600">{error}</p>}
+        </div>
+      );
+    }
+
+    function Textarea({ label, value, onChange, placeholder, rows = 10, error, disabled = false, id, className = '' }) {
+      const areaId = id || 'textarea-field';
+      return (
+        <div className={className}>
+          {label && (
+            <label htmlFor={areaId} className="block text-sm font-medium text-slate-700 mb-1.5">{label}</label>
+          )}
+          <textarea
+            id={areaId}
+            value={value}
+            onChange={onChange}
+            placeholder={placeholder}
+            rows={rows}
+            disabled={disabled}
+            aria-invalid={error ? 'true' : 'false'}
+            className={`w-full rounded-lg border px-3 py-2 text-sm leading-relaxed text-slate-900 placeholder-slate-400 transition focus:outline-none focus:ring-2 disabled:bg-slate-100 ${
+              error ? 'border-rose-400 focus:ring-rose-300' : 'border-slate-300 focus:ring-indigo-300'
+            }`}
+          />
+          {error && <p className="mt-1.5 text-xs text-rose-600">{error}</p>}
+        </div>
+      );
+    }
+
+    function Card({ className = '', children, ...rest }) {
+      return (
+        <div className={`rounded-xl bg-white shadow-sm ring-1 ring-slate-200 ${className}`} {...rest}>
+          {children}
+        </div>
+      );
+    }
+
+    function Badge({ category, className = '' }) {
+      const style = CATEGORY_STYLE[category] || 'bg-slate-100 text-slate-700 ring-slate-200';
+      return (
+        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ${style} ${className}`}>
+          {category}
+        </span>
+      );
+    }
+
+    function Modal({ isOpen, onClose, title, size = 'md', children }) {
+      useEffect(() => {
+        if (!isOpen) return undefined;
+        const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+      }, [isOpen, onClose]);
+
+      if (!isOpen) return null;
+
+      const sizes = { sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-lg' };
+
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4" role="dialog" aria-modal="true">
+          <div className={`w-full ${sizes[size]} rounded-xl bg-white p-5 shadow-xl animate-fade-up`}>
+            {title && <h2 className="text-lg font-bold text-slate-900">{title}</h2>}
+            <div className="mt-3">{children}</div>
+          </div>
+        </div>
+      );
+    }
+
+    function Spinner({ label = '불러오는 중…' }) {
+      return (
+        <div className="flex flex-col items-center justify-center gap-3 py-16 text-slate-500" role="status">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-200 border-t-indigo-600"></div>
+          <p className="text-sm">{label}</p>
+        </div>
+      );
+    }
+
+    function EmptyState({ icon = '📭', title, description, action }) {
+      return (
+        <div className="flex flex-col items-center justify-center gap-2 px-6 py-16 text-center">
+          <div className="text-4xl" aria-hidden="true">{icon}</div>
+          <p className="text-base font-semibold text-slate-700">{title}</p>
+          {description && <p className="max-w-sm text-sm text-slate-500">{description}</p>}
+          {action && <div className="mt-3">{action}</div>}
+        </div>
+      );
+    }
+
+    function Alert({ tone = 'error', children }) {
+      if (!children) return null;
+      const tones = {
+        error: 'bg-rose-50 text-rose-700 ring-rose-200',
+        info: 'bg-sky-50 text-sky-700 ring-sky-200',
+      };
+      return (
+        <div className={`rounded-lg px-3 py-2 text-sm ring-1 ${tones[tone]}`} role="alert">
+          {children}
+        </div>
+      );
+    }
+
+    // ========================================
+    // 🔀 Router (해시 기반)
+    // ========================================
+
+    const RouterContext = createContext(null);
+
+    function matchRoute(pattern, pathname) {
+      const patternParts = pattern.split('/').filter(Boolean);
+      const pathParts = pathname.split('/').filter(Boolean);
+      if (patternParts.length !== pathParts.length) return null;
+
+      const params = {};
+      for (let i = 0; i < patternParts.length; i += 1) {
+        const pp = patternParts[i];
+        if (pp.startsWith(':')) {
+          params[pp.slice(1)] = decodeURIComponent(pathParts[i]);
+        } else if (pp !== pathParts[i]) {
+          return null;
+        }
+      }
+      return params;
+    }
+
+    function Router({ children }) {
+      const readHash = () => window.location.hash.replace(/^#/, '') || '/';
+      const [path, setPath] = useState(readHash);
+
+      useEffect(() => {
+        const onHashChange = () => {
+          setPath(readHash());
+          window.scrollTo(0, 0);
+        };
+        window.addEventListener('hashchange', onHashChange);
+        return () => window.removeEventListener('hashchange', onHashChange);
+      }, []);
+
+      const navigate = useCallback((to, { replace = false } = {}) => {
+        const target = `#${to}`;
+        if (replace) {
+          window.location.replace(target);
+        } else {
+          window.location.hash = to;
+        }
+      }, []);
+
+      const value = useMemo(() => ({ path, navigate, params: {} }), [path, navigate]);
+
+      return <RouterContext.Provider value={value}>{children}</RouterContext.Provider>;
+    }
+
+    function useRouter() {
+      return useContext(RouterContext);
+    }
+
+    const ParamsContext = createContext({});
+    function useParams() {
+      return useContext(ParamsContext);
+    }
+
+    function Routes({ children }) {
+      const { path } = useRouter();
+      const routes = React.Children.toArray(children);
+
+      for (const route of routes) {
+        const params = matchRoute(route.props.path, path);
+        if (params) {
+          return <ParamsContext.Provider value={params}>{route.props.element}</ParamsContext.Provider>;
+        }
+      }
+
+      return (
+        <EmptyState
+          icon="🧭"
+          title="페이지를 찾을 수 없습니다"
+          description={`요청한 경로: ${path}`}
+          action={<Link to="/"><Button>목록으로 돌아가기</Button></Link>}
+        />
+      );
+    }
+
+    function Route() {
+      return null; // Routes 가 props 만 읽는다
+    }
+
+    function Link({ to, className = '', children, ...rest }) {
+      return (
+        <a href={`#${to}`} className={className} {...rest}>{children}</a>
+      );
+    }
+
+    // ========================================
+    // 🔐 Auth Context
+    // ========================================
+
+    const AuthContext = createContext(null);
+
+    function AuthProvider({ children }) {
+      const [user, setUser] = useState(null);
+      const [checking, setChecking] = useState(true);
+
+      // 쿠키는 스크립트에서 읽을 수 없으므로, 로그인 여부는 서버에 물어본다
+      useEffect(() => {
+        let active = true;
+        apiRequest('/auth/me')
+          .then((res) => { if (active) setUser(res.data); })
+          .catch(() => { /* 비로그인 또는 만료된 세션 */ })
+          .finally(() => { if (active) setChecking(false); });
+        return () => { active = false; };
+      }, []);
+
+      const login = useCallback(async (username, password) => {
+        const res = await apiRequest('/auth/login', { method: 'POST', body: { username, password } });
+        setUser(res.data);
+        return res.data;
+      }, []);
+
+      const signup = useCallback(async (username, password, displayName) => {
+        const res = await apiRequest('/auth/signup', { method: 'POST', body: { username, password, displayName } });
+        setUser(res.data);
+        return res.data;
+      }, []);
+
+      const logout = useCallback(async () => {
+        try {
+          await apiRequest('/auth/logout', { method: 'POST' });
+        } catch (e) {
+          // 세션이 이미 만료된 경우에도 화면 상태는 정리한다
+        }
+        setUser(null);
+      }, []);
+
+      const value = useMemo(() => ({ user, checking, login, signup, logout }), [user, checking, login, signup, logout]);
+
+      return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    }
+
+    function useAuth() {
+      return useContext(AuthContext);
+    }
+
+    // ========================================
+    // 🧩 Common / Layout Components
+    // ========================================
+
+    function Header() {
+      const { user, logout } = useAuth();
+      const { navigate } = useRouter();
+
+      const handleLogout = async () => {
+        await logout();
+        navigate('/');
+      };
+
+      return (
+        <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
+          <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-4 py-3">
+            <Link to="/" className="flex items-center gap-2 text-base font-extrabold text-slate-900 sm:text-lg">
+              <span aria-hidden="true">👨‍👩‍👧</span>
+              <span>우리가족 커뮤니티</span>
+            </Link>
+
+            <nav className="flex items-center gap-2" aria-label="주요 메뉴">
+              {user ? (
+                <>
+                  <span className="hidden text-sm text-slate-600 sm:inline">
+                    <b className="font-semibold text-slate-900">{user.displayName}</b>님
+                  </span>
+                  <Link to="/write"><Button size="sm">글쓰기</Button></Link>
+                  <Button size="sm" variant="ghost" onClick={handleLogout}>로그아웃</Button>
+                </>
+              ) : (
+                <>
+                  <Link to="/signup"><Button size="sm" variant="secondary">회원가입</Button></Link>
+                  <Link to="/login"><Button size="sm">로그인</Button></Link>
+                </>
+              )}
+            </nav>
+          </div>
+        </header>
+      );
+    }
+
+    function Footer() {
+      return (
+        <footer className="mx-auto max-w-4xl px-4 py-10 text-center text-xs text-slate-400">
+          우리가족 커뮤니티 · Express + React 단일 파일 데모 (데이터는 서버 메모리에 저장됩니다)
+        </footer>
+      );
+    }
+
+    function CategoryFilter({ value, onChange }) {
+      const options = ['전체', ...CATEGORIES];
+      return (
+        <div className="flex flex-wrap gap-2" role="group" aria-label="카테고리 필터">
+          {options.map((option) => {
+            const active = value === option;
+            return (
+              <button
+                key={option}
+                type="button"
+                onClick={() => onChange(option)}
+                aria-pressed={active}
+                className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
+                  active
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                {option}
+              </button>
+            );
+          })}
+        </div>
+      );
+    }
+
+    function PostRow({ post }) {
+      return (
+        <Link
+          to={`/posts/${post.id}`}
+          className="block px-4 py-4 transition hover:bg-slate-50 focus:outline-none focus-visible:bg-slate-50 sm:px-5"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <Badge category={post.category} />
+                <span className="truncate text-xs text-slate-400 sm:hidden">{formatRelative(post.createdAt)}</span>
+              </div>
+              <h3 className="mt-1.5 truncate text-[15px] font-semibold text-slate-900">{post.title}</h3>
+              <p className="mt-1 truncate text-sm text-slate-500">{post.excerpt}</p>
+              <p className="mt-2 text-xs text-slate-500">
+                <span className="font-medium text-slate-700">{post.authorName}</span>
+                <span className="mx-1.5 text-slate-300">·</span>
+                <span>{formatDateTime(post.createdAt)}</span>
+              </p>
+            </div>
+            <span className="hidden shrink-0 text-xs text-slate-400 sm:block">{formatRelative(post.createdAt)}</span>
+          </div>
+        </Link>
+      );
+    }
+
+    function PostForm({ mode, initial, onSubmit, submitting, error }) {
+      const { navigate } = useRouter();
+      const [title, setTitle] = useState(initial ? initial.title : '');
+      const [category, setCategory] = useState(initial ? initial.category : CATEGORIES[0]);
+      const [content, setContent] = useState(initial ? initial.content : '');
+      const [fieldErrors, setFieldErrors] = useState({});
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        const errors = {};
+        if (!title.trim()) errors.title = '제목을 입력해 주세요.';
+        if (!content.trim()) errors.content = '내용을 입력해 주세요.';
+        setFieldErrors(errors);
+        if (Object.keys(errors).length > 0) return;
+        onSubmit({ title: title.trim(), category, content: content.trim() });
+      };
+
+      return (
+        <Card className="p-5 sm:p-6">
+          <h1 className="text-xl font-bold text-slate-900">{mode === 'edit' ? '게시글 수정' : '새 글 쓰기'}</h1>
+
+          <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+            <div>
+              <span className="block text-sm font-medium text-slate-700 mb-1.5">카테고리</span>
+              <div className="flex flex-wrap gap-2">
+                {CATEGORIES.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setCategory(c)}
+                    aria-pressed={category === c}
+                    className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
+                      category === c
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <Input
+              id="post-title"
+              label="제목"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="제목을 입력하세요"
+              error={fieldErrors.title}
+              maxLength={100}
+            />
+
+            <Textarea
+              id="post-content"
+              label="내용"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="가족과 나누고 싶은 내용을 적어 주세요"
+              error={fieldErrors.content}
+              rows={12}
+            />
+
+            <Alert>{error}</Alert>
+
+            <div className="flex justify-end gap-2 pt-1">
+              <Button variant="secondary" onClick={() => navigate(mode === 'edit' ? `/posts/${initial.id}` : '/')}>
+                취소
+              </Button>
+              <Button type="submit" disabled={submitting}>
+                {submitting ? '저장 중…' : mode === 'edit' ? '수정 완료' : '등록하기'}
+              </Button>
+            </div>
+          </form>
+        </Card>
+      );
+    }
+
+    // ========================================
+    // 📄 Page Components
+    // ========================================
+
+    function PostListPage() {
+      const { user } = useAuth();
+      const [posts, setPosts] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState('');
+      const [category, setCategory] = useState('전체');
+      const [keyword, setKeyword] = useState('');
+
+      useEffect(() => {
+        let active = true;
+        setLoading(true);
+        setError('');
+
+        const params = new URLSearchParams();
+        if (category !== '전체') params.set('category', category);
+        if (keyword.trim()) params.set('q', keyword.trim());
+        const query = params.toString();
+
+        apiRequest(`/posts${query ? `?${query}` : ''}`)
+          .then((res) => { if (active) setPosts(res.data); })
+          .catch((err) => { if (active) setError(err.message); })
+          .finally(() => { if (active) setLoading(false); });
+
+        return () => { active = false; };
+      }, [category, keyword]);
+
+      return (
+        <div className="space-y-5">
+          <section className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-6 text-white shadow-sm sm:px-7 sm:py-8">
+            <h1 className="text-xl font-extrabold sm:text-2xl">가족 게시판</h1>
+            <p className="mt-1.5 text-sm text-indigo-100">
+              맛집·여행·생활 정보와 포트폴리오를 가족과 함께 기록해요.
+            </p>
+            {!user && (
+              <p className="mt-3 text-sm text-indigo-100">
+                글을 쓰려면 <Link to="/login" className="font-semibold text-white underline underline-offset-2">로그인</Link>이 필요합니다.
+              </p>
+            )}
+          </section>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <CategoryFilter value={category} onChange={setCategory} />
+            <div className="sm:w-56">
+              <Input
+                id="search"
+                type="search"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                placeholder="제목·내용·작성자 검색"
+                aria-label="게시글 검색"
+              />
+            </div>
+          </div>
+
+          <Card>
+            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 sm:px-5">
+              <p className="text-sm font-semibold text-slate-700">
+                전체 {posts.length}개 <span className="font-normal text-slate-400">· 최신순</span>
+              </p>
+              {user && <Link to="/write"><Button size="sm" variant="secondary">글쓰기</Button></Link>}
+            </div>
+
+            {loading ? (
+              <Spinner />
+            ) : error ? (
+              <div className="p-4"><Alert>{error}</Alert></div>
+            ) : posts.length === 0 ? (
+              <EmptyState
+                title="아직 게시글이 없습니다"
+                description={
+                  category === '전체' && !keyword
+                    ? '첫 번째 글을 남겨 보세요.'
+                    : '조건에 맞는 게시글이 없습니다. 필터나 검색어를 바꿔 보세요.'
+                }
+                action={user ? <Link to="/write"><Button>글쓰기</Button></Link> : <Link to="/login"><Button>로그인하고 글쓰기</Button></Link>}
+              />
+            ) : (
+              <ul className="divide-y divide-slate-100">
+                {posts.map((post) => (
+                  <li key={post.id}><PostRow post={post} /></li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </div>
+      );
+    }
+
+    function PostDetailPage() {
+      const { id } = useParams();
+      const { user } = useAuth();
+      const { navigate } = useRouter();
+
+      const [post, setPost] = useState(null);
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState('');
+      const [confirmOpen, setConfirmOpen] = useState(false);
+      const [deleting, setDeleting] = useState(false);
+
+      useEffect(() => {
+        let active = true;
+        setLoading(true);
+        setError('');
+        apiRequest(`/posts/${id}`)
+          .then((res) => { if (active) setPost(res.data); })
+          .catch((err) => { if (active) setError(err.message); })
+          .finally(() => { if (active) setLoading(false); });
+        return () => { active = false; };
+      }, [id]);
+
+      const handleDelete = async () => {
+        setDeleting(true);
+        try {
+          await apiRequest(`/posts/${id}`, { method: 'DELETE' });
+          setConfirmOpen(false);
+          navigate('/');
+        } catch (err) {
+          setError(err.message);
+          setConfirmOpen(false);
+        } finally {
+          setDeleting(false);
+        }
+      };
+
+      if (loading) return <Card><Spinner /></Card>;
+
+      if (error && !post) {
+        return (
+          <Card>
+            <EmptyState
+              icon="🔍"
+              title="게시글을 볼 수 없습니다"
+              description={error}
+              action={<Link to="/"><Button>목록으로</Button></Link>}
+            />
+          </Card>
+        );
+      }
+
+      const isOwner = user && post.authorId === user.id;
+      const edited = post.updatedAt !== post.createdAt;
+
+      return (
+        <div className="space-y-4 animate-fade-up">
+          <Link to="/" className="inline-flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-slate-800">
+            ← 목록으로
+          </Link>
+
+          <Card className="p-5 sm:p-7">
+            <Badge category={post.category} />
+            <h1 className="mt-3 text-xl font-bold leading-snug text-slate-900 sm:text-2xl">{post.title}</h1>
+
+            <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-slate-100 pb-4 text-sm text-slate-500">
+              <span className="font-semibold text-slate-800">{post.authorName}</span>
+              <span className="text-slate-300">·</span>
+              <span>{formatDateTime(post.createdAt)}</span>
+              {edited && (
+                <>
+                  <span className="text-slate-300">·</span>
+                  <span className="text-xs text-slate-400">{formatDateTime(post.updatedAt)} 수정됨</span>
+                </>
+              )}
+            </div>
+
+            <div className="mt-5 whitespace-pre-wrap text-[15px] leading-7 text-slate-800">
+              {post.content}
+            </div>
+
+            <Alert>{error}</Alert>
+
+            {isOwner && (
+              <div className="mt-7 flex justify-end gap-2 border-t border-slate-100 pt-4">
+                <Link to={`/posts/${post.id}/edit`}><Button variant="secondary" size="sm">수정</Button></Link>
+                <Button variant="danger" size="sm" onClick={() => setConfirmOpen(true)}>삭제</Button>
+              </div>
+            )}
+          </Card>
+
+          <Modal isOpen={confirmOpen} onClose={() => setConfirmOpen(false)} title="게시글을 삭제할까요?" size="sm">
+            <p className="text-sm text-slate-600">삭제한 글은 되돌릴 수 없습니다.</p>
+            <div className="mt-5 flex justify-end gap-2">
+              <Button variant="secondary" size="sm" onClick={() => setConfirmOpen(false)}>취소</Button>
+              <Button variant="danger" size="sm" onClick={handleDelete} disabled={deleting}>
+                {deleting ? '삭제 중…' : '삭제하기'}
+              </Button>
+            </div>
+          </Modal>
+        </div>
+      );
+    }
+
+    function WritePage() {
+      const { user, checking } = useAuth();
+      const { navigate } = useRouter();
+      const [submitting, setSubmitting] = useState(false);
+      const [error, setError] = useState('');
+
+      useEffect(() => {
+        if (!checking && !user) navigate('/login', { replace: true });
+      }, [checking, user, navigate]);
+
+      if (checking || !user) return <Card><Spinner label="로그인 상태를 확인하는 중…" /></Card>;
+
+      const handleSubmit = async (values) => {
+        setSubmitting(true);
+        setError('');
+        try {
+          const res = await apiRequest('/posts', { method: 'POST', body: values });
+          navigate(`/posts/${res.data.id}`);
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setSubmitting(false);
+        }
+      };
+
+      return <PostForm mode="create" onSubmit={handleSubmit} submitting={submitting} error={error} />;
+    }
+
+    function EditPage() {
+      const { id } = useParams();
+      const { user, checking } = useAuth();
+      const { navigate } = useRouter();
+
+      const [post, setPost] = useState(null);
+      const [loading, setLoading] = useState(true);
+      const [loadError, setLoadError] = useState('');
+      const [submitting, setSubmitting] = useState(false);
+      const [error, setError] = useState('');
+
+      useEffect(() => {
+        let active = true;
+        apiRequest(`/posts/${id}`)
+          .then((res) => { if (active) setPost(res.data); })
+          .catch((err) => { if (active) setLoadError(err.message); })
+          .finally(() => { if (active) setLoading(false); });
+        return () => { active = false; };
+      }, [id]);
+
+      useEffect(() => {
+        if (!checking && !user) navigate('/login', { replace: true });
+      }, [checking, user, navigate]);
+
+      if (loading || checking) return <Card><Spinner /></Card>;
+
+      if (loadError) {
+        return (
+          <Card>
+            <EmptyState icon="🔍" title="게시글을 불러올 수 없습니다" description={loadError}
+              action={<Link to="/"><Button>목록으로</Button></Link>} />
+          </Card>
+        );
+      }
+
+      if (user && post.authorId !== user.id) {
+        return (
+          <Card>
+            <EmptyState icon="🔒" title="수정 권한이 없습니다" description="본인이 작성한 글만 수정할 수 있습니다."
+              action={<Link to={`/posts/${id}`}><Button>글 보기</Button></Link>} />
+          </Card>
+        );
+      }
+
+      const handleSubmit = async (values) => {
+        setSubmitting(true);
+        setError('');
+        try {
+          await apiRequest(`/posts/${id}`, { method: 'PUT', body: values });
+          navigate(`/posts/${id}`);
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setSubmitting(false);
+        }
+      };
+
+      return <PostForm mode="edit" initial={post} onSubmit={handleSubmit} submitting={submitting} error={error} />;
+    }
+
+    function LoginPage() {
+      const { user, login } = useAuth();
+      const { navigate } = useRouter();
+      const [username, setUsername] = useState('');
+      const [password, setPassword] = useState('');
+      const [error, setError] = useState('');
+      const [submitting, setSubmitting] = useState(false);
+
+      useEffect(() => {
+        if (user) navigate('/', { replace: true });
+      }, [user, navigate]);
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        setSubmitting(true);
+        setError('');
+        try {
+          await login(username, password);
+          navigate('/');
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setSubmitting(false);
+        }
+      };
+
+      return (
+        <div className="mx-auto max-w-md">
+          <Card className="p-6 sm:p-7">
+            <h1 className="text-xl font-bold text-slate-900">로그인</h1>
+            <p className="mt-1 text-sm text-slate-500">가족 계정으로 로그인하고 글을 남겨 보세요.</p>
+
+            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+              <Input
+                id="login-username"
+                label="아이디"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="아이디를 입력하세요"
+                autoComplete="username"
+              />
+              <Input
+                id="login-password"
+                label="비밀번호"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••"
+                autoComplete="current-password"
+              />
+              <Alert>{error}</Alert>
+              <Button type="submit" size="lg" className="w-full" disabled={submitting}>
+                {submitting ? '로그인 중…' : '로그인'}
+              </Button>
+            </form>
+
+            <p className="mt-5 text-center text-sm text-slate-500">
+              계정이 없으신가요? <Link to="/signup" className="font-semibold text-indigo-600 hover:underline">회원가입</Link>
+            </p>
+          </Card>
+        </div>
+      );
+    }
+
+    function SignupPage() {
+      const { user, signup } = useAuth();
+      const { navigate } = useRouter();
+      const [username, setUsername] = useState('');
+      const [displayName, setDisplayName] = useState('');
+      const [password, setPassword] = useState('');
+      const [passwordConfirm, setPasswordConfirm] = useState('');
+      const [fieldErrors, setFieldErrors] = useState({});
+      const [error, setError] = useState('');
+      const [submitting, setSubmitting] = useState(false);
+
+      useEffect(() => {
+        if (user) navigate('/', { replace: true });
+      }, [user, navigate]);
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        const errors = {};
+        if (username.trim().length < 3) errors.username = '아이디는 3자 이상이어야 합니다.';
+        if (password.length < 6) errors.password = '비밀번호는 6자 이상이어야 합니다.';
+        if (password !== passwordConfirm) errors.passwordConfirm = '비밀번호가 일치하지 않습니다.';
+        setFieldErrors(errors);
+        if (Object.keys(errors).length > 0) return;
+
+        setSubmitting(true);
+        setError('');
+        try {
+          await signup(username.trim(), password, displayName.trim());
+          navigate('/');
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setSubmitting(false);
+        }
+      };
+
+      return (
+        <div className="mx-auto max-w-md">
+          <Card className="p-6 sm:p-7">
+            <h1 className="text-xl font-bold text-slate-900">회원가입</h1>
+            <p className="mt-1 text-sm text-slate-500">가족 구성원을 추가해 함께 사용하세요.</p>
+
+            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+              <Input
+                id="signup-username"
+                label="아이디"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="영문 3자 이상"
+                error={fieldErrors.username}
+                autoComplete="username"
+              />
+              <Input
+                id="signup-display"
+                label="표시 이름 (선택)"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="예: 아빠, 엄마, 딸"
+                maxLength={20}
+              />
+              <Input
+                id="signup-password"
+                label="비밀번호"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="6자 이상"
+                error={fieldErrors.password}
+                autoComplete="new-password"
+              />
+              <Input
+                id="signup-password2"
+                label="비밀번호 확인"
+                type="password"
+                value={passwordConfirm}
+                onChange={(e) => setPasswordConfirm(e.target.value)}
+                placeholder="한 번 더 입력"
+                error={fieldErrors.passwordConfirm}
+                autoComplete="new-password"
+              />
+              <Alert>{error}</Alert>
+              <Button type="submit" size="lg" className="w-full" disabled={submitting}>
+                {submitting ? '가입 중…' : '가입하기'}
+              </Button>
+            </form>
+
+            <p className="mt-5 text-center text-sm text-slate-500">
+              이미 계정이 있나요? <Link to="/login" className="font-semibold text-indigo-600 hover:underline">로그인</Link>
+            </p>
+          </Card>
+        </div>
+      );
+    }
+
+    // ========================================
+    // 🚀 App
+    // ========================================
+
+    function App() {
+      return (
+        <Router>
+          <AuthProvider>
+            <div className="min-h-screen bg-slate-100">
+              <Header />
+              <main className="mx-auto max-w-4xl px-4 py-6 sm:py-8">
+                <Routes>
+                  <Route path="/" element={<PostListPage />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/signup" element={<SignupPage />} />
+                  <Route path="/write" element={<WritePage />} />
+                  <Route path="/posts/:id" element={<PostDetailPage />} />
+                  <Route path="/posts/:id/edit" element={<EditPage />} />
+                </Routes>
+              </main>
+              <Footer />
+            </div>
+          </AuthProvider>
+        </Router>
+      );
+    }
+
+    // ========================================
+    // Rendering
+    // ========================================
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

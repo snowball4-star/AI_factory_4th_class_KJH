@@ -1,0 +1,11 @@
+# 비밀정보는 배포 번들에 절대 올리지 않는다 (Vercel 환경변수로 설정)
+.env
+.env.*
+
+# 로컬 전용
+node_modules
+.playwright-mcp
+
+# 문서·스크린샷은 서버 동작에 필요 없다
+README.md
+*.png
