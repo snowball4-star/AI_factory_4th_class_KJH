@@ -1,0 +1,1959 @@
+{
+ "keyword": "glaucoma",
+ "term": "glaucoma[Title/Abstract] AND 2026/09/14:2026/09/20[EDAT]",
+ "from": "2026/09/14",
+ "to": "2026/09/20",
+ "count": 78,
+ "papers": [
+  {
+   "pmid": "42763536",
+   "title": "Netarsudil-Induced Honeycomb Keratopathy in an Eye With Iridocorneal Endothelial  Syndrome.",
+   "abstract": "PURPOSE: To describe a case of netarsudil-associated honeycomb keratopathy in a  patient with iridocorneal endothelial (ICE) syndrome. OBSERVATIONS: A 43-year-old male with a history of Cogan-Reese variant ICE syndrome presented with ocular irritation, foreign body sensation, blurred vision, photosensitivity, and discharge in the right eye 2 weeks after initiating topical netarsudil 0.02% for secondary angle-closure glaucoma. Slit lamp exam and anterior segment optical coherence tomography demonstrated diffuse reticular epithelial cysts, consistent with netarsudil-induced honeycomb keratopathy. Three weeks after netarsudil cessation, slit lamp exam showed complete resolution of corneal edema. CONCLUSIONS AND IMPORTANCE: Endothelial cell dysfunction in ICE syndrome may be a risk factor for patients to develop reversible netarsudil-induced honeycomb keratopathy. Ophthalmologists should exercise caution when prescribing netarsudil for glaucoma management in patients with pre-existing corneal pathologies, including those with ICE syndrome.",
+   "journal": "Case reports in ophthalmological medicine",
+   "journalAbbr": "Case Rep Ophthalmol Med",
+   "date": "2026",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Ferguson, Alina N",
+    "Bojikian, Karine Duarte",
+    "Nguyen, Minh T"
+   ],
+   "mesh": [],
+   "doi": "10.1155/crop/8615059",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42763536/"
+  },
+  {
+   "pmid": "42763533",
+   "title": "Validation of Automated Fixed Force Applanation Tonometry.",
+   "abstract": "PURPOSE: To validate fixed force applanation tonometry against traditional  Goldmann applanation tonometry (GAT) and compare interuser reproducibility. DESIGN: Prospective cross-sectional pilot study. SUBJECTS: Patients presenting for their routine eye care at an academic glaucoma practice. METHODS: A prototype adaptor containing a camera was attached to the Goldmann tonometer of a standard slitlamp microscope set to a fixed force in conjunction with a custom tonometer tip. Recorded applanation mires were converted to an intraocular pressure (IOP) using the Imbert-Fick formula. Standard GAT was also performed. Clinical GAT, research GAT, and prototype IOP measurements among different users were also completed. MAIN OUTCOME MEASURES: Goldmann applanation tonometry and prototype IOPs were compared in a pilot validation study, and interuser reproducibility was assessed using the 2 devices. RESULTS: In the validation study, 100 eyes from 50 subjects were included. The mean difference between the prototype and standard GAT measurements was +1.0 mmHg, with 95% limits of agreement (LoA) of -3.4 to 5.5 mmHg. The mean absolute difference (+/- standard deviation) between the prototype IOP and the standard GAT measurement was 1.9 +/- 1.5 mmHg. In the reproducibility study, 42 eyes from 21 subjects were included. The mean difference between the research technician prototype IOP and the ophthalmologist prototype IOP measurements was 0.01 mmHg with LoA of -2.5 to 2.4 mmHg. The mean absolute difference between users was significantly lower when using the prototype compared with standard GAT (0.9 +/- 1.2 mmHg vs. 1.6 +/- 1.1 mmHg, P = 0.003). CONCLUSIONS: Preliminary measurements using a fixed force applanation tonometry method demonstrated comparable results with standard GAT with improved interuser reproducibility. FINANCIAL DISCLOSURES: The authors have no proprietary or commercial interest in any materials discussed in this article.",
+   "journal": "Ophthalmology science",
+   "journalAbbr": "Ophthalmol Sci",
+   "date": "2026 Oct",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Wen, Joanne C",
+    "Vora, Rohan",
+    "Jiang, Hongyi",
+    "McKinnon, Stuart",
+    "Muir, Kelly W",
+    "Tantum, Stacy L"
+   ],
+   "mesh": [],
+   "doi": "10.1016/j.xops.2026.101370",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42763533/"
+  },
+  {
+   "pmid": "42763047",
+   "title": "A New Omics View of Retinal Aging: Cell-Type Vulnerability, Spatial Niches, and  Disease Susceptibility.",
+   "abstract": "Classical accounts of retinal aging emphasize oxidative, mitochondrial,  inflammatory, vascular, proteostatic, and retinal pigment epithelium (RPE)-centered mechanisms. Omics studies now confirm and refine this non-uniformity, showing that aging-associated signals vary by cell type, anatomical niche, molecular layer, and functional reserve. Direct evidence from single-cell and single-nucleus transcriptomics is strong for lineage- and subtype-specific aging programs in neural retina, RPE, glia, vascular cells, and choroidal immune populations. Spatial omics can generate and test localization hypotheses across anatomically defined foveolar/foveal, parafoveal, perifoveal, peripheral, vascular, glial, optic nerve head, and RPE-Bruch's membrane-choroid niches, but direct spatial-omics evidence for normal human retinal aging remains sparse. Proteomic, metabolic, lipidomic, epigenomic, and imaging mass spectrometry data help determine whether transcriptional aging states translate into altered protein turnover, metabolic reserve, lipid handling, chromatin state, and inflammatory memory. AI-derived retinal age clocks provide population-scale imaging phenotypes, but color fundus photography alone is poorly depth-resolved; biological interpretation requires optical coherence tomography (OCT), visual function, biomarkers, destructive cell-type-resolved or spatially resolved tissue data, and longitudinal imaging or functional data. We integrate these findings into a multi-scale model in which normal retinal aging may lower resilience thresholds in defined cells and niches, thereby contributing to susceptibility to age-related macular degeneration, glaucoma, diabetic retinopathy, and inherited retinal degeneration. We also outline minimum standards for retinal aging omics, including anatomically specified sampling, donor metadata, evidence-source class interpretation, spatial validation, perturbation or rescue testing, and measurable endpoints of retinal resilience and visual function.",
+   "journal": "Experimental eye research",
+   "journalAbbr": "Exp Eye Res",
+   "date": "2026 Sep 19",
+   "types": [
+    "Journal Article",
+    "Review"
+   ],
+   "authors": [
+    "Yang, Liu",
+    "Li, Zhijie"
+   ],
+   "mesh": [],
+   "doi": "10.1016/j.exer.2026.111243",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42763047/"
+  },
+  {
+   "pmid": "42762946",
+   "title": "Incidence, Prevalence, and Clinical Associations of Non-Infectious Pediatric  Uveitis in the United States: A TriNetX Database Study.",
+   "abstract": "PURPOSE: To characterize the incidence, prevalence, demographics, anatomic  subtypes, ocular complications, associated systemic diseases, and immunosuppressive treatment patterns of non-infectious pediatric uveitis in the United States using the TriNetX database. DESIGN: Retrospective incidence and prevalence study. SUBJECTS: Patients aged 17 years or younger with uveitis in the TriNetX US Collaborative Network between 2016 and 2025, stratified into anterior, intermediate, posterior, and panuveitis subtypes according to the Standardization of Uveitis Nomenclature classification. METHODS: Demographic characteristics, ocular complications, associated systemic inflammatory diseases, and systemic immunosuppressive medications were identified using International Classification of Diseases, Tenth Revision, Clinical Modification, RxNorm, and Healthcare Common Procedure Coding System codes. Incidence and prevalence were calculated per 100,000 persons, annually and cumulatively, overall and by subtype. Proportions are reported with 95% confidence intervals (CIs) constructed using Wilson score intervals. MAIN OUTCOME MEASURES: Annual and cumulative incidence and prevalence of pediatric uveitis and its subtypes, demographic distribution, rates of ocular complications, associated systemic diseases, and immunosuppressive medication use. RESULTS: Of 30,729,490 children, 30,533 (0.10%) had uveitis. Median age was 11 years (interquartile range, 8 years); 16,671 (54.6%; 95% CI, 54.0-55.2) were male. Anterior uveitis was the most common subtype (22,481; 73.6%). From 2016 to 2025, annual incidence rose from 22 to 33 per 100,000 persons and prevalence from 106 to 226 per 100,000 persons. Glaucoma (2,509; 8.8%; 95% CI, 8.5-9.1) and cataract (1,962; 6.9%; 95% CI, 6.6-7.2) were the most common ocular complications; posterior uveitis had the highest rate of blindness and low vision (397; 13.4%; 95% CI, 12.2-14.6). Prednisone (3,979; 13.6%) and methotrexate (3,854; 13.1%) were most frequently prescribed, and antimetabolites were the most common class (4,568; 15.6%). Juvenile idiopathic arthritis (3,038; 10.4%) and tubulointerstitial nephritis and uveitis (450; 1.5%) were the most frequent discrete systemic associations. CONCLUSIONS: The incidence and prevalence of pediatric uveitis increased over the past decade. Anterior uveitis predominated, whereas ocular morbidity and treatment intensity concentrated in intermediate uveitis and vision loss in posterior uveitis. Juvenile idiopathic arthritis and tubulointerstitial nephritis and uveitis were frequent associations. Prospective studies should determine whether rising rates reflect a true increase in disease or improved detection.",
+   "journal": "American journal of ophthalmology",
+   "journalAbbr": "Am J Ophthalmol",
+   "date": "2026 Sep 19",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Nijim, Wasef",
+    "Pham, Natan Vu",
+    "Liu, Regina",
+    "Agsalud, Khadija",
+    "Dutta, Emery",
+    "Venkat, Arthi",
+    "Arepalli, Sruthi"
+   ],
+   "mesh": [],
+   "doi": "10.1016/j.ajo.2026.09.025",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42762946/"
+  },
+  {
+   "pmid": "42762288",
+   "title": "Optimizing the Ocular Surface Before, During, and After Glaucoma Surgery: A  Narrative Review.",
+   "abstract": "This narrative review synthesizes the published literature on ocular surface  disease (OSD) and glaucoma filtration surgery to develop practical, evidence-informed clinical and surgical recommendations for optimizing ocular surface management before, during, and after surgery. The reviewed studies examine how OSD affects ocular inflammation and wound healing, how chronic preservative-containing topical therapy affects bleb survival, and how reducing cumulative preservative load benefits ocular surface health. In patients with glaucoma, chronic use of preservative-containing topical medications can aggravate OSD, with approximately 50% of patients receiving topical intraocular pressure-lowering therapy reporting symptoms of OSD. OSD-related inflammation and tissue changes may adversely affect wound healing and compromise the success of glaucoma filtration surgery. OSD in patients likely to require filtration surgery should be actively identified and treated throughout the preoperative, intraoperative, and postoperative stages. Practical steps include screening for OSD, reducing exposure to preservative-containing medications, optimizing the ocular surface preoperatively, and minimizing conjunctival inflammation perioperatively. These strategies can be readily adopted into clinical practice and may help optimize conditions for bleb survival, although direct evidence demonstrating improved bleb survival is limited.",
+   "journal": "Ophthalmology and therapy",
+   "journalAbbr": "Ophthalmol Ther",
+   "date": "2026 Sep 19",
+   "types": [
+    "Journal Article",
+    "Review"
+   ],
+   "authors": [
+    "Labbe, Antoine",
+    "Tatham, Andrew J",
+    "Stalmans, Ingeborg",
+    "Baudouin, Christophe"
+   ],
+   "mesh": [],
+   "doi": "10.1007/s40123-026-01493-z",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42762288/"
+  },
+  {
+   "pmid": "42762097",
+   "title": "Predictors and Patient-Reported Reasons for Missed Appointments in an Urban  Ophthalmology Center.",
+   "abstract": "PURPOSE: To examine adult ophthalmology appointments at New York Eye and Ear  Infirmary of Mount Sinai (NYEE) to identify structural and logistical factors associated with no-shows. METHODS: We conducted a retrospective cross-sectional mixed-methods study of electronic health record data for adult appointments between January 1 and December 31, 2025 (n = 62,678). Demographic, socioeconomic, geographic, and appointment characteristics were extracted from the electronic health record. Generalized estimating equations were used to identify predictors of no-show while accounting for repeated appointments by the same patient. A subset of glaucoma patients who missed appointments participated in routine quality improvement follow-up calls documenting reasons for missed visits. The primary outcome was appointment attendance; the secondary outcome was patient-reported reasons for missed appointments. RESULTS: The overall no-show rate was 16.9%. Medicaid/Public insurance, Self-Pay/Charity status, higher neighborhood social vulnerability, afternoon appointments, and several ophthalmic subspecialties were independently associated with greater odds of no-show. Younger age was also associated with increased no-show risk, whereas travel distance was not associated with a clinically meaningful increase in missed appointments. Among 67 patients reached through follow-up calls, the most commonly reported reasons for missed visits were forgetting the appointment, health or family emergencies, and scheduling conflicts. CONCLUSION: Missed ophthalmology appointments are driven by both structural socioeconomic disadvantage and immediate logistical barriers. Combining large-scale electronic health record analyses with patient-reported perspectives supports the development of targeted, equity-focused interventions.",
+   "journal": "Ophthalmic epidemiology",
+   "journalAbbr": "Ophthalmic Epidemiol",
+   "date": "2026 Sep 19",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Doiphode, Aditi",
+    "Midha, Manav",
+    "Lai, Carolyn",
+    "Anderson, Luvia",
+    "Capa, Elizabeth",
+    "Pearlman, Irene",
+    "Lema, Gareth M C"
+   ],
+   "mesh": [],
+   "doi": "10.1080/09286586.2026.2736074",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42762097/"
+  },
+  {
+   "pmid": "42761939",
+   "title": "Long-Term Safety and Effectiveness of STREAMLINE Canaloplasty with  Phacoemulsification in a Hispanic Population with Open-Angle Glaucoma.",
+   "abstract": "PURPOSE: To report long-term clinical outcomes from a multicenter study  evaluating STREAMLINE(R) Surgical System (STREAMLINE) canaloplasty, a minimally invasive glaucoma surgery (MIGS), combined with phacoemulsification in eyes with mild to moderate open-angle glaucoma (OAG). DESIGN: Retrospective extension of a prospective, multicenter, interventional study. PARTICIPANTS: Participants were those in the original study who provided consent for retrospective long-term data collection. METHODS: All eyes in this single-arm, retrospective extension study underwent STREAMLINE canaloplasty performed in combination with phacoemulsification between November 2021 and April 2022 at two sites in Latin America. MAIN OUTCOME MEASURES: The primary effectiveness outcome was the reduction in mean intraocular pressure (IOP) from Screening to last follow-up. Secondary effectiveness outcomes included mean change in topical IOP-lowering medication count from Screening compared to last follow-up. Safety assessments included visual acuity, visual field mean deviation, and incidence of adverse events (AEs). RESULTS: Participants (n=28) at 2 of the 3 sites in the original study (n=43, 65.1%) consented to have retrospective data collected as part of this extension study. Average length of follow-up was 24.2+/-4.4 months (M24). Mean IOP (17.1+/-3.0 mmHg) and IOP-lowering medication count (1.86+/-0.80) at Screening decreased to 15.13+/-3.25 mmHg (p=0.002) and 0.54+/-1.17 (p<0.001), respectively. At M24, 92.9% of eyes were on the same or fewer medications compared to screening and 78.6% were medication free. No AEs were reported in the extension study (M12 to last follow-up). CONCLUSIONS: Canaloplasty with the STREAMLINE(R) Surgical System in combination with phacoemulsification provides clinically and statistically significant reduction in both IOP and the need for IOP-lowering medications in eyes with mild-moderate OAG in a Hispanic adult population through an average of 24 months post-operatively.",
+   "journal": "Clinical ophthalmology (Auckland, N.Z.)",
+   "journalAbbr": "Clin Ophthalmol",
+   "date": "2026",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Lazcano-Gomez, Gabriel",
+    "Orlich, Claudio",
+    "Ison, Elysia",
+    "Kahook, Malik Y"
+   ],
+   "mesh": [],
+   "doi": "10.2147/OPTH.S622094",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42761939/"
+  },
+  {
+   "pmid": "42761702",
+   "title": "Systemic diseases to the mechanism of primary open angle glaucoma.",
+   "abstract": "Primary open angle glaucoma (POAG) is a complex neurodegenerative disorder  involving genetic susceptibility, environmental factors, and systemic abnormalities, whose pathogenesis has not been fully elucidated. Based on baseline intraocular pressure (IOP), POAG is classified into two subtypes: high-tension glaucoma (HTG) and normal-tension glaucoma (NTG). This review summarizes and integrates recent research advances, focusing on the roles of systemic disorders including cardiovascular, endocrine, neurodegenerative, and autoimmune diseases, as well as obstructive sleep apnea-hypopnea syndrome (OSAHS), in the onset and progression of POAG from an integrated eye-brain-body axis perspective. Current evidence suggests that optic nerve damage in POAG involves multiple interconnected pathological pathways, such as IOP-related mechanical stress, hemodynamic disturbances, impaired neurovascular coupling, microvascular dysfunction, oxidative stress, and chronic inflammation. Among them, dysfunctions of the eye-brain axis, gut-eye axis, and ocular lymphatic-glymphatic system serve as key regulatory networks that mediate and integrate the aforementioned pathological processes. The two subtypes display distinct pathogenic features: HTG is primarily driven by elevated IOP, whereas NTG relies more on IOP-independent mechanisms and is more susceptible to systemic influences. This integrative perspective deepens our understanding of POAG pathogenesis and provides a novel theoretical foundation for early diagnosis, multidimensional intervention, and precision therapy.",
+   "journal": "International journal of ophthalmology",
+   "journalAbbr": "Int J Ophthalmol",
+   "date": "2026",
+   "types": [
+    "Journal Article",
+    "Review"
+   ],
+   "authors": [
+    "Zhang, Yuan-Yuan",
+    "Mu, Qing-Qing",
+    "Ge, Li-Qiao",
+    "Liu, Yan",
+    "Liu, Xu",
+    "Zhang, Rui-Xue",
+    "Jia, Jun",
+    "Duan, Jia-Xing",
+    "Shi, Guo-Xin",
+    "He, Yuan"
+   ],
+   "mesh": [],
+   "doi": "10.18240/ijo.2026.10.21",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42761702/"
+  },
+  {
+   "pmid": "42761674",
+   "title": "A simplified slipknot technique for pupilloplasty in the treatment of mydriasis.",
+   "abstract": "AIM: To evaluate the surgical outcomes of a simplified slipknot pupilloplasty  technique for repairing mydriasis, with a focus on postoperative visual recovery, pupil morphological stability, knitting efficiency and knot security. METHODS: This prospective case series included patients with mydriasis due to trauma, glaucoma attack or iatrogenic damage, who underwent pupilloplasty (with or without intraocular lens implantation) from October 2022 to July 2025. Postoperative follow-ups were performed at 1, 3, 6, and 12mo. All cases had a minimum follow-up period of 3mo (range 3-12mo). Parameters recorded included best-corrected visual acuity (BCVA, logMAR), pupil diameter, and intraocular pressure (IOP). RESULTS: A total of 32 consecutive patients (32 eyes, 21 males) were included. The mean age was 57.9+/-15.9y (21 to 85y). The simplified slipknot technique resulted in significant visual improvement: the mean preoperative logMAR BCVA was 1.15+/-0.79 (range, 0.22 to 2.5), which improved to 0.35+/-0.32 (range, 0 to 1.398) postoperatively. Postoperative pupil diameter remained stable, with a mean of 3.0+/-0.5 mm (range, 2.5 to 4 mm). The duration of the pupilloplasty was 4.3+/-0.5min and there was no loosening or shedding of the line knot in any case. CONCLUSION: The simplified slipknot technique has a similar treatment effect and safety as the traditional technique but requires a shorter time and is easier to perform in pupilloplasty surgery. It causes minimal trauma to intraocular tissues, and is easy to popularize.",
+   "journal": "International journal of ophthalmology",
+   "journalAbbr": "Int J Ophthalmol",
+   "date": "2026",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Bao, Yan-Bo",
+    "Tang, Yi-Fei",
+    "Liu, Su-Yu",
+    "He, Zi-Fang",
+    "Liu, Ya-Jun",
+    "Yi, Qing-Hua",
+    "Xie, Zheng-Gao"
+   ],
+   "mesh": [],
+   "doi": "10.18240/ijo.2026.10.15",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42761674/"
+  },
+  {
+   "pmid": "42761650",
+   "title": "Systemic comorbidities, seasonal onset, and antihypertensive medication use in  primary angle-closure disease subtypes.",
+   "abstract": "AIM: To investigate clinical characteristics, comorbidities, seasonal onset, and  antihypertensive medication use among acute primary angle-closure (APAC), chronic primary angle-closure glaucoma (CPACG), and primary angle-closure suspect (PACS) patients. METHODS: A retrospective cross-sectional study of 484 Chinese patients was conducted. Baseline demographics, hypertension and diabetes prevalence, antihypertensive medication use, and seasonal onset patterns were compared across primary angle-closure disease (PACD) subtypes. Seasonal variation was assessed using the von Mises distribution, with subgroup analyses stratified by systemic conditions and medication use. RESULTS: CPACG patients were older (median 71 vs 67y in APAC, P<0.001) with higher hypertension (47.74% vs 31.16%, P=0.003) and diabetes prevalence (20.60% vs 10.05%, P=0.014). Multivariate analysis showed hypertension [odds ratio (OR)=1.85] and diabetes (OR=2.00) were significant predictors of CPACG vs APAC. A modest but significant seasonal peak of APAC onset was identified in early June. Subgroup analyses revealed significant shifts in seasonal patterns according to hypertension (P=0.023), diabetes (P<0.001), and calcium channel blocker (CCB) use (P=0.025). Angiotensin-converting enzyme inhibitors (ACEIs) use was absent in APAC patients but present in CPACG and PACS groups; CCB use was highest in APAC patients, though differences were not statistically significant. CONCLUSION: Vascular and metabolic comorbidities are more prevalent in CPACG than APAC, suggesting their role in CPACG pathogenesis. The early-summer peak in disease onset points to possible environmental triggers. Seasonal variation in APAC onset appears to be influenced by systemic vascular conditions and antihypertensive medication use, supporting a multifactorial interaction between environmental, systemic, and pharmacologic factors in APAC.",
+   "journal": "International journal of ophthalmology",
+   "journalAbbr": "Int J Ophthalmol",
+   "date": "2026",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Zhang, Xiao-Yue",
+    "Wu, Qian-Yi",
+    "Liang, Zhi-Qiao",
+    "Lu, Ye",
+    "Wu, Kuan-Kuan",
+    "Ma, Yao",
+    "Wu, Hui-Juan"
+   ],
+   "mesh": [],
+   "doi": "10.18240/ijo.2026.10.14",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42761650/"
+  },
+  {
+   "pmid": "42761588",
+   "title": "Uncovering the Novel Genetic Determinants of Primary Congenital Glaucoma in  Pakistani Families.",
+   "abstract": "Primary congenital glaucoma (PCG) is an early-onset eye disorder, particularly  prevalent in populations with high consanguinity rates. In Pakistan, approximately 63% of marriages are reported to be consanguineous, contributing to an increased burden of autosomal-recessive disorders. The genetic basis of PCG in the highly consanguineous Pakistani population is largely unexplored. This study was conducted to broaden the genetic landscape of PCG in families of Pakistani origin. PCG families identified through clinical characterization were recruited in the study. All probands were initially investigated for CYP1B1 mutations by targeted Sanger sequencing, followed by segregation analysis of the identified variants. Moreover, one family (PCG02) not linked to CYP1B1 was further subjected to a 250K SNP microarray and whole-exome sequencing (WES). The study participants comprised nine large, unrelated consanguineous and three PCG trio families collected from Pakistan. Nine identified variants were recurrent, whereas one previously unreported variant, CYP1B1 (NM_000104.4: c.1390T>C; p.Ser464Pro), was not found in any of the online databases such as gnomAD, ClinVar, and dbSNP, and was predicted to be deleterious by all the pathogenicity predicting tools. Furthermore, a plausible 2-Mb novel locus was identified on Chromosome 7q34 (139,681,371-141,507,822) (GRCh38/hg38) in family PCG02. The current study expands the mutation spectrum of CYP1B1 in the Pakistani population and highlights the genetic heterogeneity of the disease in this population.",
+   "journal": "Human mutation",
+   "journalAbbr": "Hum Mutat",
+   "date": "2026",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Khan, Hamza",
+    "Bukhari, Sadia",
+    "Ahmad, Nauman",
+    "Bhutto, Israr Ahmed",
+    "Mahsood, Yousaf Jamal",
+    "Haroon, Mohsin Iqbal",
+    "Uddin, Muhammad Moeez",
+    "Memon, Amal Shabir",
+    "Rehman, Atta Ur",
+    "Zainab, Shah",
+    "Munir, Asad",
+    "Ali, Syeda Hafiza Benish",
+    "Ajmal, Muhammad",
+    "Qamar, Raheel",
+    "Hirbo, Jibril",
+    "Azam, Maleeha",
+    "Ayub, Humaira"
+   ],
+   "mesh": [
+    "Humans",
+    "Pakistan",
+    "*Cytochrome P-450 CYP1B1/genetics",
+    "*Glaucoma/genetics/congenital",
+    "Pedigree",
+    "Female",
+    "Male",
+    "Consanguinity",
+    "Mutation",
+    "Exome Sequencing",
+    "Polymorphism, Single Nucleotide",
+    "*Genetic Predisposition to Disease",
+    "Genetic Association Studies"
+   ],
+   "doi": "10.1155/humu/1806353",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42761588/"
+  },
+  {
+   "pmid": "42761361",
+   "title": "Artificial intelligence in ophthalmic optical coherence tomography angiography: a  bibliometric analysis.",
+   "abstract": "AIM: To analyze research landscapes, hotspots, and trends in artificial  intelligence (AI) applied to ophthalmic optical coherence tomography angiography (OCTA) from 2015 to 2024, aiming to reveal global collaborations and guide future research. METHODS: We retrieved publications from Web of Science Core Collection using AI and OCTA-related search terms. After screening, 237 articles were analyzed with CiteSpace (version 6.3.R1) for co-citation, collaboration, and keyword burst analysis. RESULTS: Annual publications grew rapidly since 2017. China (94 publications) and the US (86 publications) were the most productive and influential countries. Research focused on: deep learning algorithms and vessel segmentation, ocular disease diagnosis including diabetic retinopathy and glaucoma, and automated vascular quantification and multimodal imaging. Key limitations included small sample sizes and limited algorithm generalizability. CONCLUSION: The integration of AI with OCTA has significantly advanced the automation and precise quantitative analysis of ophthalmic vascular imaging, demonstrating substantial potential for diagnosing various retinal and choroidal diseases. Future efforts should focus on developing more robust and interpretable AI models, conducting large-scale, multi-center clinical validation, and establishing standardized imaging and analysis protocols to ultimately realize the widespread adoption of AI-OCTA technology in routine clinical practice.",
+   "journal": "International journal of ophthalmology",
+   "journalAbbr": "Int J Ophthalmol",
+   "date": "2026",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Zhu, Si-Yuan",
+    "Zhang, Qing",
+    "Yang, Wei-Hua",
+    "Chi, Wei"
+   ],
+   "mesh": [],
+   "doi": "10.18240/ijo.2026.10.19",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42761361/"
+  },
+  {
+   "pmid": "42761351",
+   "title": "Gonioscopy-assisted transluminal trabeculotomy in the management of uncontrolled  Posner-Schlossman syndrome: a retrospective study.",
+   "abstract": "AIM: To explore the efficacy and safety of gonioscopy-assisted transluminal  trabeculotomy (GATT) in the treatment of Posner-Schlossman syndrome (PSS). METHODS: A retrospective review was conducted on participants diagnosed with PSS and uncontrolled intraocular pressure (IOP) who underwent GATT between 2023 and 2024. Clinical outcome measures including visual acuity, IOP, gonioscopic findings, complications, and relapses were collected for postoperative visits: 1d, 1wk, 1, 3, 6mo and 1y. RESULTS: Eleven participants (mean age 43.00+/-13.82y, 5 females and 6 males) were enrolled. Nine participants were followed up for 12mo after the surgery, 1 participant underwent trabeculectomy to decrease the uncontrolled IOP, another participant was followed up for 6mo because of loss of follow-up. The mean IOP before GATT was 33.64+/-6.21 mm Hg (range: 23-46 mm Hg). The mean number of antiglaucoma medications prior to surgery was 2.73+/-0.66. At 6mo after the surgery, the mean IOP decreased to 17.36+/-6.17 mm Hg (47.15%+/-17.35% reduction). Nine participants were followed up for 12mo, and their mean IOP decreased to 16.22+/-2.49 mm Hg, with an average IOP reduction of 46.83%+/-16.93% (P<0.01). The number of anti-glaucoma medications significantly decreased to 0.91+/-0.83 at the last follow-up (P<0.05). Two eyes were considered treatment failures due to reintervention and uncontrolled IOP. The preoperative IOP of qualified success cases were significantly lower than that of failed cases. The most common complications were intraoperative anterior chamber blood reflux (100%) and IOP spikes (45.45%), both of which resolved within 1wk. During the follow-up period, 7 participants experienced recurrent attacks of PSS. Nevertheless, peak IOP during relapse was significantly reduced compared to preoperative values (P<0.05). CONCLUSION: GATT seems to be a reliable and effective method for the management of PSS with uncontrolled IOP. Higher preoperative IOP maybe the factor of surgical failure. Although it may not prevent relapse of PSS, it might potentially reduce the peak IOP. Longer-term follow-up and a larger sample size are recommended for more in-depth analysis.",
+   "journal": "International journal of ophthalmology",
+   "journalAbbr": "Int J Ophthalmol",
+   "date": "2026",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Jing, Lin",
+    "He, Yu",
+    "Fan, Han-Ying",
+    "Wang, Su-Zhen",
+    "Xin, Mei",
+    "Zeng, Liu-Zhi"
+   ],
+   "mesh": [],
+   "doi": "10.18240/ijo.2026.10.23",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42761351/"
+  },
+  {
+   "pmid": "42759754",
+   "title": "Photography-based Retinal Vasculometry and Visual Field Progression in Primary  Open Angle Glaucoma.",
+   "abstract": "PURPOSE: To evaluate whether retinal vasculometry features derived from baseline  fundus photographs are associated with subsequent longitudinal visual field (VF) change in glaucoma suspects and eyes with primary open-angle glaucoma. DESIGN: Retrospective cohort study. METHODS: Retinal vasculometry metrics, including length-diameter ratio, tortuosity, branching measures, fractal dimension, and vessel-density measures, were derived from baseline fundus photographs using an automated deep-learning system. Linear mixed-effects models evaluated associations between baseline vasculometry and longitudinal VF mean deviation (MD) change. Clinical-only, full vasculometry, and parsimonious models were compared, with hierarchy-respecting backward selection performed under maximum likelihood using the Akaike information criterion. RESULTS: A total of 1,595 eyes (757 POAG and 838 glaucoma suspect) from 929 participants with at least 2 years of follow-up and 5 VF examinations were included. A mean of 14.5 VFs were obtained over 10.3 years, and the mean VF MD change was -0.15 dB/year. In the parsimonious model, VF MD slope differed by 0.079 dB/year (95% CI, 0.034-0.123) per 1-SD higher venous fractal dimension, 0.056 dB/year (95% CI, 0.025-0.087) per 1-SD higher arterial fractal dimension, and 0.032 dB/year (95% CI, 0.015-0.050) per 1-SD higher arterial tortuosity (all P<0.001). CONCLUSIONS: Baseline retinal vasculometry features were associated with subsequent longitudinal VF change after adjustment for demographic and clinical factors. These findings support further investigation of fundus photograph-derived vascular features as potential prognostic markers, although independent validation is needed before their clinical predictive utility can be established.",
+   "journal": "American journal of ophthalmology",
+   "journalAbbr": "Am J Ophthalmol",
+   "date": "2026 Sep 18",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Nishida, Takashi",
+    "Wang, Jin",
+    "Moghimi, Sasan",
+    "Walker, Evan",
+    "Soltani, Ghazaleh",
+    "Hashemi, Seyedeh Melika",
+    "Pereira, Amelia de Oliveira",
+    "Shi, Danli",
+    "Zangwill, Linda M",
+    "He, Mingguang",
+    "Weinreb, Robert N"
+   ],
+   "mesh": [],
+   "doi": "10.1016/j.ajo.2026.09.024",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42759754/"
+  },
+  {
+   "pmid": "42759221",
+   "title": "Algorithms for the identification of ophthalmic diseases in medico-administrative  databases: A systematic review.",
+   "abstract": "CONTEXT: Medico-administrative databases (MADs) are increasingly used in  comparative effectiveness research. OBJECTIVE: To conduct a systematic review of algorithms used for the identification of key ophthalmic diseases in MADs: age-related macular degeneration (AMD), diabetic retinopathy (DR)/ diabetic macular edema (DME), glaucoma, cataract and uveitis. METHODS: We searched PubMed between June 30, 2016, and August 6, 2024, using keywords related to MADs and the ophthalmic diseases of interest. Two reviewers independently selected studies and extracted data. RESULTS: From the 1719 references identified, 315 were selected describing a total of 523 algorithms. Approximately half of the study objectives were related to the identification of factors associated with the onset of ophthalmic diseases, exacerbation, or hospitalization (48%, n = 151). Only 2% (n = 6) focused exclusively on the development and/or validation of algorithms. Most studies were from Taiwan (36%, n = 113), Korea (27%, n = 84) and the United States (20%, n = 64). From the 523 algorithms, a validation was mentioned for 47 (9%). After regrouping close algorithms, 433 different algorithms were identified concerning glaucoma (34%, n = 146), DR/DME (26%, n = 114), AMD (18%, n = 80), cataract (11%, n = 47) and uveitis (11%, n = 46). About half of these algorithms used diagnosis codes only (58%, n = 251), while others combined diagnosis codes and procedures (16%, n = 69), or diagnosis codes and drugs (12%, n = 50). CONCLUSION: This systematic review showed heterogeneity between algorithms used to identify the same pathology, raising the question of which ones are more appropriate to use in a particular context. Moreover, most algorithms were not validated despite the potential impact on study results.",
+   "journal": "Journal of epidemiology and population health",
+   "journalAbbr": "J Epidemiol Popul Health",
+   "date": "2026 Sep 18",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Neau, Julie",
+    "Turpin, Agathe",
+    "Rajendrabose, Deivanes",
+    "Haneef, Romana",
+    "Soltani, Omayma",
+    "Dilange, Lisa",
+    "Couasnard, Alexis",
+    "Bodaghi, Bahram",
+    "Baudouin, Christophe",
+    "Tubach, Florence",
+    "Guillo, Sylvie",
+    "Dechartres, Agnes"
+   ],
+   "mesh": [],
+   "doi": "10.1016/j.jeph.2026.203788",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42759221/"
+  },
+  {
+   "pmid": "42758533",
+   "title": "Defective neuronal differentiation in Lowe syndrome is associated with  mitochondrial dysfunction and impaired cilia-related Sonic Hedgehog signaling.",
+   "abstract": "Human brain development requires tight coordination of metabolic and signaling  pathways. Lowe syndrome (LS) is a recessive X-linked disorder characterized by proximal tubular renal disease, congenital cataracts, glaucoma, and neurodevelopmental delays. While LS results from mutations in the OCRL gene, which encodes an inositol polyphosphate 5-phosphatase, the cellular mechanisms driving neuronal dysfunction remain poorly understood. In this study, using patient-derived iPSC neurons, an Ocrl knockout mouse model, and an independent zebrafish OCRL-deficient model, we identified mitochondrial dysfunction as a conserved phenotype of OCRL loss across species. Collectively, our findings showed that OCRL deficiency leads to reduced mitochondrial activity, decreased mtDNA levels, reduced mitochondrial content (TOM20), and increased oxidative stress. We further showed that OCRL-deficient neural cells exhibited an altered balance of neuronal versus astrocytic differentiation, rather than a defect in neurogenesis. Additionally, we observed impaired Sonic Hedgehog (Shh) signaling and ciliary homeostasis. Thus, our findings support a model in which OCRL deficiency is associated with mitochondrial dysfunction, increased oxidative stress, altered neural lineage balance, and reduced Hedgehog pathway activity, providing a framework for understanding these interconnected phenotypes.",
+   "journal": "eLife",
+   "journalAbbr": "Elife",
+   "date": "2026 Sep 18",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Walkiewicz, Grzegorz",
+    "Chen, Siyu",
+    "Lo, Chienhui",
+    "Zhao, Jingyu",
+    "Liu, Zhiquan",
+    "Wang, Biao",
+    "Wang, Qing",
+    "Kowal, Tia J",
+    "Lawson, Benjamin",
+    "Sun, Yang"
+   ],
+   "mesh": [
+    "Animals",
+    "Zebrafish",
+    "*Hedgehog Proteins/metabolism",
+    "*Signal Transduction",
+    "*Neurons/physiology/pathology",
+    "*Mitochondria/metabolism/pathology",
+    "*Oculocerebrorenal Syndrome/physiopathology/pathology/genetics",
+    "*Cell Differentiation",
+    "Humans",
+    "*Cilia/metabolism",
+    "Phosphoric Monoester Hydrolases/genetics/deficiency/metabolism",
+    "Mice",
+    "Oxidative Stress",
+    "Mice, Knockout",
+    "Disease Models, Animal"
+   ],
+   "doi": "10.7554/eLife.104055",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42758533/"
+  },
+  {
+   "pmid": "42758422",
+   "title": "Exome-wide screening discovers novel pathogenic variants in Vietnamese primary  congenital glaucoma patients.",
+   "abstract": "BACKGROUND: Primary congenital glaucoma (PCG), the most prevalent pediatric  variant, is a major contributor of childhood blindness globally. Traditional diagnosis relies on clinical features such as the classic triad (epiphora, photophobia, and blepharospasm), elevated intraocular pressure (IOP), corneal enlargement and optic disc cupping. Early diagnosis remains challenging as the conventional diagnosis often requires cooperation from pediatric patients. OBJECTIVE: To identify the genetic etiology and underlying variants in a cohort of Vietnamese patients diagnosed with PCG using WES. METHODS: A cohort of 32 Vietnamese patients with clinically diagnosed PCG was subjected to Whole-Exome Sequencing (WES) for genetic etiology identification. Validation of candidate variants was achieved using Sanger sequencing, with pathogenicity classification following ACMG/AMP guideline. RESULTS: Genetic examination revealed pathogenic/likely pathogenic variants in 18.75% of the cohort (6/32 probands), involving in three genes: CYP1B1, TEK, FOXC1; and VUS in 6.25% (2/32 probands) spanning the gene LTBP2, FBN1. Three novel point variants in glaucoma-assiciated genes were identified, including a frameshift in FOXC1 (p.Tyr5fs*40), a stop-gained variant in TEK (p.Trp216*), and a missense variant in FBN1 (p.Lys54Glu). Additionally, a new putative large chromosomal deletion was identified on FOXC1 gene. While CYP1B1 remains a primary driver of PCG, finding alterations in FOXC1 and FBN1-typically associated with Axenfeld-Rieger and Marfan syndromes-underscores the clinical overlap between PCG and other developmental or systemic disorders. CONCLUSION: Achieving a 25% diagnostic rate, the study suggests that broader genetic testing by WES would greatly beneficial in the identification and categorization of glaucoma. The data suggest that WES is a powerful diagnostic resource, particularly when corneal clouding impedes fundus examination, and can provide essential insights into systemic syndromic risks.",
+   "journal": "Genes & genomics",
+   "journalAbbr": "Genes Genomics",
+   "date": "2026 Sep 18",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Dao, Thi Mai Anh",
+    "Tran, Van Khanh",
+    "Nguyen, Phuoc-Dung",
+    "Nguyen, Ngoc Lan",
+    "Mai, Quoc Tung",
+    "Phuong, Le Thi",
+    "Trang, Tran Thi Quynh",
+    "Van Pham, Trong",
+    "Vu, Hung M",
+    "Van Bui, Thi Anh",
+    "Van Ta, Thanh",
+    "Tran, Thinh Huy",
+    "Park, Ji-Hwan",
+    "Kim, Minjae",
+    "Van, Huy Nguyen"
+   ],
+   "mesh": [],
+   "doi": "10.1007/s13258-026-01805-4",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42758422/"
+  },
+  {
+   "pmid": "42757470",
+   "title": "Ketogenic diet attenuates Muller cell activation and retinal neuroinflammation in  autoimmune glaucoma through acetylation‑mediated FOXO signalling.",
+   "abstract": "Glaucoma consists of a group of neurodegenerative diseases characterized by  retinal ganglion cell degeneration, in which Muller cells are increasingly recognised as drivers of neuroinflammation. A ketogenic diet (KD) elevates circulating beta‑hydroxybutyrate (BHB) and exhibits benefits in other neurodegenerative disorders; however, its role in glaucoma remains poorly understood. In the present study, an experimental autoimmune glaucoma (EAG) mouse model was established and primary Muller cells were cultured. Using spectrophotometry, optical coherence tomography and immunofluorescence, serum ketone body levels were found to be significantly lower in both patients with primary open‑angle glaucoma and EAG mice, independent of intraocular pressure. In vitro and in vivo experiments showed that KD increased BHB levels and ketone body metabolism, suppressed Muller cell activation and reduced retinal neuroinflammation. In addition, 4D data‑independent acquisition proteomic analysis and subsequent validation revealed that FOXO3A acetylation and FOXO3A and metallothionein 2A upregulation were regulated in the retina and Muller cells. These findings suggest that impaired ketone body metabolism occurs in glaucoma and that KD‑mediated neuroprotection is associated with altered FOXO3A acetylation. The present study highlighted an association between ketone metabolism and immune regulation in glaucoma, providing evidence for Muller cell phenotypic modulation and supported further investigation of KD as a potential neuroprotective adjunct therapy for glaucoma.",
+   "journal": "International journal of molecular medicine",
+   "journalAbbr": "Int J Mol Med",
+   "date": "2026 Nov",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Tan, Sisi",
+    "Wang, Xiaochen",
+    "Zheng, Yunfan",
+    "Mou, Zhenni",
+    "Zeng, Lihong",
+    "Yuan, Jingchang",
+    "Fan, Xiao",
+    "Wei, Miao",
+    "Huo, Yujia",
+    "Ouyang, Ruotong",
+    "Pu, Yanyu",
+    "Lei, Junqin",
+    "Gao, Xi",
+    "Wang, Dangdang",
+    "Peng, Yang",
+    "Li, Hong"
+   ],
+   "mesh": [
+    "Animals",
+    "*Diet, Ketogenic",
+    "*Signal Transduction",
+    "Acetylation",
+    "*Ependymoglial Cells/metabolism/pathology",
+    "Mice",
+    "*Forkhead Box Protein O3/metabolism",
+    "Humans",
+    "Male",
+    "*Glaucoma/diet therapy/metabolism/pathology/immunology",
+    "*Autoimmune Diseases/diet therapy/metabolism/pathology",
+    "3-Hydroxybutyric Acid",
+    "*Retina/pathology/metabolism",
+    "*Neuroinflammatory Diseases/diet therapy/metabolism/pathology",
+    "Disease Models, Animal",
+    "Mice, Inbred C57BL",
+    "Ketone Bodies/metabolism"
+   ],
+   "doi": "10.3892/ijmm.2026.5992",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42757470/"
+  },
+  {
+   "pmid": "42755512",
+   "title": "Ab interno trabeculotomy with vs. without cataract surgery for POAG: a  retrospective study.",
+   "abstract": "PURPOSE: To compare the 12-month efficacy and safety of ab interno trabeculotomy  combined with phacoemulsification vs. ab interno trabeculotomy alone in patients with primary open-angle glaucoma(POAG). METHODS: A retrospective analysis was performed on clinical data from patients diagnosed with POAG between January 2021 and January 2025 who underwent either combined surgery (combined group, 39 cases)or ab interno trabeculotomy alone (ab interno trabeculotomy-only group,44 cases). The primary outcome measures were postoperative intraocular pressure (IOP) and the change in IOP from baseline. Secondary outcomes included the number of antiglaucoma medications, surgical success rates (complete success and qualified success), and the incidence of complications (hyphema and IOP spike). RESULTS: Baseline characteristics were comparable between the two groups. At postoperative day 1, week 1, months 1, 3, and 6, IOP in the combined group was significantly lower than that in the ab interno trabeculotomy-only group (all P < 0.05). At 12 months postoperatively, no statistically significant difference in IOP was observed between the groups (15.94 +/- 1.45 mmHg vs. 16.15 +/- 1.36 mmHg, P = 0.266). The magnitude of IOP reduction was greater in the combined group than in the ab interno trabeculotomy-only group at all time points (all P < 0.05). No statistically significant differences were found between the two groups regarding the number of antiglaucoma medications or the reduction in medication use at any postoperative time point (all P > 0.05). At 12 months postoperatively, neither complete nor qualified success rates differed significantly between the groups. The incidence of hyphema was lower in the combined group than in the ab interno trabeculotomy-only group (23.08% vs. 43.18%, P = 0.053), and the incidence of IOP spike was significantly lower in the combined group (12.82% vs. 38.63%, P = 0.005). CONCLUSION: In patients with POAG, combined ab interno trabeculotomy with phacoemulsification achieved superior IOP reduction and a significantly lower IOP spike rate compared with trabeculotomy alone. However, no statistically significant differences were observed at medication reduction, or surgical success rates. Given the retrospective, non-randomized design and baseline imbalances, the combined procedure cannot be definitively recommended as the preferred approach. These findings should be considered hypothesis-generating, and prospective randomized trials are warranted to validate them.",
+   "journal": "Frontiers in medicine",
+   "journalAbbr": "Front Med (Lausanne)",
+   "date": "2026",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Zhang, Lei",
+    "Bian, Junjie"
+   ],
+   "mesh": [],
+   "doi": "10.3389/fmed.2026.1914639",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42755512/"
+  },
+  {
+   "pmid": "42755333",
+   "title": "Genetic findings and clinical features of extreme refractive errors in Thai  children using whole genome sequencing.",
+   "abstract": "INTRODUCTION: Extreme refractive errors in children may indicate underlying  genetic or syndromic conditions. This study investigated the genetic basis of high refractive errors in Thai children and compared clinical characteristics between high myopia and high hyperopia, and identified clinical predictors of a positive genetic result. METHODS: Ninety-eight children (<18 years) with high refractive errors were recruited from the Queen Sirikit National Institute of Child Health. All underwent comprehensive ophthalmic examination; ocular biometry and optical coherence tomography (OCT) were performed when feasible. Whole genome sequencing was performed, and variants were interpreted using established clinical classification frameworks. Clinical characteristics were compared between gene-positive and gene-negative patients. RESULTS: Among 98 children (mean age 8.7 +/- 4.0 years; 52% male), 71 had high myopia and 27 had high hyperopia. Pathogenic or likely pathogenic variants were identified in 23.94% of myopic and 29.63% of hyperopic patients. In the myopic group, variants in COL2A1 and COL11A1 were most frequent. In the hyperopic group, variants in PRSS56 and MFRP were associated with posterior microphthalmos or nanophthalmos. A positive family history was 2.6-fold more common in gene-positive myopic patients (p = 0.012), and OCT abnormalities were exclusively observed in gene-positive hyperopic patients (p < 0.001). DISCUSSION: Extreme refractive errors in children are genetically heterogeneous and often associated with monogenic conditions. A positive family history and OCT abnormalities are clinically useful indicators to guide genetic testing. Genetic testing in selected patients may improve diagnosis and support surveillance for complications such as retinal detachment and glaucoma.",
+   "journal": "Ophthalmic genetics",
+   "journalAbbr": "Ophthalmic Genet",
+   "date": "2026 Sep 18",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Wangtiraumnuay, Nutsuchar",
+    "Surukrattanaskul, Supawan",
+    "Trichaiyaporn, Sumalin",
+    "Wichitnark, Grobgran",
+    "Kuptanon, Chulaluck",
+    "Pongpanich, Monnat"
+   ],
+   "mesh": [],
+   "doi": "10.1080/13816810.2026.2731369",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42755333/"
+  },
+  {
+   "pmid": "42754369",
+   "title": "Incidence patterns and genetic validation of primary glaucoma subtypes among 1  million adults in China and the UK.",
+   "abstract": "BACKGROUND/AIMS: Primary open-angle glaucoma (POAG) and primary angle-closure  glaucoma (PACG) are distinct diseases, yet many glaucoma cases in population-based datasets lack subtype specification. We assessed incidence patterns of glaucoma subtypes in China and the UK and used genetic evidence to infer the likely subtype composition of cases recorded as unspecified glaucoma. METHODS: Incident primary glaucoma was identified from linked inpatient records in the prospective China Kadoorie Biobank (CKB; n=512 504) and UK Biobank (UKB; n=492 329) studies. Cohort-specific phenotyping algorithms defined POAG, PACG and unspecified glaucoma. Adjusted incidence rates were estimated by direct standardisation. To support subtype inference, polygenic risk scores (PRSs) were constructed using ancestry-specific genome-wide association studies, including a new East Asian PACG meta-analysis, and tested for association with glaucoma phenotypes using multivariable logistic regression. RESULTS: Over 12 years of follow-up, 1658 primary glaucoma cases were identified in CKB and 7643 in UKB. Most (>68%) cases lacked subtype specification. Incidence increased with age and was twofold higher among women for PACG in both cohorts and for unspecified glaucoma in CKB. In UKB, POAG incidence was fivefold higher among Black than White participants, with a similar but attenuated pattern for unspecified glaucoma. PRS analyses indicated that unspecified glaucoma closely aligned with PACG in CKB but was more heterogeneous in UKB. CONCLUSION: Healthcare-recorded incidence patterns for POAG and PACG were consistent with established demographic risk factors, whereas unspecified glaucoma showed differences in subtype composition between populations. Integrating epidemiological and genetic evidence improves interpretation of glaucoma phenotypes when detailed clinical information is unavailable.",
+   "journal": "The British journal of ophthalmology",
+   "journalAbbr": "Br J Ophthalmol",
+   "date": "2026 Sep 17",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Li, Charles",
+    "Wang, Baihan",
+    "Walters, Robin G",
+    "Stuart, Kelsey V",
+    "Luben, Robert N",
+    "Xu, Benjamin Y",
+    "Sun, Catherine Q",
+    "Lum, Flora",
+    "Shao, Zilun",
+    "Zheng, Xiangyang",
+    "Avery, Daniel",
+    "Sun, Dianjianyi",
+    "Yu, Canqing",
+    "Pei, Pei",
+    "Lv, Jun",
+    "Chen, Yiping",
+    "Yang, Ling",
+    "Li, Liming",
+    "Khawaja, Anthony P",
+    "Chen, Zhengming",
+    "Bennett, Derrick A",
+    "Millwood, Iona Y",
+    "Du, Huaidong"
+   ],
+   "mesh": [],
+   "doi": "10.1136/bjo-2026-330795",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42754369/"
+  },
+  {
+   "pmid": "42754355",
+   "title": "Chronic relapsing inflammatory optic neuropathy misdiagnosed as intermittent  angle closure: a diagnostic challenge.",
+   "abstract": "A woman in her 40 s presented with recurrent retro-orbital pain over several  years, initially attributed to migraine. Later, she was diagnosed with glaucoma in the context of suspected intermittent angle closure. Despite controlled intraocular pressure (IOP) with topical pressure-lowering therapy, progressive visual loss persisted.Optical coherence tomography showed diffuse retinal nerve fibre layer (RNFL) thinning, and visual fields demonstrated severe defects. However, pronounced optic disc pallor, rapid progression despite IOP control and diffuse rather than sectorial RNFL loss raised suspicion of an alternative diagnosis. Visual evoked potentials demonstrated delayed P100 latency, and MRI confirmed inflammatory changes of the optic nerve.High-dose systemic corticosteroids led to marked improvement, with relapse following its withdrawal, confirming steroid dependency. Chronic relapsing inflammatory optic neuropathy was the diagnosis, and immunosuppressive therapy was initiated with subsequent sustained visual recovery.This case highlights the importance of considering alternative diagnoses in atypical glaucoma presentations.",
+   "journal": "BMJ case reports",
+   "journalAbbr": "BMJ Case Rep",
+   "date": "2026 Sep 17",
+   "types": [
+    "Case Reports",
+    "Journal Article"
+   ],
+   "authors": [
+    "Pargana, Joana",
+    "Vivas, Maria",
+    "Monteiro, Bernardo",
+    "Ferreira, Joao",
+    "Cacador, Nuno",
+    "Gomes, Teresa",
+    "Ferreira, Joana"
+   ],
+   "mesh": [
+    "Humans",
+    "Female",
+    "*Glaucoma, Angle-Closure/diagnosis",
+    "Tomography, Optical Coherence",
+    "*Optic Neuritis/diagnosis/drug therapy",
+    "Recurrence",
+    "Diagnostic Errors",
+    "Diagnosis, Differential",
+    "Magnetic Resonance Imaging",
+    "Evoked Potentials, Visual",
+    "Chronic Disease",
+    "*Optic Nerve Diseases/diagnosis/drug therapy",
+    "Immunosuppressive Agents/therapeutic use"
+   ],
+   "doi": "10.1136/bcr-2026-275568",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42754355/"
+  },
+  {
+   "pmid": "42754226",
+   "title": "Guidelines for Disinfection of Applanation Tonometers: A Position Statement from  the American Glaucoma Society and the American Academy of Ophthalmology.",
+   "abstract": "Glaucoma is the leading cause of irreversible blindness in the United States and  across the globe. Accurate measurement of intraocular pressure (IOP) is essential for management. As such, equitable access to accurate and high-quality tonometry to measure IOP is critical. In the 1950s, the Goldmann applanation tonometer (GAT) replaced the Schiotz tonometer as the clinical reference standard for measuring IOP. Current disinfection guidelines, using a categorization system devised in the 1930s, place tonometers in the same category as tonometers with instruments such as endoscopes and bronchoscopes, the latter of which contact the mucous membranes, as semi-critical instruments, requiring them to undergo high-level disinfection (HLD). Available clinical evidence has not shown an increased risk of disease transmission with low-level disinfection (LLD) of tonometers. At the same time, HLD for GAT may give rise to potential patient safety concerns. HLD chemicals can cause corneal burns and can damage instrumentation by dissolving the glue holding the applanation tip together, causing the tip to swell and crack. The damaged tip can both harm patients' corneas and produce inaccurate intraocular pressure readings. To circumvent the inconvenience, error and cost associated with HLD, many healthcare systems have adopted disposable tonometer tips, which generate large amounts of plastic waste and impose unsustainable costs. Because LLD has been effective in preventing disease transmission in practice, we propose that tonometers be reclassified as a non-critical-use item under the Spaulding classification system. As a non-critical item, tonometers would not require HLD, but rather low-level disinfection. Patients at increased risk of developing an infection, for example, those with corneal abrasions or a history of ocular trauma, signs of possible ocular infection such as erythema or discharge, or a history of chronic viral infection, can be evaluated with single-use tonometer tips or other acceptable methods of tonometry, facilitating more efficient utilization of resources while ensuring high-quality patient care.",
+   "journal": "Ophthalmology. Glaucoma",
+   "journalAbbr": "Ophthalmol Glaucoma",
+   "date": "2026 Sep 17",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Khanna, Cheryl",
+    "Shukla, Aakriti",
+    "Garmany, Armin",
+    "Emerick, Geoffrey",
+    "Miller, Darby",
+    "Robin, Alan L",
+    "Schehlein, Emily"
+   ],
+   "mesh": [],
+   "doi": "10.1016/j.ogla.2026.09.003",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42754226/"
+  },
+  {
+   "pmid": "42754180",
+   "title": "Assessing oxidative stress in retinal tissue using multispectral autofluorescence  imaging.",
+   "abstract": "PURPOSE: Oxidative stress plays a central role in retinal degeneration, yet  in-vivo assessment remains challenging due to the reliance on invasive or exogenous techniques. Here, we investigate the use of multispectral autofluorescence imaging as a label-free approach to detect stress-induced metabolic alterations in retinal tissue. METHODS: Rodent retinal explants were exposed to mitochondrial (rotenone), endoplasmic reticulum (thapsigargin), oxidative (hydrogen peroxide), excitotoxic (N-methyl-D-aspartate), and glycolytic (iodoacetic acid) stress. Superoxide levels were independently verified using dihydroethidium staining. Autofluorescence images were acquired across 33 excitation-emission channels. RESULTS: Stressor-specific changes in NAD(P)H- and flavin-associated autofluorescence were observed only for rotenone and IAA treatment, resulting in distinct optical redox ratio (ORR) responses. Despite these limited changes in individual fluorophore-associated signals, classification models based on autofluorescence features achieved strong discrimination for selected stressors (e.g., rotenone: ROC-AUC = 1.00+/-0.00), with reduced performance when all stressors were combined, reflecting heterogeneous responses. CONCLUSION: These findings demonstrate that multispectral autofluorescence imaging captures stressor-specific signatures rather than a uniform oxidative stress phenotype. Importantly, robust classification performance using UV-free channels highlights the potential for clinical translation. Multispectral autofluorescence imaging therefore represents a promising non-invasive tool for assessing oxidative stress and metabolic dysfunction in retinal tissue.",
+   "journal": "Free radical biology & medicine",
+   "journalAbbr": "Free Radic Biol Med",
+   "date": "2026 Sep 17",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Knab, Aline",
+    "Marupally, Abhilash Goud",
+    "Anwer, Ayad G",
+    "Habibalahi, Abbas",
+    "Pattamatta, Ushasree",
+    "Carnt, Nicole",
+    "Casson, Robert",
+    "Goldys, Ewa M",
+    "White, Andrew"
+   ],
+   "mesh": [],
+   "doi": "10.1016/j.freeradbiomed.2026.09.017",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42754180/"
+  },
+  {
+   "pmid": "42754175",
+   "title": "Surgical applications of expanded polytetrafluorethylene in ophthalmology: A  review.",
+   "abstract": "Expanded polytetrafluoroethylene (ePTFE) has evolved from its origins as an  industrial polymer into a biomedical material with a range of demonstrated uses across cardiovascular, hernia repair, and ophthalmology. Its application in ophthalmology has expanded significantly over the past few years owing to its unique physical and chemical properties, including its biocompatibility, inertness, bio-integration, mechanical and chemical stability, high tensile strength, and softness. The earliest ophthalmic applications of ePTFE focused on corneal perforation repair and keratoprosthesis scaffolds, followed by its use in ocular surface reconstruction, scleral buckling, and eyelid procedures. In current products under development, ePTFE has demonstrated unique capabilities in a novel keratoprosthesis and a novel glaucoma shunt. Modifications tailored for ophthalmic applications were made to the ePTFE to optimize pore size for bio-integration, reduce thickness and profile, and incorporate hydrophilic coating to enhance tissue integration and cosmesis. The modifications promise to combine the best attributes of ePTFE engineered to address unmet needs in ophthalmology. Continued clinical trials and translational research are essential to expand its safety and efficacy profile. We provide an up-to-date overview of the physicochemical properties and surgical uses of ePTFE in ophthalmology.",
+   "journal": "Survey of ophthalmology",
+   "journalAbbr": "Surv Ophthalmol",
+   "date": "2026 Sep 17",
+   "types": [
+    "Journal Article",
+    "Review"
+   ],
+   "authors": [
+    "Ruiz-Lozano, Raul E",
+    "Bicket, Amanda K",
+    "Pitha, Ian",
+    "Nallasamy, Nambi",
+    "Cortina, Maria S",
+    "de la Cruz, Jose",
+    "Venugopal, Anitha"
+   ],
+   "mesh": [],
+   "doi": "10.1016/j.survophthal.2026.09.001",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42754175/"
+  },
+  {
+   "pmid": "42754173",
+   "title": "Gene polymorphisms associated with progression of primary open-angle glaucoma: A  systematic review.",
+   "abstract": "Glaucoma is the leading global cause of irreversible blindness, with primary  open-angle glaucoma (POAG) its most prevalent subtype. While elevated intraocular pressure is a major risk factor, glaucoma progression is multifactorial, influenced by genetic, environmental, vascular and mechanical factors. Genetic polymorphisms have been linked to both POAG susceptibility and progression, yet most studies focus on risk factors for disease onset rather than progression. We provide an overview of the current literature on gene polymorphisms associated with POAG progression. We conducted a systematic search following PRISMA guidelines in MEDLINE, EMBASE, Web of Science, Cochrane Library, Scopus and Public Health Genomics and Precision Health Knowledge Base. Eligible studies investigated associations between genetic variants and structural or functional markers of glaucoma progression in adult-onset POAG patients. Eighteen articles were included. HLA class I haplotypes (A1-B8 and A2-B40) and MYOC.mt1+ carriers showed faster progression of optic nerve head damage. The APOE epsilon4 allele was linked to faster macular thinning in normal tension glaucoma patients. BDNF rs6265 Val/Val homozygotes exhibited accelerated retinal nerve fiber layer loss, particularly in females. TGFBR3-CDC7 (rs1192415: G) and MYOC.mt1+ carriers experienced accelerated visual field deterioration. Carriers of GAS7 (rs9913911: AA), IL1B (rs1143627: CT and rs16944: CT) and OPTN (rs2234968) had a higher likelihood of requiring surgery. Variants in ABCA1, CDKN2B-AS, eNOS and Piezo1 showed inconclusive results. These findings support a role for genetic polymorphisms in POAG progression and highlight the potential of genetic screening to identify patients at increased risk for rapid disease progression.",
+   "journal": "Survey of ophthalmology",
+   "journalAbbr": "Surv Ophthalmol",
+   "date": "2026 Sep 17",
+   "types": [
+    "Journal Article",
+    "Review"
+   ],
+   "authors": [
+    "Brackenier, Heloise",
+    "Van Aerschot, Joseph",
+    "Vermeer, Sascha",
+    "Stalmans, Ingeborg",
+    "Eijgen, Jan Van"
+   ],
+   "mesh": [],
+   "doi": "10.1016/j.survophthal.2026.09.002",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42754173/"
+  },
+  {
+   "pmid": "42753158",
+   "title": "The Role of the MYOC Gene in Primary Open Angle Glaucoma in Ethiopia.",
+   "abstract": "",
+   "journal": "Clinical & experimental ophthalmology",
+   "journalAbbr": "Clin Exp Ophthalmol",
+   "date": "2026 Sep 17",
+   "types": [
+    "Letter"
+   ],
+   "authors": [
+    "Gessesse, Girum",
+    "Graham, Patricia S",
+    "Tigabu, Lemlem Tamrat",
+    "Gebreselase, Matiyas Engida",
+    "Jones, Johanna L",
+    "Muecke, James S",
+    "Burdon, Kathryn P"
+   ],
+   "mesh": [],
+   "doi": "10.1111/ceo.70169",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42753158/"
+  },
+  {
+   "pmid": "42752944",
+   "title": "Association of primary congenital glaucoma with quality of life in children and  their families.",
+   "abstract": "PURPOSE: To evaluate quality of life (QoL) and family impact in postoperative  children with primary congenital glaucoma (PCG) and their parents, and to identify associated factors. METHODS: This cross-sectional, case-control study included 135 children with PCG (mean age, 5.83 +/- 2.70 years) and 141 healthy age-matched controls (6.09 +/- 3.03 years). Children aged 5 to 11 years completed self-report versions of the Pediatric Eye Questionnaire (PedEyeQ) and Pediatric Quality of Life Inventory (PedsQL) Generic Core Scales, while parents completed age-appropriate proxy reports for children aged 0 to 11 years and the PedsQL Family Impact Module (FIM). RESULTS: Children with PCG demonstrated significantly lower PedEyeQ functional vision scores (mean difference [MD], - 24; 95% CI, - 31 to - 18) and PedsQL total scores (MD, - 12; 95% CI, - 18 to - 7) compared with controls (all P < 0.001). Parents reported substantial burdens in PedEyeQ worry about functional vision (MD, - 35; 95% CI, - 42 to - 29), PedsQL (MD, - 19; 95% CI, - 28 to - 11), and FIM (MD, - 17; 95% CI, - 21 to - 12) (all P < 0.05). Parent proxy-reported scores were significantly lower than child self-reported scores in frustration/worry, physical functioning, and social functioning domains (all P < 0.05). Worse visual acuity, greater myopic spherical equivalent refraction (SER), more glaucoma surgeries, and lower parental education were associated with reduced QoL. CONCLUSIONS: Children with PCG and their parents experience substantial QoL reductions. These findings suggest the need to consider visual rehabilitation and family-centred psychosocial support, in addition to intraocular pressure control.",
+   "journal": "Graefe's archive for clinical and experimental ophthalmology = Albrecht von  Graefes Archiv fur klinische und experimentelle Ophthalmologie",
+   "journalAbbr": "Graefes Arch Clin Exp Ophthalmol",
+   "date": "2026 Sep 17",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Jiang, Jinyun",
+    "Xiang, Chuqi",
+    "Tan, Hongmei",
+    "Zhong, Yimin",
+    "Zhu, Yingting",
+    "Yu, Mengting",
+    "Chen, Shuoshuo",
+    "Lin, Shufen",
+    "Fang, Lei",
+    "Wang, Lili",
+    "Tang, Xianghua",
+    "Lu, Mingxin",
+    "He, Liying",
+    "Chen, Weiyin",
+    "Li, Cong",
+    "Hu, Yin",
+    "Liu, Xing",
+    "Yang, Xiao"
+   ],
+   "mesh": [],
+   "doi": "10.1007/s00417-026-07503-x",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42752944/"
+  },
+  {
+   "pmid": "42751705",
+   "title": "Marked Discordance Between Visual Field Loss and Optic Disc Cupping Revealing MOG  Antibody-Associated Optic Neuritis in a Patient With Angle-Closure Glaucoma.",
+   "abstract": "This study reports a case of MOG antibody-associated optic neuritis masquerading  as acute angle-closure glaucoma in which marked discordance between optic disc cupping and visual field loss prompted magnetic resonance imaging (MRI) and led to the correct diagnosis. A 69-year-old woman presented with acute ocular pain, decreased vision, and intraocular pressure exceeding 40 mmHg in the right eye. Humphrey visual field testing demonstrated nearly complete central visual field loss, whereas fundus examination revealed only mild optic disc cupping. Because the severity of visual field loss was disproportionate to the optic disc findings, concurrent optic neuritis was suspected. MRI demonstrated a hyperintense lesion in the right optic nerve on short tau inversion recovery (STIR) imaging. Intravenous methylprednisolone pulse therapy was initiated, followed by bilateral cataract surgery combined with ab interno microhook trabeculotomy because of persistent angle closure and anticipated prolonged corticosteroid therapy. Subsequent serological testing confirmed myelin oligodendrocyte glycoprotein antibody-associated disease (MOGAD). Five months later, visual acuity recovered to 20/20 with substantial improvement in the visual field, and intraocular pressure remained well controlled. Even in patients with markedly elevated intraocular pressure suggestive of acute angle-closure glaucoma, pronounced discordance between optic disc findings and visual field loss should raise suspicion for concomitant optic neuritis or other nonglaucomatous optic neuropathies. MRI can facilitate the diagnosis of underlying MOG antibody-associated disease and guide appropriate neurological and ophthalmic management.",
+   "journal": "Cureus",
+   "journalAbbr": "Cureus",
+   "date": "2026 Aug",
+   "types": [
+    "Case Reports",
+    "Journal Article"
+   ],
+   "authors": [
+    "Mizumoto, Risa",
+    "Mori, Sotaro",
+    "Nakamura, Makoto"
+   ],
+   "mesh": [],
+   "doi": "10.7759/cureus.114684",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42751705/"
+  },
+  {
+   "pmid": "42751639",
+   "title": "Clinical and Multimodal Imaging Features of Familial Exudative Vitreoretinopathy:  The Genetic and Phenotypic Spectrum.",
+   "abstract": "OBJECTIVE: This study aimed to characterize the genetic, clinical, and multimodal  imaging findings in a cohort of patients with familial exudative vitreoretinopathy (FEVR). METHODS: This retrospective cross-sectional study included patients diagnosed with FEVR at a tertiary referral center. Clinical findings, fluorescein angiography, optical coherence tomography (OCT), OCT angiography (OCTA), treatment records, and whole-exome sequencing results were reviewed. RESULTS: A total of 28 patients were included in the analysis, of whom 22 (78.6%) were probands and 6 (21.4%) were family members.Fifteen patients (53.6%) were male and 13 (46.4%) female. Mean age was 11.75+/-9.63 (2-47) years, with a mean follow-up of 21.57+/-14.24 (2-50) months. Visual acuity ranged from light perception to 20/20, with a median BCVA of 20/32. Among 56 eyes, mild disease (stage 1-2) was observed in 67.9%, compared with 32.1% for advanced disease (stage 3-5). Genetic variants were identified in 17 patients (60.7%), whereas no disease-associated variant was detected in 11 (39.3%). The most commonly affected genes were FZD4 (21.4%), LRP5 (17.9%), KIF11 (14.3%), TSPAN12 (3.6%), and NDP (3.6%). Clinical manifestations ranged from asymptomatic peripheral vascular anomalies to advanced retinal detachment and severe vision loss. One LRP5-mutant patient exhibited PFV, stage 5 disease, and glaucoma. The four KIF11-mutant cases demonstrated marked phenotypic variability. A FEVR phenotype was also identified in a case with an EPHA2 mutation. OCT, OCT-A, and fluorescein angiography were available in 29 (51.8%), 10 (17.9%), and 27 eyes (48.2%), respectively. Combined imaging revealed posterior pole, vitreoretinal interface, and retinal microvascular abnormalities, including foveal and vitreomacular alterations, that were not fully reflected by stage classification alone. Laser photocoagulation was performed in 26.8% of eyes, combination therapy in 14.2%, and anti-VEGF monotherapy in 1.8%. CONCLUSION: FEVR demonstrated marked genetic and phenotypic heterogeneity, while multimodal imaging provided complementary information beyond conventional stage classification.",
+   "journal": "Clinical ophthalmology (Auckland, N.Z.)",
+   "journalAbbr": "Clin Ophthalmol",
+   "date": "2026",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Ogreden, Tulin",
+    "Muftuoglu, Ilkay Kilic",
+    "Erdogan, Gurkan"
+   ],
+   "mesh": [],
+   "doi": "10.2147/OPTH.S632710",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42751639/"
+  },
+  {
+   "pmid": "42751619",
+   "title": "Genetic Architecture and Clinical Phenotypes of Primary Open-Angle Glaucoma: An  Updated Review of Mendelian Genes, GWAS Loci, and Polygenic Risk.",
+   "abstract": "PURPOSE: To synthesize the genetic architecture of primary open-angle glaucoma  (POAG) across the full variant spectrum and map each genetic subtype to its clinical phenotype, IOP profile, optic nerve morphology, systemic associations, and treatment response. METHODS: PubMed/MEDLINE was searched from inception through April 2025 for POAG genetics, susceptibility genes, GWAS loci, polygenic risk scores, and gene-specific clinical correlations. Eligible designs included peer-reviewed original research, GWAS meta-analyses, candidate-gene studies, family-based linkage analyses, cohort and case-control studies, and PRS development in human subjects. Genetic association studies were appraised using Q-Genie; observational clinical studies were appraised using the Newcastle-Ottawa Scale. RESULTS: Seven high-penetrance Mendelian genes (MYOC, OPTN, TBK1, WDR36, NTF4, FOXC1, CYP1B1) account for fewer than 10% of cases, each defining a clinically distinct subtype: juvenile high-tension glaucoma (MYOC), normal-tension neurodegeneration (OPTN, TBK1), and syndromic developmental glaucoma (FOXC1, CYP1B1). GWAS meta-analyses have identified 100 to 127 susceptibility loci converging on five biological axes: trabecular meshwork dysfunction, retinal ganglion cell survival, autophagy and protein homeostasis, neuroinflammation, and extracellular matrix integrity. Polygenic risk scores combined with clinical variables achieve an AUC of 0.89. CONCLUSION: POAG comprises genetically and clinically distinct subtypes defined by dominant molecular axes. Gene-specific data reveal actionable pharmacogenomic signals: ROCK inhibitors for ARHGEF12 and AFAP1 carriers, nicotinamide for OPTN and TXNRD2 subtypes, and goniotomy for CYP1B1-associated congenital glaucoma. IOP-centric management is insufficient for normal-tension subtypes driven by autophagy failure and neuroinflammation. The framework supports genotype-guided decisions on screening intensity, IOP targets, and neuroprotective adjuncts.",
+   "journal": "Clinical ophthalmology (Auckland, N.Z.)",
+   "journalAbbr": "Clin Ophthalmol",
+   "date": "2026",
+   "types": [
+    "Journal Article",
+    "Review"
+   ],
+   "authors": [
+    "Abu-Amero, Khaled K",
+    "Abualkhair, Shereen",
+    "AlOtaibi, Hajar",
+    "Sesma, Gorka"
+   ],
+   "mesh": [],
+   "doi": "10.2147/OPTH.S623649",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42751619/"
+  },
+  {
+   "pmid": "42751337",
+   "title": "Clinical and Patient-Reported Outcomes of Premium Intraocular Lenses in Glaucoma  Patients Undergoing Combined Cataract and Minimally Invasive Glaucoma Surgery.",
+   "abstract": "BACKGROUND: Premium intraocular lenses (IOLs), including multifocal, extended  depth-of-focus (EDOF), and light adjustable lenses (LALs) are used to reduce spectacle dependence after cataract surgery. However, their use in glaucoma patients remains controversial due to concerns that reduced contrast sensitivity and pre-existing visual field loss limits functional benefits from these optics. Increasing use of minimally invasive glaucoma surgery (MIGS) at the time of cataract surgery has made combined refractive and glaucoma management more common, but data on real world outcomes remains limited. METHODS: This single-center, IRB-approved retrospective observational study with cross-sectional survey analysis included glaucoma patients who underwent bilateral cataract surgery with implantation of multifocal, EDOF, or LAL IOLs with concurrent MIGS from 2020 to 2025. Postoperative visual outcomes, intraocular pressure (IOP), glaucoma medication burden, spectacle dependence, dysphotopsias, and patient satisfaction were assessed. Longitudinal outcomes were analyzed using mixed-effects models adjusted for baseline glaucoma severity (mean deviation). Satisfaction was evaluated using proportional odds logistic regression adjusting for age and baseline disease severity. RESULTS: Seventy-nine patients (Multifocal n=43, EDOF n=24, LAL n=12) were included. All groups demonstrated significant postoperative improvement in distance visual acuity and reduction in IOP and glaucoma medication burden. Adjusted IOP trajectories and most recent IOP were similar between groups. Distance visual acuity outcomes were similar between groups after adjustment for baseline glaucoma severity. Near visual acuity favored multifocal IOLs, while LAL demonstrated the highest spectacle dependence. Dysphotopsias were more frequent with multifocal lenses and lowest in LAL. Satisfaction was high across all groups, with predicted probabilities of being \"very\" or \"somewhat satisfied\" of 94% (multifocal), 88% (EDOF), and 87% (LAL). CONCLUSIONS: In appropriately selected glaucoma patients undergoing cataract surgery with MIGS, multifocal, EDOF, and LAL IOLs provide comparable visual outcomes, excellent IOP control, and high satisfaction. Differences in spectacle dependence and dysphotopsia support individualized IOL selection.",
+   "journal": "Clinical ophthalmology (Auckland, N.Z.)",
+   "journalAbbr": "Clin Ophthalmol",
+   "date": "2026",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Wolsky, Jack",
+    "Jemiyo, Christianah",
+    "Greenwood, Michael"
+   ],
+   "mesh": [],
+   "doi": "10.2147/OPTH.S628605",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42751337/"
+  },
+  {
+   "pmid": "42751274",
+   "title": "Bleb-related infection associated with an intraluminal stent suture after  PreserFlo MicroShunt implantation: a case report.",
+   "abstract": "PURPOSE: The PreserFlo MicroShunt (PMS) is a glaucoma drainage device designed to  reduce intraocular pressure (IOP) with fewer complications than conventional filtering surgery. An intraluminal stent suture can prevent early postoperative hypotony; however, a potential infection risk exists. We report a rare case of bleb-related infection associated with an intraluminal stent suture in the PMS. OBSERVATION: An 80-year-old man with secondary glaucoma due to bilateral cytomegalovirus anterior uveitis underwent bilateral PMS implantation with a 10-0 nylon intraluminal stent suture. The stent was removed from the right eye 1 month postoperatively but retained in the left eye because the IOP remained stable. At 3.5 months postoperatively, the left eye developed eyelid swelling, ocular pain, conjunctival hyperemia, and anterior chamber inflammation without bleb leakage. Infection related to the stent suture was suspected. After stent removal, suture culture grew Streptococcus agalactiae. Intensive topical and intracameral antibiotic therapy resolved the inflammation within 2 weeks. Transient hypotony and choroidal detachment occurred after removal but resolved conservatively, and the IOP stabilized. CONCLUSION AND IMPORTANCE: Intraluminal stent sutures may effectively prevent early postoperative hypotony after PMS implantation, but their indication should be carefully considered while balancing the risks of hypotony and infection. Early stent removal and careful postoperative monitoring are essential.",
+   "journal": "American journal of ophthalmology case reports",
+   "journalAbbr": "Am J Ophthalmol Case Rep",
+   "date": "2026 Dec",
+   "types": [
+    "Case Reports",
+    "Journal Article"
+   ],
+   "authors": [
+    "Nishigaki, Masashi",
+    "Miki, Atsuya",
+    "Nogawa, Chiaki",
+    "Muroya, Taro",
+    "Kamei, Motohiro"
+   ],
+   "mesh": [],
+   "doi": "10.1016/j.ajoc.2026.102660",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42751274/"
+  },
+  {
+   "pmid": "42750724",
+   "title": "Improved Estimation of Rates of Glaucoma Progression Using Spatial Two-Fold  Linear Mixed Models.",
+   "abstract": "Visual field testing is essential for detecting glaucomatous damage. Traditional  approaches such as pointwise linear regression often fail to account for the spatial correlations and hierarchical structure among test locations. We propose a two-fold linear mixed model that incorporates both eye-level and within-eye cluster-level random effects. Using the Bascom Palmer Glaucoma Repository, we show that our model outperforms conventional pointwise linear regression and permutation-based pointwise regression. In simulation studies, the proposed method yields markedly lower mean squared error than ordinary least squares, achieving MSEs of 0.41 (lower eye) and 0.50 (upper eye), compared with 1.12 and 1.72, respectively, while also reducing false-positive and false-negative rates. This framework provides improved precision and interpretability for quantifying visual field progression in glaucoma.",
+   "journal": "Journal of statistical theory and applications : JSTA",
+   "journalAbbr": "J Stat Theory Appl",
+   "date": "2026",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Zhao, Chen",
+    "Swaminathan, Swarup S",
+    "Rao, J Sunil"
+   ],
+   "mesh": [],
+   "doi": "10.1007/s44199-026-00184-9",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42750724/"
+  },
+  {
+   "pmid": "42750715",
+   "title": "A Predictive Framework for Therapeutic Target Discovery in Glaucoma.",
+   "abstract": "",
+   "journal": "Phenomics (Cham, Switzerland)",
+   "journalAbbr": "Phenomics",
+   "date": "2026 Jun",
+   "types": [
+    "Letter"
+   ],
+   "authors": [
+    "Chen, Dijun",
+    "Chen, Ming"
+   ],
+   "mesh": [],
+   "doi": "10.1007/s43657-026-00331-3",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42750715/"
+  },
+  {
+   "pmid": "42750304",
+   "title": "Post-marketing safety assessment of mirvetuximab soravtansine: a  disproportionality analysis based on the FDA Adverse Event Reporting System.",
+   "abstract": "OBJECTIVE: Mirvetuximab soravtansine (MIRV) is an antibody-drug conjugate that  targets the folate receptor-alpha and is used for the treatment of platinum-resistant ovarian cancer, though post-marketing safety data remain limited. This study aimed to perform a post-marketing safety assessment of MIRV based on the Food and Drug Administration Adverse Event Reporting System (FAERS) database. METHODS: Adverse event (AE) reports of MIRV as the primary suspected drug were collected from the FAERS database (Q4 2022 to Q4 2025). Four main methods of disproportionality analysis, including reporting odds ratio, proportional reporting ratio, Bayesian confidence propagation neural network, and multi-item gamma poisson shrinker, were employed for signal detection. Additionally, clinical priority and time-to-onset characteristics were assessed. RESULTS: Two thousand five hundred eighty-two AEs associated with MIRV were identified in 1,252 unique patients. The system organ classes of eye and gastrointestinal disorders were the most frequently affected by MIRV. Thirty-nine preferred terms (PTs) were detected as positive safety signals. The most frequently reported AEs were vision blurred, neuropathy peripheral, cataract, diarrhea, abdominal pain and pneumonitis. Several unexpected safety signals, including blindness, colitis, pulmonary fibrosis, glaucoma, intestinal perforation, and ulcerative keratitis, were also identified. None of the positive PTs were classified as strong clinical priority. Furthermore, exploratory findings suggest the peak onset period for MIRV-associated AEs appears to be the first month of treatment. CONCLUSION: This study confirms the known safety profile of MIRV and identifies several unexpected safety signals. However, as these unexpected safety signals are only hypothesis-generating, prospective studies are still required to confirm causality.",
+   "journal": "Journal of gynecologic oncology",
+   "journalAbbr": "J Gynecol Oncol",
+   "date": "2026 Sep 3",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Tan, Haowen",
+    "Ou, Xuan",
+    "Luo, Luping",
+    "Chen, Ying"
+   ],
+   "mesh": [],
+   "doi": "10.3802/jgo.2027.38.e27",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42750304/"
+  },
+  {
+   "pmid": "42749829",
+   "title": "Minimal effective plate: rethinking plate size in glaucoma drainage devices.",
+   "abstract": "",
+   "journal": "Eye (London, England)",
+   "journalAbbr": "Eye (Lond)",
+   "date": "2026 Sep 16",
+   "types": [
+    "Editorial"
+   ],
+   "authors": [
+    "Rubegni, Giovanni",
+    "Dowidar, Mostafa",
+    "Sadiq, Salman"
+   ],
+   "mesh": [],
+   "doi": "10.1038/s41433-026-04854-x",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42749829/"
+  },
+  {
+   "pmid": "42749828",
+   "title": "Visual impairment certifications in England over 16 years: annual numbers  attributable to age-related macular degeneration, glaucoma, diabetes and hereditary eye disease.",
+   "abstract": "",
+   "journal": "Eye (London, England)",
+   "journalAbbr": "Eye (Lond)",
+   "date": "2026 Sep 16",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Lim, Alicia Yenting",
+    "Fox, Snezana",
+    "Mahendra, Smina",
+    "Nugawela, Manjula",
+    "Seeberan, Richard",
+    "Barnes, Ayse",
+    "Amalfitano, Francesca",
+    "Sivaprasad, Sobha",
+    "Mahroo, Omar A"
+   ],
+   "mesh": [],
+   "doi": "10.1038/s41433-026-04882-7",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42749828/"
+  },
+  {
+   "pmid": "42747257",
+   "title": "Explainable Multimodal OCT and OCTA Analysis Reveals Structural and Vascular  Features of Mild Glaucoma Across Ethnicities.",
+   "abstract": "PURPOSE: To develop and externally validate an explainable artificial  intelligence model integrating optical coherence tomography (OCT) and OCT angiography (OCTA) for mild primary open-angle glaucoma (POAG) and to determine the structural and vascular features contributing to classification across ethnically distinct cohorts. METHODS: This cross-sectional, multicenter diagnostic study included participants with mild POAG (visual field mean deviation >/= -6 dB) and normal controls. Quantitative structural OCT and vascular OCTA features from the optic disc and macula were extracted. An Asian cohort (n = 621; 429 glaucoma, 192 controls) was used for model development and testing, and an independent Caucasian cohort (n = 131; 62 glaucoma, 69 controls) was used for external validation. Random Forest models using OCT-only, OCTA-only, and combined OCT/OCTA features were compared using area under the receiver operating characteristic (AUC) curve, sensitivity, and specificity. Feature contributions were assessed using SHapley Additive exPlanations (SHAP). RESULTS: Among 752 participants (mean age, 60 years; 50% male), the multimodal model achieved high discrimination in the internal test set (AUC = 0.975) and comparable performance to OCT-only model (AUC = 0.965; P = 0.248) but outperformed the OCTA-only model (AUC = 0.870; P < 0.001). In the external test set, the multimodal model achieved an AUC of 0.884, outperforming both OCT-only (AUC = 0.801; P < 0.001) and OCTA-only (AUC = 0.792; P = 0.005) models. SHAP analysis identified inferior peripapillary retinal nerve fiber layer thickness and peripapillary perfusion density as key contributors. CONCLUSIONS: Explainable multimodal OCT/OCTA analysis identified consistent structural and vascular features of mild glaucoma across ethnically distinct cohorts. OCTA-derived vascular metrics provided complementary information to structural OCT, particularly in the external validation cohort.",
+   "journal": "Investigative ophthalmology & visual science",
+   "journalAbbr": "Invest Ophthalmol Vis Sci",
+   "date": "2026 Sep 1",
+   "types": [
+    "Journal Article",
+    "Multicenter Study"
+   ],
+   "authors": [
+    "Chua, Jacqueline",
+    "Shi, Zhixin",
+    "Kumar, Eshitha Jithendra",
+    "Yadav, Peddini Sagarika",
+    "Li, Chi",
+    "Xu, Qiong",
+    "Wong, Damon",
+    "Tan, Bingyao",
+    "Husain, Rahat",
+    "Aung, Tin",
+    "Popa-Cherecheanu, Alina",
+    "Schmetterer, Leopold"
+   ],
+   "mesh": [
+    "Humans",
+    "*Tomography, Optical Coherence/methods",
+    "Cross-Sectional Studies",
+    "*Glaucoma, Open-Angle/ethnology/diagnosis/diagnostic imaging/physiopathology",
+    "Female",
+    "*Optic Disk/blood supply/pathology",
+    "Male",
+    "Middle Aged",
+    "Intraocular Pressure/physiology",
+    "ROC Curve",
+    "*Fluorescein Angiography/methods",
+    "Visual Fields/physiology",
+    "Retinal Ganglion Cells/pathology",
+    "*Retinal Vessels/diagnostic imaging/pathology",
+    "Nerve Fibers/pathology",
+    "Aged",
+    "Multimodal Imaging"
+   ],
+   "doi": "10.1167/iovs.67.11.32",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42747257/"
+  },
+  {
+   "pmid": "42746768",
+   "title": "A Unified Visualization Platform for Longitudinal Macular Structure-Function  Assessment in Glaucoma.",
+   "abstract": "PRECIS: A cross-device visualization platform, currently assessed on Spectralis  and Cirrus OCT systems, integrates macular OCT and central 10-2 visual field data for aligned cross-sectional and longitudinal structure-function assessment. PURPOSE: To develop a unified visualization platform integrating macular optical coherence tomography (OCT) with central 10-2 visual field (VF) data across different OCT devices, enabling concurrent cross-sectional and longitudinal assessment of structure-function relationships in glaucoma. METHODS: We analyzed 116 eyes from 116 glaucoma patients enrolled in the Advanced Glaucoma Progression Study (AGPS), who underwent serial macular imaging with Spectralis SD-OCT and Cirrus HD-OCT, along with 10-2 perimetry every six months. Raw macular thickness data were exported, interpolated to uniform grids, and aligned to the fovea using rotation and displacement correction. Thickness maps were co-localized with VF test locations using device-specific scaling. The platform enabled interactive selection of retinal layers, spatial resolution, visit intervals, opacity blending, and temporal difference mapping relative to baseline. Structural and functional changes were qualitatively evaluated in progressing and stable eyes. RESULTS: The platform successfully harmonized data across OCT devices, allowing anatomically consistent overlay of thickness maps and VF points. In progressing eyes, regions of inner macular layer thinning, including GCC or GCIPL depending on the device/layer selected corresponded to localized VF sensitivity loss, while stable eyes showed minimal changes. Difference mapping and adjustable spatial resolution improved detection of subtle progression, particularly in moderate disease. CONCLUSIONS: This unified visualization platform enables longitudinal integration of macular OCT and central 10-2 visual field data for assessment of structure-function relationships in glaucoma. The framework may support future quantitative evaluation of glaucoma progression and predictive modeling.",
+   "journal": "Journal of glaucoma",
+   "journalAbbr": "J Glaucoma",
+   "date": "2026 Sep 10",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Mohammadzadeh, Vahid",
+    "Winjum, Benjamin",
+    "Nouri-Mahdavi, Kouros"
+   ],
+   "mesh": [],
+   "doi": "10.1097/IJG.0000000000002776",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42746768/"
+  },
+  {
+   "pmid": "42746752",
+   "title": "Global Trends in Glaucoma Publications, 1900-2023.",
+   "abstract": "PRECIS: Glaucoma research has shown sustained exponential growth, with a marked  recent rise in China's scientific output. PURPOSE: This bibliometric study aims to trace the growth of glaucoma research from 1900 to 2023. An additional aim is to understand growth patterns in the field, with a focus on comparative contributions from the United States and China. METHODS: Using databases including SCOPUS, Web of Science, and PubMed, publications containing \"glaucoma\" in their titles or keywords were selected. Chronological distribution, growth rates, duplication times, and author productivity, including complementary bibliometric indicators (h-index, g-index, and p-index), were analyzed. RESULTS: There was a substantial increase in glaucoma research publications, particularly since 2008. The United States has historically led in scientific output, and recent trends show the rapid rise of China. If current trends persist, China is projected to surpass the United States in glaucoma research within two decades. CONCLUSIONS: Bibliometric analysis has revealed a substantial growth in the publication of scientific literature on glaucoma. This study highlights a global shift in glaucoma research, with China emerging as a major contributor. The findings provide valuable insights for future research direction and resource allocation in glaucoma research and highlight the evolving landscape of global scientific output.",
+   "journal": "Journal of glaucoma",
+   "journalAbbr": "J Glaucoma",
+   "date": "2026 Sep 14",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Povedano-Montero, Javier F",
+    "Lopez-Munoz, Francisco",
+    "Moghimi, Sasan",
+    "Huang, Alex S",
+    "Vasile, Cristiana G",
+    "Weinreb, Robert N"
+   ],
+   "mesh": [],
+   "doi": "10.1097/IJG.0000000000002782",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42746752/"
+  },
+  {
+   "pmid": "42746749",
+   "title": "Management of Corneal Endothelial Failure in Eyes With a PreserFlo MicroShunt.",
+   "abstract": "PURPOSE: To describe different approaches to manage corneal endothelial failure  in eyes with PreserFlo MicroShunts (PFM). PATIENTS AND METHODS: All medical files (n = 150) of patients who had received PFM implantation between January 2022 and February 2024 at a single center were screened for corneal endothelial failure. Visual acuity, intraocular pressure, PFM position within the anterior chamber (distance to the endothelium and tube length), and central corneal thickness were recorded. Descemet membrane endothelial keratoplasty (DMEK) was performed with sulfur hexafluoride gas tamponade and combined with epithelial debridement to enhance visibility of intraocular structures. RESULTS: In total, 5 eyes with corneal edema in eyes with a PFM were identified, of which 3 eyes had received PFM implantation at our hospital (observed frequency: 3/150, 2%). One case was treated with shortening of the intracameral PFM portion and subsequent DMEK. In 2 cases, simultaneous shortening of the PFM and DMEK was performed. DMEK was technically feasible with early success in all cases. In one case, corneal edema resolved spontaneously after intraocular pressure reduction after needling of the filtering bleb and shortening of the PFM. The fifth patient refrained from corneal surgery because of multiple previous surgeries and reduced prognosis. CONCLUSIONS: Endothelial failure in eyes with PFM was observed mainly in eyes with further risk factors for endothelial impairment as Fuchs endothelial corneal dystrophy, pseudoexfoliation glaucoma, or multiple previous surgeries. DMEK with simultaneous or sequential intracameral tube shortening is a feasible option in this setting.",
+   "journal": "Cornea",
+   "journalAbbr": "Cornea",
+   "date": "2026 Sep 2",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Weller, Julia M",
+    "Eberle, Jessica V",
+    "Kruse, Friedrich E",
+    "Lammer, Robert"
+   ],
+   "mesh": [],
+   "doi": "10.1097/ICO.0000000000004292",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42746749/"
+  },
+  {
+   "pmid": "42746748",
+   "title": "Complications and Safety Profile of XEN((R)) Gel Stent in Glaucoma: A Five-Year  MAUDE Database Analysis.",
+   "abstract": "PURPOSE: To analyze adverse events associated with the XEN((R)) Gel Stent using the  FDA's Manufacturer and User Facility Device Experience (MAUDE) database. METHODS: The FDA MAUDE database was queried for reports from January 1, 2020, to November 8, 2024, using the product code \"KYF.\" Reports unrelated to the XEN((R)) Gel Stent were excluded. Data were analyzed for patient demographics, event types, and device-related complications. Descriptive statistics were used to outline the trends in device-related and patient-related issues. RESULTS: A total of 1,816 reports were identified. After excluding 688 reports unrelated to the XEN((R)) Gel Stent, 338 reports that originated from the literature rather than primary MAUDE submissions, and 2 reports with insufficient information, 788 reports were included for analysis. The most frequently reported device-related issues included Difficult to insert (device sticking) (n = 217, 36.7%), Obstruction of flow (n = 78, 13.2%), device malposition (68, 11.5%). Common patient-related complications included increased intraocular pressure (IOP) (142, 21.8%) and eye injury (137, 21.0%), followed by erosion (77, 11.8%). CONCLUSIONS: Over five years, the MAUDE database has revealed that the most common issues with the XEN((R)) Gel Stent involve device-related problems like resistance and blockage, as well as patient complications. While the data comes from voluntary reports and has its limitations, these real-world insights are valuable.",
+   "journal": "Current eye research",
+   "journalAbbr": "Curr Eye Res",
+   "date": "2026 Sep 16",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Ghazou, Alina",
+    "Hawas, Yousef",
+    "Gerges, Martin W",
+    "Awad, Aya",
+    "Alkhawaldeh, Ibraheem M",
+    "Marouf, Mohamed",
+    "Alqudah, Asem A"
+   ],
+   "mesh": [],
+   "doi": "10.1080/02713683.2026.2728913",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42746748/"
+  },
+  {
+   "pmid": "42746724",
+   "title": "Relationship of Neighborhood Socioeconomic Deprivation with Glaucoma Severity and  Medication Adherence in Veterans.",
+   "abstract": "PRCIS: In a cohort of 200 veterans with glaucoma, neighborhood socioeconomic  deprivation was not significantly associated with disease severity or medication adherence. These findings suggest that the integrated Veterans Health Administration system may mitigate traditional socioeconomic barriers to glaucoma care. PURPOSE: To evaluate the association of neighborhood socioeconomic disadvantage, measured by the Area Deprivation Index, with glaucoma severity and medication adherence in Veterans Health Administration patients. PATIENTS AND METHODS: This study was a secondary data analysis of 200 veterans (100 intervention and 100 control) from the Medication Adherence in Glaucoma to Improve Care randomized controlled trial. Baseline demographics, clinical variables, and 6-month smart-bottle adherence were linked retrospectively to national Area Deprivation Index percentiles corresponding to the time of trial randomization. The primary outcomes were the associations of Area Deprivation Index with disease severity and medication adherence. The secondary outcomes were the associations between Area Deprivation Index and demographic/socioeconomic variables. RESULTS: Area Deprivation Index did not significantly correlate with glaucoma severity (P=0.69). In the control arm, Area Deprivation Index was not correlated with mean weekly medication adherence (P=0.98). There was no interaction between Area Deprivation Index and intervention status regarding mean weekly medication adherence. Lower Area Deprivation Index (less deprivation) was observed among married participants (P=0.003), White participants (P<0.001), urban residents (P<0.001), older participants (P=0.03), and those with higher income (P=0.002). There was no significant difference in Area Deprivation Index based on sex (P=0.24) or employment status (P=0.17). CONCLUSIONS: In this veteran cohort, neighborhood socioeconomic deprivation was not associated with glaucoma severity or medication adherence. These findings suggest that the integrated Veterans Health Administration system may help mitigate socioeconomic barriers in glaucoma care. Larger multicenter studies are recommended to clarify how neighborhood deprivation and health system structure influence glaucoma outcomes.",
+   "journal": "Journal of glaucoma",
+   "journalAbbr": "J Glaucoma",
+   "date": "2026 Sep 7",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Zhu, Michael",
+    "Liu, Keke",
+    "Woolson, Sandra",
+    "Muir, Kelly W"
+   ],
+   "mesh": [],
+   "doi": "10.1097/IJG.0000000000002781",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42746724/"
+  },
+  {
+   "pmid": "42746469",
+   "title": "Efficacy and Safety of the iStent infinite Trabecular Micro-Bypass Device for  Glaucoma: A Systematic Review and Meta-Analysis.",
+   "abstract": "BACKGROUND: The iStent infinite (Glaukos Corporation) is a third-generation  trabecular micro-bypass device approved for stand-alone use in patients with inadequately controlled open-angle glaucoma, but overall efficacy and safety estimates have not been quantitatively synthesized via meta-analysis. Our objective was to evaluate the 12-month efficacy and safety of iStent infinite device implantation by examining intraocular pressure reduction and glaucoma medication reduction. METHODS: We conducted a systematic review and meta-analysis per the Preferred Reporting Items for Systematic reviews and Meta-Analyses (PRISMA) 2020 guidelines after registering the review protocol with the International Prospective Register of Systematic Reviews (PROSPERO). We searched PubMed/MEDLINE, Cochrane Central Register of Controlled Trials (CENTRAL), and ClinicalTrials.gov from inception through November 2025 for studies reporting 12-month outcomes after iStent infinite device implantation (stand-alone or combined with phacoemulsification). Pooled mean changes in intraocular pressure and medications were calculated, heterogeneity was assessed with I(2), and surgical approach (stand-alone vs combined with phacoemulsification) was evaluated via meta-regression. RESULTS: Three nonrandomized studies comprising 199 eyes with 12-month follow-up were included. The pooled mean intraocular pressure reduction at 12 months was 4.48 mm Hg (95% CI 3.04 to 5.92; P<0.0001) with high heterogeneity (I(2)=83.4%). Meta-regression showed greater intraocular pressure reduction with stand-alone implantation vs phacoemulsification-combined procedures (an additional 2.16 mm Hg; 95% CI 0.52 to 3.81; P=0.010), explaining 88.4% of heterogeneity. The pooled mean reduction in glaucoma medications was 0.48 (95% CI 0.29 to 0.67; P<0.0001) with moderate heterogeneity (I(2)=45.0%) and no significant difference by surgical approach (P=0.65). CONCLUSION: iStent infinite device implantation was associated with clinically meaningful 12-month reductions in intraocular pressure, a modest reduction in medication burden, and a favorable short-term safety profile.",
+   "journal": "Ochsner journal",
+   "journalAbbr": "Ochsner J",
+   "date": "2026 Fall",
+   "types": [
+    "Journal Article",
+    "Review"
+   ],
+   "authors": [
+    "Fischer, Ryan",
+    "Duncombe, Christopher",
+    "Okolie, Chinwendu",
+    "Caglianone, Lily"
+   ],
+   "mesh": [],
+   "doi": "10.31486/toj.26.0015",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42746469/"
+  },
+  {
+   "pmid": "42746273",
+   "title": "Bilateral Choroidal Neovascular Membranes in a Patient With a C1QTNF5 Mutation  Managed With Long-Term Anti-VEGF Therapy and PRN Protocol: A Case Report.",
+   "abstract": "Choroidal neovascular membranes (CNVM) are abnormal vascular complexes that can  cause serious visual morbidity if untreated. They can be induced by the C1QTNF5 mutation, which disrupts retinal pigment epithelium (RPE) adhesion and leads to progressive sub-RPE deposit accumulation. Due to its overlapping clinical presentation with age-related macular degeneration (AMD), C1QTNF5-associated CNVM is often misdiagnosed. Early recognition of atypical CNVM clinical presentations is essential to prompt genetic testing and initiate personalized antivascular endothelial growth factor (anti-VEGF) therapy. We report a 57-year-old male with a history of pontine stroke and strabismus surgery who presented with bilateral submacular hemorrhages and visual distortion. Given the atypical bilateral presentation and absence of drusen, genetic testing was performed. A pathogenic C1QTNF5 mutation with a p. Asn22Lys variant was identified. Treatment was initiated with intravitreal bevacizumab (IVA) injection and switched to aflibercept (IVE). After 2 years of tailored injection intervals based on optical coherence tomography (OCT) and visual acuity, the patient achieved visual acuity of 20/25 in both eyes with complete or near-complete resolution of subretinal fluid. A pro re nata (PRN) protocol was then initiated, and vision remained stable at the 4-year follow-up. This case highlights the importance of considering inherited retinal disease in atypical CNVM presentations. Early diagnosis, genetic testing, and individualized, imaging-driven anti-VEGF therapy can lead to long-term stability and favorable visual outcomes in patients with C1QTNF5-associated CNVM. Although causality cannot be established from a single case, concurrent glaucoma findings support the need for comprehensive ocular surveillance in patients with C1QTNF5 mutations.",
+   "journal": "Case reports in ophthalmological medicine",
+   "journalAbbr": "Case Rep Ophthalmol Med",
+   "date": "2026",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Chou, Zishuai",
+    "Saade, Celine"
+   ],
+   "mesh": [],
+   "doi": "10.1155/crop/6047720",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42746273/"
+  },
+  {
+   "pmid": "42745877",
+   "title": "Two-year outcomes of PRESERFLO MicroShunt implantation in a real-world  heterogeneous glaucoma cohort: a retrospective single-center study.",
+   "abstract": "PURPOSE: To evaluate intraocular pressure (IOP), medication burden,  best-corrected visual acuity (BCVA), and safety outcomes after ab externo PRESERFLO MicroShunt (PreserFlo) implantation in routine clinical practice. METHODS: This retrospective single-center study included patients undergoing PreserFlo implantation (standalone or combined with phacoemulsification) between 2019 and 2022. IOP, BCVA, and glaucoma medications were collected preoperatively and postoperatively (day 1, week 1, month 1, year 1, and year 2). Hypotony was defined as IOP </= 5 mmHg. Complete success at 2 years required IOP </= 21 mmHg with >/=20% reduction from baseline without glaucoma medication. RESULTS: Eighty-one eyes of 74 patients (mean age 73.2 years) were included. Mean baseline IOP was 24.0 +/- 10.2 mmHg, decreasing to 12.5 +/- 3.8 mmHg at year 1 (p < 0.0001) and 13.5 +/- 3.4 mmHg at year 2 (p = 0.0005). Mean BCVA was 0.63 +/- 0.30 at baseline, 0.70 +/- 0.31 at year 1, and 0.73 +/- 0.27 at year 2, indicating stable visual acuity during follow-up. Mean IOP reduction was 39.6% at year 1 and 33.8% at year 2; 75.6% and 73.3% achieved >/=20% IOP reduction at years 1 and 2, respectively. Medications decreased from 3.09 +/- 1.02 to 0.44 +/- 0.97 (year 1) and 0.45 +/- 0.85 (year 2), and their medication-free rates were 80.5% and 73.3%, respectively. Complications occurred in 55.6% of eyes; 27.2% required postoperative interventions (needling 20.9%); 15.0% required further glaucoma surgery. Complete success rates were 60.2% (year 1) and 52.0% (year 2). CONCLUSIONS: PreserFlo implantation provided sustained mid-term IOP reduction with substantial medication sparing and stable BCVA.",
+   "journal": "Frontiers in ophthalmology",
+   "journalAbbr": "Front Ophthalmol (Lausanne)",
+   "date": "2026",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Zeier, Anina",
+    "Tschopp, Markus",
+    "Barthelmes, Daniel",
+    "Papazoglou, Anthia"
+   ],
+   "mesh": [],
+   "doi": "10.3389/fopht.2026.1835844",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42745877/"
+  },
+  {
+   "pmid": "42745735",
+   "title": "Selective laser trabeculoplasty for anti-VEGF associated intraocular pressure  elevation in steroid-naive eyes.",
+   "abstract": "PURPOSE: Selective Laser Trabeculoplasty (SLT) is utilized in cases of primary  and certain secondary open-angle glaucoma to decrease intraocular pressure (IOP). SLT effectiveness has been demonstrated in patients with increased IOP secondary to intraocular steroids. In addition to intravitreal steroids, intravitreal anti-vascular endothelial growth factor (VEGF) injections are commonly used in patients with diabetic retinopathy and age-related macular degeneration. Some patients receiving anti-VEGF injections experience increases in IOP. No studies have evaluated the effectiveness of SLT for anti-VEGF-associated glaucoma. METHODS: This was a retrospective, single-center study. Anti-VEGF-associated IOP increase was defined as an eye receiving at least one anti-VEGF intravitreal injection prior to SLT. IOP and the number of pressure-lowering drops were measured at 3-, 6-, 9-, and 12-month post-SLT follow-up appointments. Outcomes included changes in IOP, and the number of IOP-lowering drops prescribed. RESULTS: Twenty-three eyes from 18 patients were included in this study. The IOP was 18.26 +/- 3.33 with 2.6 +/- 1. drops prescribed at baseline. Two eyes required repeat SLT. Over the study period, IOP was reduced by 3 to 4.5 mm Hg, with all p-values <0.001. Eight eyes in the study were drop-naive (no IOP-lowering drops prescribed prior to SLT). Of these, 6/8 (75%) remained drop-free at the end of the observation period. At their final clinic visit, 78.3% of patients were controlled on SLT without further surgical or medical intervention. CONCLUSIONS: To the best of our knowledge, this is the first study to demonstrate the long-term effectiveness of SLT in anti-VEGF-associated open-angle glaucoma in steroid-naive eyes.",
+   "journal": "Frontiers in ophthalmology",
+   "journalAbbr": "Front Ophthalmol (Lausanne)",
+   "date": "2026",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Samanta, Anindya",
+    "Krambeer, Chelsey",
+    "Flowers, Addie",
+    "Porter, Matthew"
+   ],
+   "mesh": [],
+   "doi": "10.3389/fopht.2026.1675048",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42745735/"
+  },
+  {
+   "pmid": "42745442",
+   "title": "Preliminary Outcomes of iStent Inject vs Kahook Dual Blade Goniotomy Combined  With Phacoemulsification: A Randomized Controlled Trial.",
+   "abstract": "BACKGROUND Canal-based minimally invasive glaucoma surgery (CB-MIGS) is  increasingly used to reduce intraocular pressure (IOP) with a favorable safety profile in patients with mild-to-moderate glaucoma. This study assessed the safety and efficacy of phacoemulsification combined with iStent inject implantation (phaco-iStent) vs goniotomy using the Kahook Dual Blade (phaco-KDB) in patients with open-angle glaucoma or ocular hypertension. MATERIAL AND METHODS This prospective randomized trial included 68 eyes (35 phaco-iStent, 33 phaco-KDB) operated on by a single surgeon between 2024 and 2025. Surgical success was defined as IOP reduction >/=20% from baseline or IOP </=15 mm Hg, with subcategories of complete and satisfactory success. Postoperative assessments were performed up to 12 months, with mean follow-up duration of 8+/-2.4 months. RESULTS Both procedures led to a similar reduction in IOP (P=0.355 at 6 months). Mean IOP decreased from 19.37 +/- 4.03 mm Hg to 16.58+/-3.64 mm Hg in the phaco-iStent group and from 18.15+/-3.76 mm Hg to 15.46+/-3.15 mm Hg in the phaco-KDB group (approximately 14% reduction in both groups). The mean number of glaucoma medications decreased from 1.29+/-0.71 to 0.00 +/- 0.00 in the phaco-iStent group and from 1.00+/-0.61 to 0.00+/-0.00 in the phaco-KDB group. Complete surgical success at 6 months was achieved in 68.8% of phaco-iStent eyes and 62.5% of phaco-KDB eyes. The most common adverse events were corneal edema and hyphema, which occurred more frequently in the phaco-KDB group; all resolved without additional surgical intervention. CONCLUSIONS Both the phaco-iStent and the phaco-KDB techniques significantly reduced IOP and medication burden with few postoperative complications. However, long-term outcomes should be interpreted with caution because of decreasing follow-up over time.",
+   "journal": "Medical science monitor : international medical journal of experimental and  clinical research",
+   "journalAbbr": "Med Sci Monit",
+   "date": "2026 Sep 16",
+   "types": [
+    "Journal Article",
+    "Randomized Controlled Trial"
+   ],
+   "authors": [
+    "Charytonowicz, Anna",
+    "Chilmonczyk, Malgorzata",
+    "Zarzecki, Mateusz",
+    "Konopinska, Joanna"
+   ],
+   "mesh": [
+    "Humans",
+    "*Phacoemulsification/methods",
+    "Intraocular Pressure/physiology",
+    "Prospective Studies",
+    "Female",
+    "Treatment Outcome",
+    "Male",
+    "Aged",
+    "*Trabeculectomy/methods",
+    "Glaucoma, Open-Angle/surgery",
+    "Middle Aged",
+    "Ocular Hypertension/surgery",
+    "Minimally Invasive Surgical Procedures/methods",
+    "Glaucoma Drainage Implants"
+   ],
+   "doi": "10.12659/MSM.953345",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42745442/"
+  },
+  {
+   "pmid": "42744592",
+   "title": "Reversal of optic disc cupping in primary congenital glaucoma: analysis of 1223  eyes.",
+   "abstract": "BACKGROUND/AIMS: To determine the prevalence and predictors of postoperative  optic disc cupping reversal in primary congenital glaucoma (PCG). METHODS: This retrospective chart review included 1223 eyes of 775 children with primary congenital glaucoma who underwent surgery between 1993 and 2023 and had at least 1 year of follow-up. Baseline demographic and ocular parameters, including age-at-onset, age at surgery, laterality, intraocular pressure (IOP), cup-disc ratio (CDR), axial length (AL) and corneal diameter (CD), were recorded. CDR reversal was defined as a reduction in CDR of at least 0.2 from baseline. For bilateral PCG, both eyes were used for analysis; hence, cluster-robust standard errors were used. Univariable and multivariable logistic regression analyses were performed to identify factors associated with reversal and a scoring system for predicting CDR reversal in PCG eyes was developed from the model. RESULTS: Postoperative cupping reversal was observed in 528 of 1223 eyes (43.2%). On multivariable analysis, a smaller baseline CD and AL remained the strongest predictors of reversal, with every 1 mm increase in CD being associated with a 50% reduction in the odds of postoperative CDR reversal (aOR 0.50, 95% CI 0.42 to 0.59; p<0.001). Neonatal-onset (aOR 2.03, 95% CI 1.04 to 3.93; p=0.036) and infantile-onset disease (aOR 2.45, 95% CI 1.30 to 4.60; p=0.005) were also independently associated with reversal compared with late-onset PCG. CONCLUSIONS: Postoperative CDR reversal occurs in a substantial proportion of PCG eyes and earlier disease onset, smaller CD and shorter AL are strong predictors for reversal.",
+   "journal": "The British journal of ophthalmology",
+   "journalAbbr": "Br J Ophthalmol",
+   "date": "2026 Sep 15",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Panigrahi, Arnav",
+    "Yadav, Suresh Kumar",
+    "Pathak, Anand Kumar",
+    "Kumar, Anurag",
+    "Das, Sumit Kumar",
+    "Gupta, Shikha",
+    "Gupta, Viney"
+   ],
+   "mesh": [],
+   "doi": "10.1136/bjo-2026-330658",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42744592/"
+  },
+  {
+   "pmid": "42743953",
+   "title": "Therapeutic Success and Revision Rate after Preserflo MicroShunt Implantation: A  Monocentric Analysis of 74 Cases.",
+   "abstract": "ABSTRACT: BACKGROUND: Filtrating surgeries have been the gold standard in  glaucoma surgery for decades, yet fibrotic processes remain a major cause of therapeutic failure. Modern glaucoma surgeries aim to offer a less invasive alternative but are often less effective in reducing intraocular pressure (IOP). The Preserflo MicroShunt combines the principles of traditional filtering surgery with minimally invasive techniques to achieve an effective IOP reduction. ABSTRACT: PATIENTS AND METHODS: This retrospective, single-centre study analysed the clinical data of 74 patients who underwent Preserflo MicroShunt implantation in a university eye clinic between 2021 and 2022. The mean age was 71.1 +/- 10.3 years. The most common glaucoma types were primary open-angle glaucoma (52.7%), pseudoexfoliation glaucoma (22.9%), normal-tension glaucoma (9.4%), and angle-closure glaucoma (4%). The median follow-up time was 326 days. Treatment success was evaluated based on IOP, revision rates, and the necessity of additional pressure-lowering interventions using descriptive statistics and Kaplan-Meier analysis. ABSTRACT: RESULTS: After approximately 1 year (326 days), 38.0% achieved absolute success (IOP </= 18 mmHg and >/=20% reduction from baseline without additional medication), while 39.9% achieved relative success (IOP </= 18 mmHg and >/=20% reduction, including topical medication). No further IOP-lowering interventions were required in 78.7% of cases, and 63.8% of patients did not require a revision of the Preserflo implant. ABSTRACT: CONCLUSION: This monocentric study presents current, consistent data from our clinic on the efficacy of the Preserflo MicroShunt in glaucoma patients, thereby complementing existing evidence on comparable filtering procedures. The observed success rates were slightly lower than those reported for other procedures, possibly due to the tertiary referral setting, complex pre-treatment histories, and the retrospective study design with non-standardized follow-up intervals and decreasing long-term risk populations. Longer prospective studies are needed to assess long-term efficacy and safety outcomes.",
+   "journal": "Klinische Monatsblatter fur Augenheilkunde",
+   "journalAbbr": "Klin Monbl Augenheilkd",
+   "date": "2026 Sep 15",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Helmers, Gloria",
+    "Bohringer, Daniel",
+    "Keye, Philip",
+    "Thelen, Patrick",
+    "Reinhard, Thomas",
+    "Luebke, Jan"
+   ],
+   "mesh": [],
+   "doi": "10.1055/a-2944-0690",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42743953/"
+  },
+  {
+   "pmid": "42743821",
+   "title": "Bushen Mingmu Wan attenuates excitotoxic retinal injury and  ferroptosis-associated pathology with involvement of CYP1B1-related PI3K/AKT signaling.",
+   "abstract": "OBJECTIVE: This study investigated whether Bushen Mingmu Wan (BSMMW) attenuates  excitotoxic retinal injury and explored the involvement of CYP1B1-related PI3K/AKT signaling in ferroptosis-associated pathological changes. METHODS: The chemical profile of the tested BSMMW batch was characterized by UPLC-Q-TOF-MS. Candidate glaucoma-related targets were screened using network-based analysis and molecular docking. The predicted biological response was then examined in orally treated rats with NMDA-induced retinal injury and in glutamate-injured R28 cells directly exposed to BSMMW. Retinal structure, Brn3a-positive RGC density, R28 cell viability, and cell death-related changes were evaluated by H&E/PAS staining, retinal flat-mount Brn3a counting, Brn3a immunofluorescence, TUNEL staining, Hoechst/PI staining, CCK-8 assay, and LDH release assay. Ferroptosis-associated alterations were assessed using electron microscopy, Prussian blue staining, GPX4 immunostaining, and GPX4/FTH1 detection by RT-qPCR and western blotting. CYP1B1 gain- and loss-of-function experiments, together with PI3K inhibition, were used to examine the involvement of CYP1B1-related PI3K/AKT signaling. RESULTS: UPLC-Q-TOF-MS provided a preliminary chemical profile of the tested BSMMW batch. Target screening and docking prioritized CYP1B1 as a candidate BSMMW-associated target for experimental investigation. In NMDA-injured rats, oral BSMMW administration reduced retinal structural damage, preserved Brn3a-positive RGC density, decreased TUNEL-positive cells, and improved ferroptosis-associated retinal abnormalities, including mitochondrial damage, iron deposition, and loss of GPX4 and FTH1 expression. In R28 cells directly exposed to BSMMW, cell viability and Brn3a expression were increased, whereas PI staining intensity and LDH release were reduced, accompanied by recovery of GPX4 and FTH1 expression. BSMMW restored CYP1B1 expression and increased the p-PI3K/PI3K and p-AKT/AKT ratios. CYP1B1 knockdown weakened the BSMMW-associated increase in PI3K/AKT phosphorylation and protective response, whereas PI3K inhibition attenuated the BSMMW-associated recovery of cell viability and ferroptosis-related proteins. CONCLUSION: BSMMW attenuated NMDA-induced retinal injury and glutamate-induced R28 cell injury, accompanied by reduced ferroptosis-associated pathological changes and restoration of CYP1B1-related PI3K/AKT signaling. CYP1B1 knockdown or PI3K inhibition weakened the BSMMW-associated protective response, supporting the involvement of CYP1B1-related PI3K/AKT signaling in this response.",
+   "journal": "Pathology, research and practice",
+   "journalAbbr": "Pathol Res Pract",
+   "date": "2026 Sep 11",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Zhao, Xin",
+    "Zhang, Linxu",
+    "Lu, Xuejing",
+    "Dong, Daoquan",
+    "Yang, Shuai",
+    "Xu, Lingling"
+   ],
+   "mesh": [],
+   "doi": "10.1016/j.prp.2026.156691",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42743821/"
+  },
+  {
+   "pmid": "42743094",
+   "title": "Intraoperative Triamcinolone Acetonide Injection During Ahmed Glaucoma Valve  Surgery Suppresses the Occurrence of the Postoperative Hypertensive Phase.",
+   "abstract": "PRCIS: Intraoperative sub-plate injection of triamcinolone acetonide during Ahmed  glaucoma valve implantation markedly reduced the incidence of the postoperative hypertensive phase without increasing complications. PURPOSE: The objective of this study was to evaluate whether intraoperative sub-plate injection of triamcinolone acetonide (TA) during Ahmed glaucoma valve (AGV) implantation reduces postoperative hypertensive phase (HP) incidence. PATIENTS AND METHODS: We included 182 eyes from 182 patients who underwent AGV implantation between June 2017 and December 2023 at five institutions in Japan and were followed for a minimum of 3 months. The eyes were divided into two groups: 103 eyes received intraoperative sub-plate TA injection (TA group), and 79 eyes did not (non-TA group). The HP was defined as an initial intraocular pressure reduction to </=22 mm Hg within 1 week postoperatively, followed by an increase to >21 mm Hg on two or more occasions within 3 months. Fisher's exact test,nonparametric tests, and multivariate logistic regression were used for statistical analyses. RESULTS: HP occurred in 8 (7.8%) and 28 (35.4%) eyes in TA and non-TA groups, respectively (P<0.0001). Among the eyes with anterior chamber tube placement, no cases of HP were observed in the TA group, whereas 8 cases occurred in the non-TA group (P<0.0001). In pars plana cases, HP developed in 8 and 20 eyes in the TA and non-TA groups, respectively (P=0.016). Multivariate logistic regression analysis identified the absence of intraoperative TA injection as an independent risk factor for the HP (odds ratio: 0.16, P<0.0001). CONCLUSIONS: Intraoperative sub-plate TA injection may be associated with a reduced incidence of postoperative HP after AGV implantation.",
+   "journal": "Journal of glaucoma",
+   "journalAbbr": "J Glaucoma",
+   "date": "2026 Aug 31",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Hirota, Akira",
+    "Asaoka, Satoko",
+    "Kuroda, Kohei",
+    "Hayashi, Yusuke",
+    "Asada, Yosuke",
+    "Iwamoto, Satoshi",
+    "Chihara, Etsuo",
+    "Sasaki, Hidenori",
+    "Aso, Hiroshi",
+    "Saeki, Tadashiro",
+    "Yamagami, Satoru",
+    "Matsuda, Akira"
+   ],
+   "mesh": [],
+   "doi": "10.1097/IJG.0000000000002778",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42743094/"
+  },
+  {
+   "pmid": "42743091",
+   "title": "Aqueous Angiography Reveals Discordance with Intraoperative Signs of iStent  Outflow.",
+   "abstract": "Minimally Invasive Glaucoma Surgeries (MIGS) have documented variable clinical  efficacy. To ensure intraoperative functionality of trabecular bypass MIGS, procedures like trypan blue dye stained episcleral venous flow andsigns such as blood reflux in the anterior chamber have been used as surrogate markers for checking functionality of MIGS procedures. Aqueous angiography (AA) images the flow of fluorescent tracer dyes within the aqueous humor outflow channels after intracameral injection of the tracer dye, thus providing confirmatory evidence for the functionality of any trabecular bypass MIGS procedure. Herein, we discuss a novel case comparing the above intraoperative surrogate markers with the confirmatory imaging technique of AA for the functionality of MIGS. A lack of concordance between the two was noted, which provides a word of caution to surgeons using these techniques to ensure functionality of trabecular bypass MIGS. This case indicates the need for further research towards evaluating the validity of these intraoperative surrogate markers for assessing the functionality of trabecular bypass MIGS.",
+   "journal": "Journal of glaucoma",
+   "journalAbbr": "J Glaucoma",
+   "date": "2026 Aug 31",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Mishra, Sanjay Kumar",
+    "Beri, Nitika",
+    "Joshi, Amrita",
+    "Tripathi, Shailaza",
+    "Solanki, Abhay",
+    "Sahu, Pramod Kumar",
+    "Sati, Alok",
+    "Dada, Tanuj"
+   ],
+   "mesh": [],
+   "doi": "10.1097/IJG.0000000000002774",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42743091/"
+  },
+  {
+   "pmid": "42743090",
+   "title": "Dynamic of the Three-dimensional Microarchitecture of Lamina Cribrosa Pores using  Optical Coherence Tomography.",
+   "abstract": "PRCIS: We found a significant increase in lamina cribrosa (LC) pore length after  surgical IOP reduction in patients with glaucoma. This change in the LC microarchitecture was correlated with changes in macroarchitectural parameters. PURPOSE: To investigate the dynamic changes in LC three-dimensional microarchitecture following surgical IOP reduction. METHODS: Ten eyes of 10 glaucoma patients were imaged with spectral domain optical coherence tomography (SD-OCT) before and one month after glaucoma surgery. The pre- and postoperative LC depth and the thickness of LC and prelaminar tissue were determined on a median vertical section of the optic nerve head. Laminar pores were traced using a semi-automatic segmentation software. Pore length, tortuosity and verticality were measured on the 3D reconstructions. RESULTS: The intraocular pressure (IOP) decreased from 23.6+/-9.03 (mean+/-SD) to 11.3+/-3.68 mmHg at one month post-surgery (P<0.001). The mean LC depth was reduced from 571.8+/-125.6 to 419.9+/-96.0 mum (P=0.006). LC thickness increased significantly (228.8+/-29.27 preoperatively to 284.4+/-83.61 mum postoperatively (P=0.016)). No significant increase in the prelaminar tissue thickness was noted (132.7+/-42.46 preoperatively and 173.1+/-63.79 mum postoperatively (P=0.101)). In lamina 3D microarchitecture, pore length was significantly greater postoperatively (P=0.01). No significant difference was observed in tortuosity or verticality (P=0.912 and P=0.159 respectively). CONCLUSIONS: We found a significant increase in LC pore length after glaucoma surgery using SD-OCT of the optic nerve head. Further studies are necessary to better characterize the dynamics of laminar microarchitecture and its influence on the prognosis of glaucomatous neuropathy.",
+   "journal": "Journal of glaucoma",
+   "journalAbbr": "J Glaucoma",
+   "date": "2026 Aug 31",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Claudel, Helene",
+    "Bastelica, Paul",
+    "Hamard, Pascale",
+    "Rossant, Florence",
+    "Ding, Nan",
+    "Paques, Michel",
+    "Labbe, Antoine",
+    "Baudouin, Christophe"
+   ],
+   "mesh": [],
+   "doi": "10.1097/IJG.0000000000002780",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42743090/"
+  },
+  {
+   "pmid": "42743074",
+   "title": "Intraocular Pressure-Lowering Effect of Netarsudil Across Glaucoma Severity.",
+   "abstract": "PRECIS: Netarsudil lowered IOP across all glaucoma severity stages; however, its  durability appeared reduced in patients with systemic hypertension, suggesting the need for closer follow-up. PURPOSE: To evaluate the intraocular pressure (IOP)-lowering effect of netarsudil 0.02% across different stages of glaucoma severity and to investigate the influence of systemic hypertension on treatment response over time. METHODS: This retrospective study included 113 eyes of 113 patients with glaucoma who initiated netarsudil 0.02% between December 2024 and December 2025. Patients were classified into early (mean deviation [MD] >-6 dB), moderate (-6 to -12 dB), and advanced (<-12 dB) glaucoma groups based on pretreatment visual field MD. IOP was recorded at baseline, 1, 3, and 6 months. A linear mixed-effect model was used to assess the effects of glaucoma severity, time, hypertension, and their interactions on IOP. RESULTS: Baseline IOP was comparable across severity groups. Netarsudil produced a significant reduction in IOP over time (P<0.001), with no significant effect of glaucoma severity (P=0.620) or stage x time interaction (P=0.276), indicating that the IOP-lowering effect did not differ significantly according to disease stage. However, a significant interaction between time and hypertension was observed (P=0.040). Although both hypertensive and non-hypertensive patients demonstrated similar IOP reduction at 1 month, the effect was sustained in non-hypertensive patients but attenuated in hypertensive patients, who showed IOP rebound at 3 and 6 months. CONCLUSIONS: Netarsudil was associated with a significant IOP-lowering effect across all stages of glaucoma, without significant differences according to disease severity. However, the durability of its effect may be influenced by systemic hypertension, suggesting the need for closer monitoring in hypertensive patients.",
+   "journal": "Journal of glaucoma",
+   "journalAbbr": "J Glaucoma",
+   "date": "2026 Aug 28",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Yoon, Heejin",
+    "Lee, Jiwoong",
+    "Hong, Hanpyo",
+    "Moon, Sangwoo"
+   ],
+   "mesh": [],
+   "doi": "10.1097/IJG.0000000000002777",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42743074/"
+  },
+  {
+   "pmid": "42741142",
+   "title": "Beyond the clinic: a community-embedded, multidomain framework for early  detection of glaucoma.",
+   "abstract": "Glaucoma remains one of the leading causes of acquired irreversible blindness  worldwide, with normal-tension glaucoma representing the dominant subtype in Japan and several East Asian populations. The insidious, asymptomatic progression of this condition, combined with the demonstrated inadequacy of intraocular pressure alone as a screening criterion, creates a critical gap between disease burden and case detection. Population-based epidemiological studies consistently reveal that the majority of individuals with glaucoma are undiagnosed. Two responses have been suggested: incorporation of retinal imaging into annual health checkups, which warrants formal prospective evaluation, and characterization of individuals at higher risk - integrating genomic risk, oxidative stress biomarkers, systemic lifestyle factors, and ocular blood flow dynamics - which may help identify those in whom damage is most likely to occur. The principal contribution of this Perspective is therefore the implementation model rather than the individual screening components. We introduce the Living Lab ('neighborhood health lab'), a community co-creation platform established under the Japan Science and Technology Agency COI-NEXT 'Vision to Connect' hub at Tohoku University, as a scalable model for operationalizing this framework. Embedded within commercial retail environments, the Living Lab integrates non-invasive screening, longitudinal health data collection, and evidence-based health product development-exemplified by the Ronbun Recipe(R) concept-within a stakeholder-aligned ecosystem encompassing citizens, researchers, industry, and municipal authorities. Conceived as a platform for well-being rather than as a disease-specific screening service, it engages individuals who are asymptomatic, undiagnosed, and outside existing screening pathways, and who would not otherwise be assessed at all.",
+   "journal": "Frontiers in public health",
+   "journalAbbr": "Front Public Health",
+   "date": "2026",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Hanyuda, Akiko",
+    "Yamada, Tetsuya",
+    "Tsuda, Satoru",
+    "Himori, Noriko",
+    "Nakazawa, Toru"
+   ],
+   "mesh": [
+    "Humans",
+    "*Glaucoma/diagnosis",
+    "Japan",
+    "*Early Diagnosis",
+    "*Mass Screening/methods"
+   ],
+   "doi": "10.3389/fpubh.2026.1915134",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42741142/"
+  },
+  {
+   "pmid": "42740952",
+   "title": "Unilateral childhood-onset glaucoma associated with Phelan-McDermid syndrome.",
+   "abstract": "PURPOSE: Phelan-McDermid Syndrome (PHMDS) is a rare neurogenetic, highly  heterogenous, disorder with hallmark signs of neonatal hypotonia, dysmorphic facial features, and developmental delay. We report a case of unilateral ocular hypertension with glaucomatous concern in a child with PHMDS. OBSERVATIONS/INTERVENTIONS: A 7-year-old female with genetically confirmed chromosome 22q13.3 deletion was referred for unilateral ocular hypertension and signs of elevated episcleral venous pressure (EVP). Given a complex genetic profile and past medical history, minimal topical medication was tolerated leaving a persistently elevated intraocular pressure (IOP) of 20 mmHg in the right eye compared to 12 mmHg in the left eye with concerns for glaucomatous cupping. Magnetic resonance imaging with angiography of the brain and orbits was unrevealing for a cause of her suspected unilateral elevated EVP. Transscleral diode cyclophotocoagulation was performed and achieved successful IOP control with limited topical therapy. CONCLUSIONS/IMPORTANCE: This case highlights the challenges of evaluating and managing ocular hypertension with glaucomatous concern in a medically complex child, as early recognition and individualized intervention can effectively manage glaucoma in the context of complex systemic comorbidities.",
+   "journal": "American journal of ophthalmology case reports",
+   "journalAbbr": "Am J Ophthalmol Case Rep",
+   "date": "2026 Dec",
+   "types": [
+    "Case Reports",
+    "Journal Article"
+   ],
+   "authors": [
+    "Faust, Julia",
+    "Ely, Amanda L"
+   ],
+   "mesh": [],
+   "doi": "10.1016/j.ajoc.2026.102657",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42740952/"
+  },
+  {
+   "pmid": "42739742",
+   "title": "The Eight-Chop Technique in Nonagenarian Patients: Real-World Intraoperative and  Postoperative Outcomes.",
+   "abstract": "Objectives: To describe intraoperative and postoperative outcomes of the  Eight-Chop Technique in elderly patients, with particular attention to nonagenarian patients undergoing cataract surgery. Methods: This retrospective study included consecutive eligible eyes undergoing Eight-Chop phacoemulsification and posterior chamber intraocular lens implantation at a single clinic. Eyes were stratified by age at surgery into 70-79 years, 80-89 years, and >/=90 years groups. Sixty eyes were included in each younger group, and all 49 eligible nonagenarian eyes were included. Eyes were not intentionally excluded from the younger groups because of poor pupillary dilation, zonular weakness, white cataract, pseudoexfoliation, glaucoma, age-related macular degeneration, or advanced nuclear grade. Preoperative characteristics, intraoperative parameters, best-corrected visual acuity (BCVA), intraocular pressure, and corneal endothelial cell density (CECD) were evaluated. Linear mixed-effects models accounted for fellow-eye correlation. Results: A total of 169 eyes were analyzed. The >/=90-year cohort had greater baseline complexity; intraoperative differences were descriptive, with the highest operative time, phacoemulsification time, aspiration time, cumulative dissipated energy, and irrigation fluid volume (all p < 0.001). Postoperative BCVA improved from baseline in all groups. Mean CECD loss at 19 weeks was -1.3 +/- 5.7%, -0.7 +/- 5.7%, and 3.5 +/- 9.2% in the 70-79-, 80-89-, and >/=90-year groups, respectively. No serious intraoperative complications occurred. Conclusions: The Eight-Chop Technique was used across elderly age groups, including nonagenarian patients. Observed age-group differences represent associations in this retrospective dataset and do not establish causal age effects or comparative superiority, safety, or endothelial protection of the technique.",
+   "journal": "Journal of clinical medicine",
+   "journalAbbr": "J Clin Med",
+   "date": "2026 Aug 30",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Sato, Tsuyoshi"
+   ],
+   "mesh": [],
+   "doi": "10.3390/jcm15176737",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42739742/"
+  },
+  {
+   "pmid": "42739636",
+   "title": "Mid to Long-Term Outcomes of Low-Energy Selective Laser Trabeculoplasty for  Primary Open Angle Glaucoma.",
+   "abstract": "Background/Objectives: To evaluate the mid- to long-term outcomes of selective  laser trabeculoplasty (SLT) performed with lower energy (</=0.5 millijoules (mJ)) than conventional settings (0.6-1.2 mJ). Methods: This retrospective chart-review study included patients who underwent low-energy SLT (0.34 +/- 0.06 mJ) at Shimane University Hospital from April 2018 onward. A total of 54 patients (99 eyes) were analyzed, with a mean follow-up period of 57.5 months and a maximum follow-up period of 114 months. Treatment failure was defined using two criteria: an increase in the number of medications or the addition of incisional glaucoma surgery, and the addition of incisional glaucoma surgery. Kaplan-Meier survival analyses and multivariate Cox proportional hazards models were performed to evaluate long-term outcomes and prognostic factors. Results: During the follow-up period, 54 eyes underwent a single SLT treatment. A total of 37 eyes underwent two SLT treatments, and 8 eyes underwent three treatments. Mean intraocular pressure (IOP) significantly decreased from 16.7 mmHg at baseline to 15.1, 14.4, and 13.9 mmHg at 12, 36, and 60 months, respectively (mixed-effects model, p < 0.0001). Medication scores were 2.2, 2.3, 2.1, and 2.8 at baseline, 12, 36, and 60 months, respectively (p = 0.0006). Success rates at 12, 36, and 60 months were 72%, 37%, and 26% by Definition 1, and 90%, 69%, and 61% by Definition 2. At 36 months, success rates stratified by baseline medication score (0, 1-2, and >/=3) were 11%, 50%, and 38% for Definition 1 (p = 0.0002), and 83%, 75%, and 58% for Definition 2 (p = 0.02). Under Definition 1, more than 90% of eyes in the medication-free group required additional medications or surgery within 5 years. Under Definition 2, 60% of eyes with a preoperative medication score of >/=3 required surgeries within 5 years. Conclusions: Performing low-energy SLT in patients using approximately one medication can delay the need for additional therapy or surgery while maintaining IOP reduction over the observation period.",
+   "journal": "Journal of clinical medicine",
+   "journalAbbr": "J Clin Med",
+   "date": "2026 Aug 27",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Ohtani, Hinako",
+    "Fujino, Yuri",
+    "Takagi, Keigo",
+    "Yoshida, Yuto",
+    "Ida, Chisako",
+    "Murakami, Kana",
+    "Koike, Mizuki",
+    "Tanito, Masaki"
+   ],
+   "mesh": [],
+   "doi": "10.3390/jcm15176631",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42739636/"
+  },
+  {
+   "pmid": "42739310",
+   "title": "A Systematic Multi-Dataset, Multi-Seed Evaluation of Preprocessing Strategies for  Retinal Optic Disc and Cup Segmentation.",
+   "abstract": "Background/Objectives: Accurate delineation of the optic disc and optic cup in  retinal fundus photographs is a prerequisite for automated glaucoma screening. While encoder-decoder segmentation models have advanced considerably, the contribution of upstream preprocessing to segmentation accuracy, and the stability of that contribution across repeated training runs, remain insufficiently characterized. Methods: Five preprocessing pipelines, baseline, Contrast Limited Adaptive Histogram Equalization (CLAHE), Region of Interest (ROI) cropping, ROI+CLAHE, and CLAHE with heavy augmentation, were benchmarked under a fixed EfficientUNet++ model with an EfficientNet-B7 encoder on three publicly available fundus datasets (REFUGE, ORIGA, and Drishti-GS). Every configuration was retrained under three independent random seeds (42, 15, and 89) to assess run-to-run variability. Seed-level standard deviations accompany every reported mean and define the confidence limit on each ranking. Results: On REFUGE, CLAHE with augmentation (Config 5) achieved the strongest mean Dice (disc 0.9523+/-0.0017; cup 0.8348+/-0.0018). On ORIGA, all five configurations clustered within 0.0067 disc Dice; ROI+CLAHE (Config 4) was marginally ahead on disc (0.9681+/-0.0002) and augmentation led on the cup (0.8873+/-0.0024). On Drishti-GS, all five configurations converged successfully once optimizer and loss settings were corrected; the near-total failures seen in earlier single-run experiments reflected a configuration problem, not the small (81-image) training set. Conclusions: CLAHE applied to full-resolution images is the single most consistently beneficial preprocessing choice across all three datasets. ROI+CLAHE showed a small, initialization-stable advantage on ORIGA, but ROI crop centres were derived from ground-truth centroids, an oracle localization setting, and these results should not be interpreted as achievable by a fully automated pipeline. Data augmentation showed a consistent reduction in initialization sensitivity on small datasets and may be beneficial as a default strategy.",
+   "journal": "Diagnostics (Basel, Switzerland)",
+   "journalAbbr": "Diagnostics (Basel)",
+   "date": "2026 Sep 7",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Alajmi, Abdullah",
+    "Elnahal, Youssef",
+    "Othman, Mohamed",
+    "Aljuhani, Manal",
+    "Alharbi, Amani",
+    "Abdelhady, Ghada"
+   ],
+   "mesh": [],
+   "doi": "10.3390/diagnostics16172880",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42739310/"
+  },
+  {
+   "pmid": "42739057",
+   "title": "Nicotinamide Supplementation in Glaucoma: A Systematic Review of Human Studies.",
+   "abstract": "Background/Objectives: Nicotinamide (NAM), a form of vitamin B3 and precursor of  nicotinamide adenine dinucleotide (NAD), has emerged as a potential metabolic and neuroprotective strategy in glaucoma. This systematic review aimed to evaluate the available human evidence on NAM-containing and NAD-targeted strategies in glaucoma, integrating interventional, observational, and mechanistic evidence with particular attention to clinical outcomes, methodological quality, and safety. Methods: A systematic literature search was conducted in PubMed, Scopus, and the Cochrane Central Register of Controlled Trials (CENTRAL), with the search updated through 22 August 2026. Eligible studies included randomized and non-randomized interventional studies evaluating NAM-containing or NAD-targeted supplementation strategies, as well as observational human studies investigating NAM/NAD-related biomarkers or mitochondrial metabolic alterations in relation to glaucoma. Risk of bias was assessed according to study design using RoB 2 for randomized trials, ROBINS-I for non-randomized interventional studies, and a domain-based assessment for observational exposure and biomarker studies. Owing to substantial clinical and methodological heterogeneity, findings were synthesized narratively without quantitative pooling. Results: Thirteen eligible reports representing eight unique human studies were included. Randomized trials provided preliminary evidence that NAM-containing interventions may produce short-term functional and electrophysiological effects. NAM supplementation was associated with improvement in inner retinal electrophysiological function in randomized crossover studies, whereas effects on visual field outcomes were inconsistent. A trial combining NAM with pyruvate reported favorable short-term visual field changes, although the specific contribution of NAM could not be isolated. Non-randomized studies provided complementary evidence on vascular, metabolic, structural, electrophysiological, and patient-reported outcomes but were limited by potential confounding and uncontrolled study designs. Observational studies reported associations between glaucoma and altered circulating NAM concentrations and systemic mitochondrial dysfunction. Available studies were generally small and of limited duration, and the evidence was insufficient to establish sustained neuroprotection or modification of glaucoma progression. Conclusions: Human evidence supports the biological plausibility of targeting NAM/NAD metabolism in glaucoma and provides preliminary signals of short-term biological and functional effects. However, current evidence remains insufficient to support routine high-dose NAM supplementation in clinical practice. Larger, adequately powered, long-term randomized controlled trials are required to establish sustained efficacy, optimal dosing, patient selection, and long-term safety.",
+   "journal": "Nutrients",
+   "journalAbbr": "Nutrients",
+   "date": "2026 Sep 3",
+   "types": [
+    "Journal Article",
+    "Review",
+    "Systematic Review"
+   ],
+   "authors": [
+    "Giudiceandrea, Andrea",
+    "Cocuzza, Martina",
+    "Gravina, Gianni",
+    "Silvestri, Valeria",
+    "Amore, Filippo",
+    "Sulfaro, Marco",
+    "De Dominicis, Francesco",
+    "Bruzio, Simone",
+    "Giudiceandrea, Epifanio",
+    "Salgarello, Matteo",
+    "Cozzupoli, Grazia Maria",
+    "Savastano, Maria Cristina",
+    "Falsini, Benedetto",
+    "Rizzo, Stanislao",
+    "Salgarello, Tommaso"
+   ],
+   "mesh": [
+    "Humans",
+    "*Niacinamide/administration & dosage/therapeutic use",
+    "*Dietary Supplements",
+    "*Glaucoma/drug therapy",
+    "Neuroprotective Agents",
+    "Female",
+    "Observational Studies as Topic"
+   ],
+   "doi": "10.3390/nu18172885",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42739057/"
+  },
+  {
+   "pmid": "42738828",
+   "title": "Liposomal Drug Delivery in Ocular Therapy: Strategies for Enhancing Corneal  Penetration and Bioavailability.",
+   "abstract": "Vision impairment affects approximately 2.2 billion people worldwide, with  glaucoma, age-related macular degeneration, fungal keratitis, and diabetic retinopathy among the leading causes of preventable blindness. Effective pharmacotherapy remains severely constrained by the eye's multilayered barrier architecture. Tear film, the corneal epithelium, the blood-aqueous barrier, and the blood-retinal barrier collectively restrict conventional topical drug bioavailability to less than 5% of the administered dose. Liposomal drug delivery systems have emerged as a clinically translatable platform capable of overcoming these barriers through targeted surface modification. This review provides a brief introduction to ocular barriers to drug delivery and transport and critically examines numerous surface-modification strategies applied to liposomal carriers to enhance corneal permeation and ocular bioavailability of drugs. It highlights the advantages and disadvantages of each modification strategy, as well as the convergent mechanism of liposomal surface modification in overcoming ocular barriers, and provides a comparative analysis of different surface-modification strategies of liposomes in terms of safety, efficacy and corneal retention. Additionally, it describes challenges associated with liposomal ophthalmic formulations in industrial scaling up. The review also sheds light on some FDA-approved liposomal ophthalmic products, active clinical trials on liposomal formulations, and relevant patents, demonstrating the potential benefits of liposomal drug delivery in the treatment of ocular disorders.",
+   "journal": "Cells",
+   "journalAbbr": "Cells",
+   "date": "2026 Aug 26",
+   "types": [
+    "Journal Article",
+    "Review"
+   ],
+   "authors": [
+    "Mehta, Palak",
+    "Moore, Erik",
+    "Dash, Alekha",
+    "Shukla, Surabhi"
+   ],
+   "mesh": [
+    "Humans",
+    "*Liposomes/chemistry",
+    "Biological Availability",
+    "*Drug Delivery Systems/methods",
+    "*Cornea/metabolism/drug effects",
+    "Animals",
+    "Administration, Ophthalmic",
+    "*Eye Diseases/drug therapy",
+    "Ophthalmic Solutions"
+   ],
+   "doi": "10.3390/cells15171534",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42738828/"
+  },
+  {
+   "pmid": "42738803",
+   "title": "Extrinsic Regulation of Optic Nerve Axon Regeneration in the Adult Central  Nervous System.",
+   "abstract": "Adult optic nerve axon regeneration has traditionally been framed as a problem of  limited intrinsic growth capacity in central nervous system neurons. However, growing evidence suggests that intrinsic factors alone cannot account for regenerative failure: restrictive extrinsic environmental factors largely govern optic nerve regeneration, dictating the intrinsic capacity axons can express. In this review, we frame the extrinsic optic nerve environment as a dynamic regenerative niche, in which vascular, immune, glial, matrix, and metabolic compartments are spatially co-localized and temporally coordinated rather than acting as independent barriers. These compartments follow a shared trajectory, broadly protective in the acute phase, then inhibitory once the underlying response fails to resolve, while also actively driving one another, such as reactive astrocytes promoting the matrix remodeling that subsequently restricts axon regrowth. Consequently, the niche's overall permissiveness for regeneration reflects the aggregate and interdependent state of these compartments rather than the action of any single barrier. This review integrates current evidence on extrinsic barriers, intervention opportunities, and disease-specific variability relevant to RGC axon regeneration after injury. These interventions must incorporate the spatial, temporal, and metabolic factors that shape the goal of functional recovery and vision restoration.",
+   "journal": "Cells",
+   "journalAbbr": "Cells",
+   "date": "2026 Aug 22",
+   "types": [
+    "Journal Article",
+    "Review"
+   ],
+   "authors": [
+    "Adhikary, Arissa",
+    "Dorairaj, Emily",
+    "Arshavsky, Alex",
+    "Ramcharan, Shanti",
+    "Kishor, Krishna S",
+    "Bhattacharya, Sanjoy K"
+   ],
+   "mesh": [
+    "Humans",
+    "*Nerve Regeneration/physiology",
+    "*Axons/physiology/metabolism",
+    "Animals",
+    "*Optic Nerve/physiology",
+    "*Central Nervous System/physiology",
+    "Optic Nerve Injuries",
+    "Retinal Ganglion Cells"
+   ],
+   "doi": "10.3390/cells15171510",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42738803/"
+  },
+  {
+   "pmid": "42738775",
+   "title": "Prediction of Ocular Toxicity of Prostaglandin F(2alpha) Analogs Based on Local  Computational Models: Superiority over Global Models and Experimental Validation.",
+   "abstract": "Drug-induced ocular toxicity is difficult to predict and evaluate, particularly  for prostaglandin F2alpha (PGF2alpha) analogs used in the management of glaucoma. Traditional global predictive models, which are built with large and various datasets (n = 6187), provide systematic false-negative results for groups of structurally uniform compounds. To address this limitation, we developed special local classification models for PGF2alpha analogs. A structurally consistent local training dataset (n = 350) was assembled using Murcko scaffold filtering and Tanimoto similarity selection (>/=0.5). Binary classification models were built using three different molecular fingerprints in combination with machine learning and two deep learning methods. Although two-dimensional molecular representations do not encode stereochemistry, computational predictions still apply to the shared two-dimensional scaffold of these compounds. These improved models were used to predict the ocular toxicity of latanoprost and its related impurities. The local models (n = 350) provided accurate toxicity predictions for latanoprost, latanoprost acid, 15(S)-latanoprost, and the trans-5,6-latanoprost isomer, whereas all 16 global computational models provided false-negative results. The experimental assessment performed with primary rabbit corneal epithelial cells (pRCECs) and a human corneal epithelial cell line (HCE-T) confirmed the cytotoxic effects, which were in agreement with the predictions made by the models. Among the tested compounds, 15(S)-latanoprost exhibited the highest cytotoxicity (IC50 = 86.22 muM, 95% CI: 82.90-89.56 muM), followed by trans-5,6-latanoprost (IC50 = 106.70 muM, 95% CI: 103.4-110.0 muM) and latanoprost (IC50 = 112.60 muM, 95% CI: 106.7-118.6 muM). At the standard therapeutic dosage (0.005%), no significant toxic response was observed. Virtual molecular docking was employed to explore the mechanism, and all analogs docked favorably into the quinone-binding channel of mitochondrial complex I and the catalytic cleft of SIRT3. These results show how a localized modeling approach is better able to capture structure-toxicity correlations among chemically similar compounds and highlight the critical need for rigorous impurity management in latanoprost products, particularly regarding 15(S)-latanoprost.",
+   "journal": "Molecules (Basel, Switzerland)",
+   "journalAbbr": "Molecules",
+   "date": "2026 Sep 5",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Lu, Xinyi",
+    "Ren, Liping",
+    "Wang, Chen",
+    "Liao, Haiming",
+    "Liu, Lisha",
+    "Han, Miaomiao",
+    "He, Lanying",
+    "Zhang, Dousheng",
+    "Fan, Huihong",
+    "Xu, Mingzhe"
+   ],
+   "mesh": [
+    "Animals",
+    "Rabbits",
+    "*Dinoprost/analogs & derivatives/chemistry/toxicity",
+    "Latanoprost/chemistry",
+    "Humans",
+    "Computer Simulation",
+    "Glaucoma/drug therapy",
+    "Models, Molecular",
+    "Machine Learning"
+   ],
+   "doi": "10.3390/molecules31173116",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42738775/"
+  },
+  {
+   "pmid": "42736780",
+   "title": "A bibliometric analysis of the top 50 most-cited articles in glaucoma management.",
+   "abstract": "BACKGROUND: As the foremost cause of irreversible vision loss around the world,  glaucoma continues to be the leading factor behind irreversible blindness. Even with progress in diagnostic tools, surgical techniques, and additional therapies, the disease continues to be problematic because of its asymptomatic onset and the partial effectiveness of pressure-reducing treatments. The overall role of significant publications in guiding glaucoma research has not been thoroughly evaluated. METHODS: A bibliometric study was carried out to determine the 50 articles on glaucoma with the highest citation counts, with searches conducted in the Web of Science database. Four reviewers independently screened the articles. The extracted information covered authorship, country of origin, journal name, study design, level of evidence, citation counts, and thematic focus. Citation and co-occurrence mapping were applied. RESULTS: The 50 most-cited articles accrued 4054 citations (mean: 81.1), peaking in the 2000s (42%). The US (52%) and UK (30%) led contributions, primarily in Ophthalmology and British Journal of Ophthalmology. Level II evidence predominated (44%), followed by Level IV evidence (38%). Retrospective cohort studies comprised the most common study design (36%), followed by case series (30%), while randomized controlled trials represented 12% of the included studies. Key themes included diagnostic integration, trabeculectomy, minimally invasive surgery (MIGS), and refractory disease management. CONCLUSION: Most-cited glaucoma-management literature was characterized by retrospective study designs and representation of both traditional filtration surgery and emerging device-based approaches, including MIGS. These findings describe patterns of scholarly attention within highly cited glaucoma-management literature and should not be interpreted as trends across the entire field or as evidence of comparative clinical effectiveness.",
+   "journal": "Medicine",
+   "journalAbbr": "Medicine (Baltimore)",
+   "date": "2026 Sep 11",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Abuhadi, Beta",
+    "Alzahrani, Naya F",
+    "Alotaibi, Fai H",
+    "Aldirbas, Jumanah M",
+    "Almulhim, Fatema M",
+    "Alhashmi Alamir, Jumana I",
+    "Justenia, Lina",
+    "Alsubaie, Najla A",
+    "Abuhekmah, Razan A",
+    "Alsuwaidi, Fatima A Almadhloum",
+    "Alqaffas, Abdulwahab M",
+    "Abuhekmah, Rawan A",
+    "AlHarthi, Fahad"
+   ],
+   "mesh": [
+    "*Bibliometrics",
+    "*Glaucoma/therapy",
+    "Humans",
+    "Ophthalmology"
+   ],
+   "doi": "10.1097/MD.0000000000050617",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42736780/"
+  },
+  {
+   "pmid": "42736697",
+   "title": "Gene Therapy for Glaucoma: Overcoming Limitations of Traditional Therapeutics.",
+   "abstract": "Glaucoma is a chronic neurodegenerative disease characterized by the  deterioration of the optic nerve and the progressive loss of retinal ganglion cells (RGCs), making it a leading cause of irreversible blindness worldwide. This neurodegenerative process is characterized by the apoptotic death of neurons whose axons constitute the optic nerve, leading to permanent visual field deficits. Although current standard-of-care therapies-including pharmacological, laser, and surgical interventions-mainly target reducing intraocular pressure (IOP), their clinical efficacy remains limited due to side effects, inconsistent outcomes, and a failure to halt neurodegeneration. Therefore, there is an urgent need for novel therapeutic frameworks that move beyond symptomatic pressure control toward molecular intervention. Gene therapy has become one of the most promising directions due to its ability to offer new perspectives on the future management of glaucoma. Viral vectors, such as adeno-associated virus (AAV), can deliver therapeutic payloads directly to ocular tissues, potentially enabling long-term transgene expression after a single administration. This review discusses the pathophysiology of glaucoma and the shortcomings of available therapies, highlighting opportunities for next-generation genetic treatments. We group the possible options of gene therapy into two different paths, which are to regulate the flow of aqueous humor through the trabecular meshwork and the ciliary body, and directly provide neuroprotection to RGCs. The former involves genetic modulation of the conventional outflow pathway to restore physiological homeostasis, while the latter focuses on enhancing neurons' intrinsic survival signals by expressing neurotrophic factors or anti-apoptotic genes. Importantly, this review uniquely integrates these molecular targets with appropriate animal models, providing a comprehensive strategic framework for translating genetic discoveries into clinical applications.",
+   "journal": "Current neuropharmacology",
+   "journalAbbr": "Curr Neuropharmacol",
+   "date": "2026 Sep 10",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Zhang, Yaqin",
+    "Dong, Xiaoyu",
+    "Zheng, Caiyan",
+    "Liu, Qin",
+    "Xia, Jinlin",
+    "Qin, Huan",
+    "Yao, Kai"
+   ],
+   "mesh": [],
+   "doi": "10.2174/011570159X481516260902055448",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42736697/"
+  },
+  {
+   "pmid": "42735845",
+   "title": "Biomechanical interplay between lamina cribrosa and peripapillary sclera  characterized by 3D ultrasound elastography.",
+   "abstract": "The lamina cribrosa (LC) and peripapillary sclera (PPS) form a biomechanical  structure whose response to intraocular pressure (IOP) is central to glaucomatous optic nerve damage. Computational models predict strong biomechanical interactions between PPS and LC, yet experimental validation in human eyes has remained limited, particularly for full-thickness characterization. In this study, we applied 3D high-frequency ultrasound elastography technique to quantify full-thickness deformation of PPS and LC and to characterize their biomechanical interplay under controlled IOP elevation. Inflation testing from 15 to 30 mmHg was performed in 22 human donor whole globes. At each pressure step, 3D radiofrequency ultrasound data was acquired and analyzed using a validated speckle-tracking algorithm to estimate full-field tissue displacements and calculate the spherical Green-Lagrange strain tensor. PPS and LC boundaries were manually segmented on radial reconstructions to enable region-specific strain and morphometric analyses. Our results showed that IOP-induced shear strains were significantly correlated between the PPS and LC (all r > 0.6, P < 0.01). Among the morphometric parameters, PPS radius of curvature was correlated with all PPS and LC shear strains (r: 0.54 to 0.71). PPS thickness was negatively correlated with PPS out-of-plane shear strains (r: -0.44 to -0.48). LC depth was correlated with LC shear strains (r: 0.42 to 0.46), and LC thickness was correlated with PPS shear strains (r: 0.54 to 0.56). These findings provide experimental evidence that PPS/LC biomechanical coupling under IOP elevation is associated with shear deformation. Quantifying PPS and LC shear behavior may improve understanding of optic nerve head biomechanics and facilitate discovery of new biomechanical biomarkers relevant to glaucoma susceptibility.",
+   "journal": "Experimental eye research",
+   "journalAbbr": "Exp Eye Res",
+   "date": "2026 Sep 14",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Chen, Zihao",
+    "Kwok, Sunny",
+    "Pan, Manqi",
+    "Pan, Xueliang",
+    "Zhang, He",
+    "Yang, Hongli",
+    "Liu, Jun"
+   ],
+   "mesh": [],
+   "doi": "10.1016/j.exer.2026.111239",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42735845/"
+  },
+  {
+   "pmid": "42735617",
+   "title": "FairEnc: A Fair vision-language model with fair vision and text encoders for  glaucoma detection.",
+   "abstract": "Automated glaucoma detection is critical for preventing irreversible vision loss  and reducing the burden on healthcare systems. However, ensuring fairness across diverse patient populations remains a significant challenge. In this paper, we propose FairEnc, a fair pretraining method for vision-language models (VLMs) that enables simultaneous debiasing across multiple sensitive attributes. FairEnc jointly mitigates biases in both textual and visual modalities with respect to multiple sensitive attributes, including race, gender, ethnicity, and language. Specifically, for the textual encoder, we leverage a large language model to generate synthetic clinical descriptions with varied sensitive attributes while preserving disease semantics, and employ a contrastive alignment objective to encourage demographic-invariant representations. For the visual encoder, we propose a dual-level fairness strategy that combines mutual information regularization to reduce statistical dependence between learned features and demographic groups, with multi-discriminator adversarial debiasing. Comprehensive experiments on the publicly available Harvard-FairVLMed dataset show that FairEnc reduces demographic disparities measured by DPD and DEOdds while achieving strong diagnostic performance under both zero-shot and linear probing evaluations. Additional experiments on the private FairFundus dataset suggest that the fairness benefits of FairEnc generalize to cross-domain and cross-modality settings while maintaining diagnostic performance within a competitive range. These results highlight FairEnc's ability to generalize fairness under distribution shifts, supporting its potential for more equitable deployment in real-world clinical settings. Our codebase and synthetic clinical notes are available at this Link.",
+   "journal": "Artificial intelligence in medicine",
+   "journalAbbr": "Artif Intell Med",
+   "date": "2026 Sep 8",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Elhabebe, Mohamed",
+    "El-Baz, Ayman",
+    "Liu, Qing"
+   ],
+   "mesh": [],
+   "doi": "10.1016/j.artmed.2026.103521",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42735617/"
+  },
+  {
+   "pmid": "42734351",
+   "title": "No-Show Propensity and Loss to Follow-Up Among Glaucoma Patients: A Retrospective  Cohort Study.",
+   "abstract": "PURPOSE: To identify risk factors for high first-year no-show propensity among  glaucoma patients and assess its association with subsequent LTFU. METHODS: This retrospective cohort study included patients with a glaucoma diagnosis documented from 2013-2023 at a tertiary academic eye institute. Demographic, clinical, and appointment status data were extracted from the electronic health record. LTFU was defined as an interval of >365 days without an attended visit after the first-year observation window. No-show propensity factor (NSPF), a metric of appointment nonattendance that considers the total number of appointments and average no-show rate of the cohort, was calculated for each patient for their first year. Poisson regression models were used to identify risk factors for high NSPF (>/=75th percentile). Cox proportional hazards models were used to evaluate the association between high NSPF and risk of subsequent LTFU. RESULTS: The 7087 glaucoma patients had 37,249 scheduled appointments in their first year, 2778 (7.5%) of which were no-show. Risk factors for high NSPF included age < 60 years (relative risk [RR]=1.10, 95% confidence interval [CI]: 1.07-1.12), Black race (RR = 1.23, 95% CI: 1.21-1.25), Medicaid insurance (RR = 1.23, 95% CI: 1.19-1.28), and visual acuity 20/200 or worse in the better-seeing eye (RR = 1.09, 95% CI: 1.06-1.11). Three-quarters (72.0%) experienced at least one LTFU event. In an adjusted model, high NSPF predicted higher risk of subsequent LTFU (hazard ratio = 1.15, 95% CI: 1.08-1.22). CONCLUSION: Demographic and clinical factors underlie risk of no-show propensity among glaucoma patients. Patients with a high propensity to no-show in their first year had greater risk of subsequent LTFU.",
+   "journal": "Ophthalmic epidemiology",
+   "journalAbbr": "Ophthalmic Epidemiol",
+   "date": "2026 Sep 14",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Williams, Andrew M",
+    "Liang, Hai-Wei"
+   ],
+   "mesh": [],
+   "doi": "10.1080/09286586.2026.2729054",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42734351/"
+  },
+  {
+   "pmid": "42734306",
+   "title": "Pre-Diagnostic Plasma Endogenous Steroids and the Risk of Exfoliation Glaucoma.",
+   "abstract": "PURPOSE: Exfoliation glaucoma (XFG) is the most common secondary glaucoma. Prior  studies suggest a higher incidence in women and links to reproductive history, implying estrogen-related pathways. Metabolomic data also indicated inverse associations with steroid-related plasma metabolites, suggesting steroid involvement in XFG pathogenesis. METHODS: We conducted a nested case-control study within the Nurses' Health Study (NHS; 1980-2018), NHSII (1989-2019), and Health Professionals Follow-up Study (1986-2018), with 217 XFG/XFG suspect (XFGS) cases and 217 matched controls (62 men and 372 women). We evaluated 18 endogenous steroids and 5 steroid classes using conditional logistic regression. Secondary analyses examined effect modifications by age and residential latitude, and heterogeneity by disease severity (XFGS versus XFG). Metabolite set enrichment analysis (MSEA) was used for class-level associations. Multiple comparisons were addressed using the number of effective (NEF) tests for individual steroids and the false discovery rate (FDR) for steroid classes. RESULTS: No individual steroid or steroid class met NEF- or FDR-adjusted significance thresholds, overall or by sex. Nonetheless, across both sexes, MSEA demonstrated a nonsignificant inverse trend between androgen levels and XFG/XFGS risk (FDR = 0.22), with 11-ketotestosterone showing a nominal inverse association (odds ratio [OR] = 0.54, 95% confidence interval [CI] = 0.31-0.93, P = 0.03). Progestogen enrichment scores showed an adverse trend (FDR = 0.31), featuring a borderline adverse association between progesterone and XFG/XFGS (OR = 2.21, 95% CI = 1.00-4.87, P = 0.05). CONCLUSIONS: Although we observed no statistically significant associations with steroids after correction for multiple testing, the suggestive patterns for androgens and progestogens support the possibility of steroid-related pathways in XFG etiology and support further evaluation in larger studies.",
+   "journal": "Investigative ophthalmology & visual science",
+   "journalAbbr": "Invest Ophthalmol Vis Sci",
+   "date": "2026 Sep 1",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Juramt, Namuunaa",
+    "Ngo, Zoe Zhiyu",
+    "Haslam, Danielle E",
+    "Hwang, Hannah",
+    "Yu, Megan",
+    "Zeleznik, Oana A",
+    "Pasquale, Louis R",
+    "Wiggs, Janey L",
+    "Lasky-Su, Jessica",
+    "Kang, Jae H"
+   ],
+   "mesh": [
+    "Humans",
+    "Female",
+    "Male",
+    "Case-Control Studies",
+    "*Exfoliation Syndrome/blood/diagnosis",
+    "Risk Factors",
+    "Middle Aged",
+    "Aged",
+    "*Steroids/blood",
+    "Intraocular Pressure/physiology",
+    "Biomarkers/blood"
+   ],
+   "doi": "10.1167/iovs.67.11.23",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42734306/"
+  },
+  {
+   "pmid": "42734286",
+   "title": "Mucoadhesive Carboxymethyl Chitosan Hydrogel Eyedrops via Dual Dynamic Covalent  Chemistry for Long-Acting Glaucoma Therapy.",
+   "abstract": "Glaucoma, a leading cause of irreversible blindness, is commonly treated with  topical eye drops that reduce intraocular pressure (IOP), but their efficacy is limited by rapid precorneal clearance. To address this, we developed a dynamic hydrogel (CSFP) via Schiff base bonding between carboxymethyl chitosan (CMCS) and 4-formylphenylboronic acid (FPBA) as an advanced delivery vehicle for brimonidine (BRI) and timolol (TIM), two common IOP-lowering agents. The mechanical properties were tunable by adjusting CMCS and FPBA concentrations. The optimized hydrogel exhibited a storage modulus of  approximately 38.8 Pa (at 1 Hz, 1% strain), excellent self-healing ability, and shear-thinning behavior, facilitating easy administration and resistance to blink-induced clearance. It also achieved near 100% transmittance and a refractive index of 1.339, ensuring optical clarity. Notably, the incorporated phenylboronic acid (PBA) groups enabled selective binding to sialic acid residues on ocular mucins via dynamic phenylboronic ester bonding, prolonging precorneal retention beyond 30 min compared to less than 5 min for the solution control. In a magnetic bead-induced ocular hypertensive rat model, CSFP hydrogel loaded with either BRI or TIM induced greater and long-lasting IOP reduction than the free drug solutions. This work highlights the potential of mucoadhesive dynamic covalent hydrogels for advanced ocular drug delivery.",
+   "journal": "Biomacromolecules",
+   "journalAbbr": "Biomacromolecules",
+   "date": "2026 Sep 14",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Pan, Jin",
+    "Gong, Huangkun",
+    "Shao, Qiuyun",
+    "Zhang, Xuehan",
+    "Narain, Ravin",
+    "Nan, Kaihui",
+    "Chen, Yangjun"
+   ],
+   "mesh": [
+    "*Chitosan/analogs & derivatives/chemistry",
+    "Animals",
+    "Timolol/administration & dosage/chemistry/pharmacology",
+    "*Glaucoma/drug therapy",
+    "*Ophthalmic Solutions/chemistry/pharmacology",
+    "*Hydrogels/chemistry",
+    "Boronic Acids/chemistry",
+    "Intraocular Pressure/drug effects",
+    "Rats",
+    "Brimonidine Tartrate/administration & dosage/pharmacology/chemistry",
+    "Drug Delivery Systems"
+   ],
+   "doi": "10.1021/acs.biomac.6c00615",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42734286/"
+  },
+  {
+   "pmid": "42734097",
+   "title": "High Adhesion Superoleophobic Oil Microdroplets to Create Ocular Hypertension In  Vivo.",
+   "abstract": "Ocular hypertension is commonly linked with glaucomatous neurodegeneration. To  investigate the mechanisms of glaucoma, in vivo models typically induce intraocular pressure elevation by obstructing aqueous humor flow in the trabecular meshwork. However, there is no satisfying in vivo model to maintain stable ocular hypertension and replicate neurodegenerative features accurately. Here, we introduce an injectable oil microdroplet model that achieves sustained IOP elevation and a 44.3% loss of retinal ganglion cells within four weeks in mice. The oil microdroplets exhibit an underwater \"superoleophobic\" state with high adhesion forces upon contact with tissue. Upon intracameral injection, the oil microdroplets deform and retain within various-sized trabecular architectures via a \"self-locking\" mechanism driven by differential Laplace pressures. Applying this oil microdroplet-induced mouse model, we observed an increase in nocturnal sleepiness, reflecting the increased daytime sleepiness observed in human glaucoma patients. This injectable oil microdroplet model provides a platform for studying glaucoma progression and evaluating potential therapeutic interventions.",
+   "journal": "Small (Weinheim an der Bergstrasse, Germany)",
+   "journalAbbr": "Small",
+   "date": "2026 Sep 14",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Hong, Eunji",
+    "Matuwana, Dorcas",
+    "Lin, Chen",
+    "Xiong, Mengwen",
+    "Huang, Sizhe",
+    "Xiao, Ruobai",
+    "Jang, Geunho",
+    "Gudiel Winter, Nicolle",
+    "Rao, Siyuan",
+    "Wang, Qianbin"
+   ],
+   "mesh": [],
+   "doi": "10.1002/smll.202600069",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42734097/"
+  },
+  {
+   "pmid": "42733826",
+   "title": "Feeling Through the Patient's Eyes: Delivering the Diagnosis of Glaucoma as a  Therapeutic Intervention.",
+   "abstract": "Glaucoma is a chronic, progressive optic neuropathy; however, receiving the  diagnosis represents more than a clinical event. For many patients, it is a psychological turning point associated with fear of blindness, loss of independence, and becoming a burden, regardless of disease stage. Psychological distress, health beliefs, communication, and treatment adherence are closely interconnected in glaucoma care, although the specific effect of the diagnostic conversation has not yet been prospectively established. In this Perspective article, we propose that delivering a glaucoma diagnosis should be approached as a therapeutic intervention. Adapting structured communication strategies such as the SPIKES protocol to glaucoma may support patient understanding, emotional processing, trust, and long-term engagement. The framework is applied to glaucoma-specific challenges, including asymptomatic disease, interpretation of optical coherence tomography and visual field findings, chronic topical therapy, and lifelong follow-up. It is presented as an evidence-informed clinical approach rather than a validated substitute for treatment. Recognizing the emotional and social dimensions of glaucoma offers a practical opportunity to strengthen patient-centered care in routine ophthalmic practice, while prospective studies are needed to evaluate its effect on distress, adherence, follow-up, and clinical outcomes.",
+   "journal": "Clinical ophthalmology (Auckland, N.Z.)",
+   "journalAbbr": "Clin Ophthalmol",
+   "date": "2026",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Checo, Leticia A",
+    "Dorairaj, Syril"
+   ],
+   "mesh": [],
+   "doi": "10.2147/OPTH.S609239",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42733826/"
+  },
+  {
+   "pmid": "42733770",
+   "title": "Diagnostic Likelihood Ratios for Glaucoma Using Deep Learning-Predicted Retinal  Nerve Fiber Layer Thickness from Fundus Photographs.",
+   "abstract": "PURPOSE: To translate continuous retinal nerve fiber layer (RNFL) thickness  values predicted by a deep learning algorithm from fundus photographs into clinically interpretable diagnostic likelihood ratios for glaucoma. DESIGN: Cross-sectional study. SUBJECTS: A total of 232 participants with glaucomatous optic neuropathy and 127 healthy controls. METHODS: A deep learning algorithm trained on spectral-domain OCT (SD-OCT) measurements (machine-to-machine, M2M) was applied to optic disc photographs to predict global RNFL thickness. Participant-level analyses were conducted by selecting the eye with the lower predicted RNFL thickness per participant. Diagnostic performance of M2M-predicted RNFL thickness was compared with SD-OCT measurements using receiver operating characteristic (ROC) analysis. Likelihood ratios were then estimated for continuous predicted RNFL thickness values using a ROC-based framework, allowing calculation of individualized post-test probabilities of glaucoma without dichotomizing results. MAIN OUTCOME MEASURES: Diagnostic performance (area under the ROC curve [AUC]) and likelihood ratios derived from continuous M2M-predicted RNFL thickness values. RESULTS: Machine-to-machine-predicted RNFL thickness was significantly lower in glaucomatous eyes than in controls (71.3 +/- 10.6 mum vs. 95.5 +/- 7.2 mum; P < 0.001). Diagnostic discrimination was high for both M2M-predicted RNFL thickness and SD-OCT-measured global RNFL thickness, with AUCs of 0.986 (95% confidence interval [CI], 0.963-0.998) and 0.986 (95% CI, 0.971-0.996), respectively. The two AUCs did not differ significantly (P = 0.987), and M2M predictions retained diagnostic information. Likelihood ratios varied markedly across the range of predicted RNFL thickness values: thinner values were associated with large likelihood ratios that substantially increased post-test probability of glaucoma, whereas thicker values produced likelihood ratios well below unity, effectively reducing disease probability. Intermediate RNFL values were associated with likelihood ratios near 1, indicating limited diagnostic impact. CONCLUSIONS: Continuous RNFL thickness values predicted by a deep learning algorithm from fundus photographs can be translated into clinically meaningful likelihood ratios that enable individualized probabilistic diagnosis of glaucoma. This framework moves beyond binary classification by preserving the diagnostic information contained in continuous artificial intelligence-derived measurements and provides a practical pathway for integrating deep learning outputs into clinical decision-making. FINANCIAL DISCLOSURES: Proprietary or commercial disclosure may be found in the Footnotes and Disclosures at the end of this article.",
+   "journal": "Ophthalmology science",
+   "journalAbbr": "Ophthalmol Sci",
+   "date": "2026 Oct",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Nilforoushan, Neda",
+    "da Costa, Douglas R",
+    "Scherer, Rafael",
+    "Palazoni, Natalia",
+    "Malek, Davina A",
+    "Medeiros, Felipe A"
+   ],
+   "mesh": [],
+   "doi": "10.1016/j.xops.2026.101355",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42733770/"
+  },
+  {
+   "pmid": "42733597",
+   "title": "Patterns and Causes of Adult Blindness in a Tertiary Ophthalmic Center in  Somalia: The Burden of Trauma-Related Visual Loss.",
+   "abstract": "PURPOSE: To describe the patterns and causes of adult blindness in patients  attending a tertiary ophthalmic center in Somalia, to examine age- and gender-related associations with major causes of blindness, and to assess the contribution of trauma-related visual loss. METHODS: A retrospective cross-sectional study was conducted using medical records of all eligible patients aged 16 years and older evaluated at a tertiary ophthalmic center in Mogadishu, Somalia, between January and December 2025. Demographic characteristics, blindness laterality, and clinical causes were extracted from electronic medical records jointly by the two investigators and recorded in a Microsoft Excel spreadsheet. Descriptive analyses and multivariable logistic regression were performed to evaluate the distribution of blindness and age- and gender-related associations with major causes of blindness. RESULTS: Of 10,000 patient records screened, 9740 met the eligibility criteria and were included in the analysis. Among these, blindness was identified in 1236 patients (12.7%), of whom 77.9% had unilateral blindness and 22.1% had bilateral blindness. Cataract was the leading cause of blindness overall, followed by trauma-related ocular disease, glaucoma, and corneal opacity. Trauma-related conditions predominated among younger adults, whereas cataract and glaucoma were more common in older age groups. Corneal opacity related to microbial keratitis or undetermined corneal scarring remained among the leading causes of unilateral blindness across age groups. CONCLUSIONS: Adult blindness in this hospital-based population reflected distinct age-related patterns, with trauma-related visual loss predominating among younger adults and age-related ocular diseases among older individuals. Corneal opacity remained an important cause of unilateral blindness across age groups. These findings have important implications for ophthalmic care in resource-limited settings.",
+   "journal": "Clinical ophthalmology (Auckland, N.Z.)",
+   "journalAbbr": "Clin Ophthalmol",
+   "date": "2026",
+   "types": [
+    "Journal Article"
+   ],
+   "authors": [
+    "Calisir, Kenan",
+    "Kadiye, Mohamed Salad"
+   ],
+   "mesh": [],
+   "doi": "10.2147/OPTH.S630147",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42733597/"
+  },
+  {
+   "pmid": "42733525",
+   "title": "Intraluminal aspiration for Ahmed glaucoma valve tube obstruction.",
+   "abstract": "PURPOSE: To describe a minimally invasive technique for managing intraluminal  obstruction of an Ahmed glaucoma valve (AGV) tube using direct aspiration via the anterior chamber. OBSERVATIONS: A 75-year-old man with AGV implantation for bilateral secondary glaucoma associated with chronic uveitis developed postoperative intraocular pressure (IOP) elevation in his left eye. Although incarceration at the tube tip was released with neodymium-doped yttrium aluminum garnet (Nd:YAG) laser treatment, IOP remained elevated. Anterior segment optical coherence tomography (AS-OCT) revealed tissue-like material within the tube lumen, confirming the diagnosis of intraluminal obstruction. A 30-gauge needle connected to a syringe was inserted into the tube lumen via the anterior chamber, and negative pressure was applied to aspirate and remove the obstructive tissue. IOP normalized promptly after the procedure, and postoperative AS-OCT confirmed disappearance of the occluding material with no recurrence during 1 year of follow-up. CONCLUSIONS AND IMPORTANCE: Intraluminal aspiration via the anterior chamber may represent a minimally invasive therapeutic option for AGV tube obstruction that avoids conjunctival incision while preserving bleb function. AS-OCT may play a key role in identifying intraluminal obstruction and determining the indication for surgical intervention.",
+   "journal": "American journal of ophthalmology case reports",
+   "journalAbbr": "Am J Ophthalmol Case Rep",
+   "date": "2026 Dec",
+   "types": [
+    "Case Reports",
+    "Journal Article"
+   ],
+   "authors": [
+    "Hayami, Takuma",
+    "Kimura, Masayo",
+    "Suzuki, Harumitsu",
+    "Nozaki, Miho",
+    "Yasukawa, Tsutomu"
+   ],
+   "mesh": [],
+   "doi": "10.1016/j.ajoc.2026.102654",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/42733525/"
+  },
+  {
+   "pmid": "29939579",
+   "title": "Hyphema.",
+   "abstract": "The anterior chamber of the eye is a fluid-filled space bounded anteriorly by the  cornea, laterally by the angle, and posteriorly by the iris diaphragm and pupil. The anterior chamber has a typical depth of 3 mm and a total volume of 200 muL. Under normal conditions, the anterior chamber contains acellular aqueous humor. A balance between aqueous humor production by the ciliary epithelium and drainage through the trabecular meshwork and uveoscleral pathway maintains intraocular pressure (IOP). A hyphema is a collection of red blood cells (RBCs) within the anterior chamber. Release of RBCs into the anterior chamber may be classified as traumatic, spontaneous (nontraumatic), or postsurgical and results from anomalies or damage involving the iris, ciliary body, trabecular meshwork, or associated vasculature. A hyphema may be visible to the naked eye as obvious layering and pooling of blood or detectable only on slit-lamp examination as a microhyphema, characterized by suspended RBCs without apparent aggregation. Hyphemas are important ophthalmologic entities to recognize. Traumatic hyphemas often signify additional ocular injury and increase the risk of subsequent glaucoma. Spontaneous hyphemas are associated with blood dyscrasias, herpetic disease, leukemia, and retinoblastoma. Following ophthalmic procedures, hyphemas can indicate the need for repositioning ophthalmic implants to prevent optic nerve damage. Hyphemas may also be complicated by rebleeding, which increases the risk of IOP elevation, corneal blood staining, optic atrophy, and permanent vision loss.",
+   "journal": "",
+   "journalAbbr": "",
+   "date": "2026 Jan",
+   "types": [
+    "Study Guide",
+    "Book Chapter"
+   ],
+   "authors": [
+    "Hyde, Monika R",
+    "Blair, Kyle"
+   ],
+   "mesh": [],
+   "doi": "",
+   "url": "https://pubmed.ncbi.nlm.nih.gov/29939579/"
+  }
+ ]
+}

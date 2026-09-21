@@ -26,3 +26,6 @@ credentials.json
 
 # Node 의존성
 node_modules/
+
+# 개인 금융 원본 데이터 (공개 저장소라 커밋 금지)
+*.xlsx

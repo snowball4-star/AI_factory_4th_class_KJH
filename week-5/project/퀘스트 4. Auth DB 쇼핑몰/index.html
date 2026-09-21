@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>오늘의 마켓</title>
+
+  <!-- ⚠️ 모든 CDN은 버전을 명시적으로 고정한다. 미고정 시 @babel/standalone 이
+       최신(8.x)으로 올라가 type="text/babel" 인라인 변환이 통째로 깨진다. -->
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.25.9/babel.min.js"></script>
+
+  <style>
+    /* Tailwind 유틸리티로 표현할 수 없는 것만 여기에 둔다 */
+    @keyframes toast-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+    .animate-toast { animation: toast-in .18s ease-out; }
+
+    @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    .animate-fade-up { animation: fade-up .22s ease-out both; }
+
+    /* 수량 input의 기본 스피너 제거 */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, useMemo, useRef, useContext, createContext } = React;
+
+    // ========================================
+    // ⚙️ 상수 & 유틸
+    // ========================================
+
+    // 항상 상대 경로. localhost 하드코딩 금지 (배포 주소에서도 그대로 동작해야 한다)
+    const API_BASE_URL = '/api';
+
+    // 이미지 로딩에 실패했을 때 대신 보여 줄 회색 플레이스홀더
+    const IMAGE_FALLBACK =
+      'data:image/svg+xml;utf8,' +
+      encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600">' +
+          '<rect width="600" height="600" fill="#e2e8f0"/>' +
+          '<text x="50%" y="50%" font-size="64" text-anchor="middle" fill="#94a3b8" font-family="sans-serif">이미지 준비중</text>' +
+        '</svg>'
+      );
+
+    const won = (n) => new Intl.NumberFormat('ko-KR').format(Number(n) || 0) + '원';
+
+    const formatDate = (iso) =>
+      new Date(iso).toLocaleString('ko-KR', {
+        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
+      });
+
+    // 세션 쿠키는 HttpOnly라 스크립트가 읽을 수 없다. credentials만 붙여 보내면 된다
+    async function api(path, { method = 'GET', body } = {}) {
+      const res = await fetch(`${API_BASE_URL}${path}`, {
+        method,
+        credentials: 'same-origin',
+        headers: body ? { 'Content-Type': 'application/json' } : undefined,
+        body: body ? JSON.stringify(body) : undefined,
+      });
+
+      const json = await res.json().catch(() => ({ success: false, message: '서버 응답을 읽을 수 없습니다.' }));
+      if (!res.ok || !json.success) {
+        const error = new Error(json.message || '요청을 처리하지 못했습니다.');
+        error.status = res.status;
+        throw error;
+      }
+      return json;
+    }
+
+    // ========================================
+    // 🎨 Design System Components
+    // ========================================
+
+    function Button({ variant = 'primary', size = 'md', className = '', disabled, loading, children, ...props }) {
+      const variants = {
+        primary: 'bg-slate-900 text-white hover:bg-slate-800 focus-visible:outline-slate-900',
+        secondary: 'bg-white text-slate-900 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 focus-visible:outline-slate-400',
+        danger: 'bg-rose-600 text-white hover:bg-rose-500 focus-visible:outline-rose-600',
+        ghost: 'bg-transparent text-slate-600 hover:bg-slate-100 focus-visible:outline-slate-400',
+      };
+      const sizes = { sm: 'px-3 py-1.5 text-sm', md: 'px-4 py-2.5 text-sm', lg: 'px-6 py-3 text-base' };
+
+      return (
+        <button
+          type="button"
+          disabled={disabled || loading}
+          className={`inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl font-semibold transition
+            focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
+            disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${sizes[size]} ${className}`}
+          {...props}
+        >
+          {loading && <Spinner className="h-4 w-4" />}
+          {children}
+        </button>
+      );
+    }
+
+    function Input({ label, error, className = '', id, ...props }) {
+      const inputId = id || `field-${label || props.name || 'input'}`;
+      return (
+        <div className={className}>
+          {label && (
+            <label htmlFor={inputId} className="mb-1.5 block text-sm font-medium text-slate-700">{label}</label>
+          )}
+          <input
+            id={inputId}
+            aria-invalid={error ? 'true' : undefined}
+            className={`w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition
+              placeholder:text-slate-400 focus:ring-2
+              ${error
+                ? 'border-rose-400 bg-rose-50/40 focus:border-rose-500 focus:ring-rose-100'
+                : 'border-slate-300 bg-white focus:border-slate-900 focus:ring-slate-200'}`}
+            {...props}
+          />
+          {error && <p className="mt-1.5 text-xs text-rose-600">{error}</p>}
+        </div>
+      );
+    }
+
+    function Textarea({ label, className = '', id, ...props }) {
+      const fieldId = id || `field-${label || 'textarea'}`;
+      return (
+        <div className={className}>
+          {label && (
+            <label htmlFor={fieldId} className="mb-1.5 block text-sm font-medium text-slate-700">{label}</label>
+          )}
+          <textarea
+            id={fieldId}
+            className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm outline-none
+              transition placeholder:text-slate-400 focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+            {...props}
+          />
+        </div>
+      );
+    }
+
+    function Card({ className = '', children, ...props }) {
+      return (
+        <div className={`rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/70 ${className}`} {...props}>
+          {children}
+        </div>
+      );
+    }
+
+    function Badge({ tone = 'slate', className = '', children }) {
+      const tones = {
+        slate: 'bg-slate-100 text-slate-700',
+        green: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
+        amber: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
+        rose: 'bg-rose-50 text-rose-700 ring-1 ring-rose-200',
+      };
+      return (
+        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${tones[tone]} ${className}`}>
+          {children}
+        </span>
+      );
+    }
+
+    function Spinner({ className = 'h-5 w-5' }) {
+      return (
+        <svg className={`animate-spin text-current ${className}`} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+        </svg>
+      );
+    }
+
+    function Modal({ isOpen, onClose, title, size = 'md', children }) {
+      useEffect(() => {
+        if (!isOpen) return;
+        const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+        window.addEventListener('keydown', onKey);
+        document.body.style.overflow = 'hidden';
+        return () => {
+          window.removeEventListener('keydown', onKey);
+          document.body.style.overflow = '';
+        };
+      }, [isOpen, onClose]);
+
+      if (!isOpen) return null;
+      const sizes = { sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-lg' };
+
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={title}>
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
+          <Card className={`animate-fade-up relative w-full ${sizes[size]} p-6`}>
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <h2 className="text-lg font-bold">{title}</h2>
+              <button
+                type="button" onClick={onClose} aria-label="닫기"
+                className="-m-1 rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+              >✕</button>
+            </div>
+            {children}
+          </Card>
+        </div>
+      );
+    }
+
+    function EmptyState({ icon = '🫙', title, description, action }) {
+      return (
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white/60 px-6 py-16 text-center">
+          <div className="text-4xl" aria-hidden="true">{icon}</div>
+          <h3 className="mt-4 text-base font-semibold text-slate-800">{title}</h3>
+          {description && <p className="mt-1.5 max-w-sm text-sm text-slate-500">{description}</p>}
+          {action && <div className="mt-5">{action}</div>}
+        </div>
+      );
+    }
+
+    function ProductImage({ src, alt, className = '' }) {
+      return (
+        <img
+          src={src || IMAGE_FALLBACK}
+          alt={alt}
+          loading="lazy"
+          onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = IMAGE_FALLBACK; }}
+          className={className}
+        />
+      );
+    }
+
+    // ========================================
+    // 🔀 Router (해시 기반)
+    // ========================================
+
+    const RouterContext = createContext({ path: '/', params: {}, navigate: () => {} });
+
+    const readHash = () => {
+      const raw = window.location.hash.replace(/^#/, '');
+      return raw.startsWith('/') ? raw : '/' + raw;
+    };
+
+    function matchRoute(pattern, path) {
+      const patternParts = pattern.split('/').filter(Boolean);
+      const pathParts = path.split('/').filter(Boolean);
+      if (patternParts.length !== pathParts.length) return null;
+
+      const params = {};
+      for (let i = 0; i < patternParts.length; i += 1) {
+        if (patternParts[i].startsWith(':')) params[patternParts[i].slice(1)] = decodeURIComponent(pathParts[i]);
+        else if (patternParts[i] !== pathParts[i]) return null;
+      }
+      return params;
+    }
+
+    function Router({ children }) {
+      const [path, setPath] = useState(readHash);
+
+      useEffect(() => {
+        const onHashChange = () => {
+          setPath(readHash());
+          window.scrollTo({ top: 0 });
+        };
+        window.addEventListener('hashchange', onHashChange);
+        if (!window.location.hash) window.location.hash = '#/';
+        return () => window.removeEventListener('hashchange', onHashChange);
+      }, []);
+
+      const navigate = useCallback((to) => { window.location.hash = '#' + to; }, []);
+      const value = useMemo(() => ({ path, navigate }), [path, navigate]);
+
+      return <RouterContext.Provider value={value}>{children}</RouterContext.Provider>;
+    }
+
+    function Routes({ children }) {
+      const { path } = useContext(RouterContext);
+      const routes = React.Children.toArray(children);
+
+      for (const route of routes) {
+        const params = matchRoute(route.props.path, path);
+        if (params) return <RouteParams.Provider value={params}>{route.props.element}</RouteParams.Provider>;
+      }
+      const fallback = routes.find((r) => r.props.path === '*');
+      return fallback ? fallback.props.element : null;
+    }
+
+    const RouteParams = createContext({});
+    const Route = () => null;
+    const useRouter = () => useContext(RouterContext);
+    const useParams = () => useContext(RouteParams);
+
+    function Link({ to, className = '', children, ...props }) {
+      return <a href={'#' + to} className={className} {...props}>{children}</a>;
+    }
+
+    // ========================================
+    // 🔐 Auth + 🛒 Cart Context
+    // ========================================
+
+    const ShopContext = createContext(null);
+    const useShop = () => useContext(ShopContext);
+
+    function ShopProvider({ children }) {
+      const [user, setUser] = useState(null);
+      const [cart, setCart] = useState({ items: [], totalQuantity: 0, totalAmount: 0 });
+      const [ready, setReady] = useState(false);
+      const [toast, setToast] = useState(null);
+      const toastTimer = useRef(null);
+
+      const showToast = useCallback((message, tone = 'success') => {
+        setToast({ message, tone });
+        clearTimeout(toastTimer.current);
+        toastTimer.current = setTimeout(() => setToast(null), 2600);
+      }, []);
+
+      useEffect(() => () => clearTimeout(toastTimer.current), []);
+
+      const emptyCart = { items: [], totalQuantity: 0, totalAmount: 0 };
+
+      const refreshCart = useCallback(async () => {
+        try {
+          const { data } = await api('/cart');
+          setCart(data);
+        } catch {
+          setCart(emptyCart); // 비로그인 상태면 401 → 빈 장바구니
+        }
+      }, []);
+
+      // 첫 로드: 로그인 여부만 확인한다. 비로그인도 정상 응답이라 상품 화면은 그대로 열린다
+      useEffect(() => {
+        (async () => {
+          try {
+            const { data } = await api('/auth/me');
+            setUser(data);
+            if (data) await refreshCart();
+          } catch {
+            setUser(null);
+          } finally {
+            setReady(true);
+          }
+        })();
+      }, [refreshCart]);
+
+      const login = useCallback(async (credentials, mode = 'login') => {
+        const { data } = await api(`/auth/${mode}`, { method: 'POST', body: credentials });
+        setUser(data);
+        await refreshCart();
+        return data;
+      }, [refreshCart]);
+
+      const logout = useCallback(async () => {
+        try { await api('/auth/logout', { method: 'POST' }); } catch { /* 이미 만료된 세션 */ }
+        setUser(null);
+        setCart(emptyCart);
+        showToast('로그아웃되었습니다.', 'info');
+      }, [showToast]);
+
+      const value = useMemo(
+        () => ({ user, cart, setCart, ready, login, logout, refreshCart, showToast }),
+        [user, cart, ready, login, logout, refreshCart, showToast]
+      );
+
+      return (
+        <ShopContext.Provider value={value}>
+          {children}
+          {toast && (
+            <div className="animate-toast fixed inset-x-0 bottom-6 z-[60] flex justify-center px-4" role="status" aria-live="polite">
+              <div className={`rounded-full px-5 py-3 text-sm font-medium text-white shadow-lg
+                ${toast.tone === 'error' ? 'bg-rose-600' : toast.tone === 'info' ? 'bg-slate-700' : 'bg-emerald-600'}`}>
+                {toast.message}
+              </div>
+            </div>
+          )}
+        </ShopContext.Provider>
+      );
+    }
+
+    // ========================================
+    // 🧩 Layout Components
+    // ========================================
+
+    function Header() {
+      const { user, cart, logout } = useShop();
+      const { path } = useRouter();
+
+      const navItem = (to, label, badge) => {
+        const active = path === to;
+        return (
+          <Link
+            to={to}
+            className={`relative whitespace-nowrap rounded-lg px-2 py-2 text-xs font-medium transition sm:px-3 sm:text-sm
+              ${active ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}`}
+          >
+            {label}
+            {badge > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center
+                rounded-full bg-rose-600 px-1 text-[11px] font-bold text-white">{badge}</span>
+            )}
+          </Link>
+        );
+      };
+
+      return (
+        <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/85 backdrop-blur">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-3 sm:gap-4 sm:px-6">
+            <Link to="/" className="flex shrink-0 items-center gap-2 whitespace-nowrap text-base font-extrabold tracking-tight sm:text-lg">
+              <span aria-hidden="true">🛍️</span>
+              {/* 좁은 화면에서는 이모지만 남겨 메뉴가 잘리지 않게 한다 */}
+              <span className="hidden min-[420px]:inline">오늘의 마켓</span>
+            </Link>
+
+            <nav className="flex items-center gap-0.5 sm:gap-1" aria-label="주요 메뉴">
+              {navItem('/', '상품')}
+              {navItem('/cart', '장바구니', cart.totalQuantity)}
+              {user && navItem('/orders', '주문내역')}
+
+              {user ? (
+                <div className="ml-1 flex items-center gap-2 border-l border-slate-200 pl-2 sm:ml-2 sm:pl-3">
+                  <span className="hidden text-sm text-slate-600 sm:inline">
+                    <strong className="font-semibold text-slate-900">{user.displayName}</strong> 님
+                  </span>
+                  <Button variant="ghost" size="sm" onClick={logout}>로그아웃</Button>
+                </div>
+              ) : (
+                <Link to="/login" className="ml-2">
+                  <Button size="sm">로그인</Button>
+                </Link>
+              )}
+            </nav>
+          </div>
+        </header>
+      );
+    }
+
+    function Footer() {
+      return (
+        <footer className="mt-16 border-t border-slate-200 bg-white">
+          <div className="mx-auto max-w-6xl px-4 py-8 text-sm text-slate-500 sm:px-6">
+            <p className="font-semibold text-slate-700">오늘의 마켓</p>
+            <p className="mt-1">상품 정보는 로그인 없이 누구나 볼 수 있습니다. 장바구니와 주문은 로그인 후 이용해 주세요.</p>
+            <p className="mt-3 text-xs text-slate-400">AI_factory 4기 · week-5 퀘스트 4 · Express + Supabase PostgreSQL + React 학습용 예제</p>
+          </div>
+        </footer>
+      );
+    }
+
+    function PageShell({ title, description, children, actions }) {
+      return (
+        <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+          {(title || actions) && (
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                {title && <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{title}</h1>}
+                {description && <p className="mt-1.5 text-sm text-slate-500">{description}</p>}
+              </div>
+              {actions}
+            </div>
+          )}
+          {children}
+        </main>
+      );
+    }
+
+    function LoadingBlock({ label = '불러오는 중…' }) {
+      return (
+        <div className="flex items-center justify-center gap-3 rounded-2xl bg-white/60 py-20 text-slate-500">
+          <Spinner /> <span className="text-sm">{label}</span>
+        </div>
+      );
+    }
+
+    function ErrorBlock({ message, onRetry }) {
+      return (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center">
+          <p className="text-sm font-medium text-rose-700">{message}</p>
+          {onRetry && <Button variant="secondary" size="sm" className="mt-4" onClick={onRetry}>다시 시도</Button>}
+        </div>
+      );
+    }
+
+    // 장바구니 담기는 로그인 필요 → 비로그인일 때 띄우는 안내 모달
+    function LoginRequiredModal({ isOpen, onClose }) {
+      return (
+        <Modal isOpen={isOpen} onClose={onClose} title="로그인이 필요해요" size="sm">
+          <p className="text-sm leading-relaxed text-slate-600">
+            상품 구경은 로그인 없이도 자유롭게 하실 수 있지만,
+            장바구니에 담고 주문하려면 로그인이 필요합니다.
+          </p>
+          <div className="mt-6 flex gap-2">
+            <Link to="/login" className="flex-1" onClick={onClose}>
+              <Button className="w-full">로그인 / 회원가입</Button>
+            </Link>
+            <Button variant="secondary" onClick={onClose}>계속 둘러보기</Button>
+          </div>
+        </Modal>
+      );
+    }
+
+    // ========================================
+    // 📄 Page: 상품 목록 (공개)
+    // ========================================
+
+    // 카드 전체가 링크지만 "담기" 버튼은 링크 밖에 둔다 (a 안에 button을 넣으면 안 된다)
+    function ProductCard({ product, onAdd, adding, inCart }) {
+      const soldOut = product.stock < 1;
+      return (
+        <Card className="group flex h-full flex-col overflow-hidden transition hover:-translate-y-0.5 hover:shadow-md">
+          <Link
+            to={`/products/${product.id}`}
+            className="flex flex-1 flex-col rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-slate-900"
+          >
+            <div className="relative aspect-square overflow-hidden bg-slate-100">
+              <ProductImage
+                src={product.imageUrl}
+                alt={product.name}
+                className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+              />
+              {soldOut && (
+                <div className="absolute inset-0 flex items-center justify-center bg-slate-900/55">
+                  <span className="rounded-full bg-white px-3 py-1 text-sm font-semibold text-slate-900">품절</span>
+                </div>
+              )}
+            </div>
+            <div className="flex flex-1 flex-col p-4 pb-3">
+              <Badge className="self-start">{product.category}</Badge>
+              <h3 className="mt-2.5 line-clamp-1 font-semibold text-slate-900">{product.name}</h3>
+              <p className="mt-1 line-clamp-2 min-h-[2.5rem] text-sm text-slate-500">{product.summary}</p>
+              <div className="mt-3 flex items-center justify-between">
+                <span className="text-lg font-bold">{won(product.price)}</span>
+                <span className="text-xs font-medium text-amber-600">★ {Number(product.rating).toFixed(1)}</span>
+              </div>
+            </div>
+          </Link>
+
+          <div className="px-4 pb-4">
+            <Button
+              variant="secondary" size="sm" className="w-full"
+              disabled={soldOut} loading={adding}
+              aria-label={`${product.name} 장바구니에 담기`}
+              onClick={() => onAdd(product)}
+            >
+              {soldOut ? '품절' : inCart > 0 ? `장바구니 담기 (담은 수량 ${inCart}개)` : '장바구니 담기'}
+            </Button>
+          </div>
+        </Card>
+      );
+    }
+
+    function ProductsPage() {
+      const { user, cart, setCart, showToast } = useShop();
+      const [addingId, setAddingId] = useState(null);
+      const [needLogin, setNeedLogin] = useState(false);
+
+      const [products, setProducts] = useState([]);
+      const [categories, setCategories] = useState([]);
+      const [category, setCategory] = useState('');
+      const [sort, setSort] = useState('recommended');
+      const [keyword, setKeyword] = useState('');   // 입력창 값
+      const [query, setQuery] = useState('');       // 실제 검색에 쓰이는 값 (디바운스)
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState(null);
+
+      useEffect(() => {
+        api('/categories').then(({ data }) => setCategories(data)).catch(() => setCategories([]));
+      }, []);
+
+      // 타이핑이 멈춘 뒤에만 서버를 부른다
+      useEffect(() => {
+        const timer = setTimeout(() => setQuery(keyword.trim()), 300);
+        return () => clearTimeout(timer);
+      }, [keyword]);
+
+      const load = useCallback(() => {
+        setLoading(true);
+        setError(null);
+        const params = new URLSearchParams();
+        if (category) params.set('category', category);
+        if (query) params.set('q', query);
+        params.set('sort', sort);
+
+        api(`/products?${params.toString()}`)
+          .then(({ data }) => setProducts(data))
+          .catch((err) => setError(err.message))
+          .finally(() => setLoading(false));
+      }, [category, query, sort]);
+
+      useEffect(load, [load]);
+
+      // 목록에서 바로 담기 — 로그인하지 않았으면 담지 않고 안내 모달만 띄운다
+      const addToCart = async (product) => {
+        if (!user) { setNeedLogin(true); return; }
+
+        setAddingId(product.id);
+        try {
+          const { data } = await api('/cart', { method: 'POST', body: { productId: product.id, quantity: 1 } });
+          setCart(data);
+          showToast(`${product.name}을(를) 장바구니에 담았어요.`);
+        } catch (err) {
+          showToast(err.message, 'error');
+        } finally {
+          setAddingId(null);
+        }
+      };
+
+      // 이미 담은 수량을 버튼에 표시하기 위한 조회표
+      const quantityByProduct = useMemo(() => {
+        const map = {};
+        cart.items.forEach((item) => { map[item.productId] = item.quantity; });
+        return map;
+      }, [cart]);
+
+      return (
+        <>
+          {/* 히어로 — 로그인 없이 볼 수 있다는 점을 첫 화면에서 알린다 */}
+          <section className="border-b border-slate-200 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700 text-white">
+            <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+              <Badge tone="green" className="bg-emerald-400/15 text-emerald-200 ring-emerald-400/30">로그인 없이 둘러보기</Badge>
+              <h1 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">오늘의 마켓</h1>
+              <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-300 sm:text-base">
+                상품명, 가격, 이미지, 설명은 누구나 바로 볼 수 있습니다.
+                마음에 드는 물건을 장바구니에 담고 주문할 때만 로그인해 주세요.
+              </p>
+            </div>
+          </section>
+
+          <PageShell>
+            {/* 검색 · 카테고리 · 정렬 */}
+            <div className="mb-6 space-y-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Input
+                  label=""
+                  type="search"
+                  value={keyword}
+                  onChange={(e) => setKeyword(e.target.value)}
+                  placeholder="상품명이나 키워드로 검색"
+                  aria-label="상품 검색"
+                  className="flex-1"
+                />
+                <select
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value)}
+                  aria-label="정렬 기준"
+                  className="rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm outline-none
+                    focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
+                >
+                  <option value="recommended">추천순 (평점 높은 순)</option>
+                  <option value="price_asc">가격 낮은 순</option>
+                  <option value="price_desc">가격 높은 순</option>
+                  <option value="name">이름순</option>
+                </select>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {[{ label: '전체', value: '' }, ...categories.map((c) => ({ label: c, value: c }))].map((c) => (
+                  <button
+                    key={c.value || 'all'}
+                    type="button"
+                    onClick={() => setCategory(c.value)}
+                    aria-pressed={category === c.value}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition
+                      ${category === c.value
+                        ? 'bg-slate-900 text-white'
+                        : 'bg-white text-slate-600 ring-1 ring-inset ring-slate-200 hover:bg-slate-100'}`}
+                  >
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {loading ? (
+              <LoadingBlock label="상품을 불러오는 중…" />
+            ) : error ? (
+              <ErrorBlock message={error} onRetry={load} />
+            ) : products.length === 0 ? (
+              <EmptyState
+                icon="🔍"
+                title="찾는 상품이 없어요"
+                description="검색어나 카테고리를 바꿔 보세요."
+                action={<Button variant="secondary" onClick={() => { setKeyword(''); setCategory(''); }}>필터 초기화</Button>}
+              />
+            ) : (
+              <>
+                <p className="mb-4 text-sm text-slate-500">총 <strong className="text-slate-900">{products.length}</strong>개 상품</p>
+                <div className="grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-4">
+                  {products.map((p) => (
+                    <ProductCard
+                      key={p.id}
+                      product={p}
+                      onAdd={addToCart}
+                      adding={addingId === p.id}
+                      inCart={quantityByProduct[p.id] || 0}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+
+            <LoginRequiredModal isOpen={needLogin} onClose={() => setNeedLogin(false)} />
+          </PageShell>
+        </>
+      );
+    }
+
+    // ========================================
+    // 📄 Page: 상품 상세 (공개)
+    // ========================================
+
+    function ProductDetailPage() {
+      const { id } = useParams();
+      const { user, setCart, showToast } = useShop();
+      const { navigate } = useRouter();
+
+      const [product, setProduct] = useState(null);
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState(null);
+      const [quantity, setQuantity] = useState(1);
+      const [adding, setAdding] = useState(false);
+      const [needLogin, setNeedLogin] = useState(false);
+
+      const load = useCallback(() => {
+        setLoading(true);
+        setError(null);
+        api(`/products/${id}`)
+          .then(({ data }) => { setProduct(data); setQuantity(1); })
+          .catch((err) => setError(err.message))
+          .finally(() => setLoading(false));
+      }, [id]);
+
+      useEffect(load, [load]);
+
+      const addToCart = async (goToCart) => {
+        if (!user) { setNeedLogin(true); return; }
+
+        setAdding(true);
+        try {
+          const { data } = await api('/cart', { method: 'POST', body: { productId: Number(id), quantity } });
+          setCart(data);
+          if (goToCart) navigate('/cart');
+          else showToast(`${product.name} ${quantity}개를 장바구니에 담았어요.`);
+        } catch (err) {
+          showToast(err.message, 'error');
+        } finally {
+          setAdding(false);
+        }
+      };
+
+      if (loading) return <PageShell><LoadingBlock /></PageShell>;
+      if (error) return <PageShell><ErrorBlock message={error} onRetry={load} /></PageShell>;
+
+      const soldOut = product.stock < 1;
+      const maxQty = Math.min(product.stock, 20);
+
+      return (
+        <PageShell>
+          <Link to="/" className="mb-5 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-900">
+            ← 상품 목록으로
+          </Link>
+
+          <div className="grid gap-8 lg:grid-cols-2">
+            <Card className="overflow-hidden">
+              <div className="aspect-square bg-slate-100">
+                <ProductImage src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />
+              </div>
+            </Card>
+
+            <div>
+              <Badge>{product.category}</Badge>
+              <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">{product.name}</h1>
+              <p className="mt-2 text-slate-500">{product.summary}</p>
+
+              <div className="mt-5 flex items-center gap-3">
+                <span className="text-3xl font-extrabold">{won(product.price)}</span>
+                <span className="text-sm font-medium text-amber-600">★ {Number(product.rating).toFixed(1)}</span>
+                {soldOut
+                  ? <Badge tone="rose">품절</Badge>
+                  : product.stock <= 10
+                    ? <Badge tone="amber">재고 {product.stock}개</Badge>
+                    : <Badge tone="green">재고 충분</Badge>}
+              </div>
+
+              <div className="mt-6 rounded-2xl bg-white p-5 ring-1 ring-slate-200/70">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-sm font-medium text-slate-700">수량</span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="secondary" size="sm" aria-label="수량 줄이기"
+                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                      disabled={soldOut || quantity <= 1}
+                    >−</Button>
+                    <input
+                      type="number" value={quantity} min="1" max={maxQty || 1} aria-label="수량"
+                      onChange={(e) => {
+                        const next = Number(e.target.value);
+                        setQuantity(Number.isFinite(next) ? Math.min(Math.max(1, next), maxQty || 1) : 1);
+                      }}
+                      disabled={soldOut}
+                      className="w-16 rounded-xl border border-slate-300 py-1.5 text-center text-sm outline-none
+                        focus:border-slate-900 focus:ring-2 focus:ring-slate-200 disabled:bg-slate-100"
+                    />
+                    <Button
+                      variant="secondary" size="sm" aria-label="수량 늘리기"
+                      onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))}
+                      disabled={soldOut || quantity >= maxQty}
+                    >+</Button>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex items-baseline justify-between border-t border-slate-100 pt-4">
+                  <span className="text-sm text-slate-500">총 결제 금액</span>
+                  <span className="text-xl font-bold">{won(product.price * quantity)}</span>
+                </div>
+
+                <div className="mt-5 flex gap-2">
+                  <Button
+                    variant="secondary" size="lg" className="flex-1"
+                    onClick={() => addToCart(false)} disabled={soldOut} loading={adding}
+                  >장바구니</Button>
+                  <Button size="lg" className="flex-1" onClick={() => addToCart(true)} disabled={soldOut}>
+                    바로 구매
+                  </Button>
+                </div>
+
+                {!user && (
+                  <p className="mt-3 text-center text-xs text-slate-500">
+                    상품 정보는 누구나 볼 수 있어요. 구매는 로그인 후 진행됩니다.
+                  </p>
+                )}
+              </div>
+
+              <section className="mt-8">
+                <h2 className="text-lg font-bold">상품 설명</h2>
+                <p className="mt-3 whitespace-pre-line text-sm leading-7 text-slate-600">{product.description}</p>
+              </section>
+            </div>
+          </div>
+
+          {product.related && product.related.length > 0 && (
+            <section className="mt-14">
+              <h2 className="mb-4 text-lg font-bold">같은 카테고리의 다른 상품</h2>
+              <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+                {product.related.map((r) => (
+                  <Link key={r.id} to={`/products/${r.id}`} className="group block rounded-2xl">
+                    <Card className="flex items-center gap-4 overflow-hidden p-3 transition group-hover:shadow-md">
+                      <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-slate-100">
+                        <ProductImage src={r.imageUrl} alt={r.name} className="h-full w-full object-cover" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="line-clamp-2 text-sm font-semibold">{r.name}</p>
+                        <p className="mt-1 text-sm text-slate-500">{won(r.price)}</p>
+                      </div>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <LoginRequiredModal isOpen={needLogin} onClose={() => setNeedLogin(false)} />
+        </PageShell>
+      );
+    }
+
+    // ========================================
+    // 📄 Page: 장바구니 (로그인 필요)
+    // ========================================
+
+    function CartPage() {
+      const { user, cart, setCart, showToast, ready } = useShop();
+      const { navigate } = useRouter();
+
+      const [busyId, setBusyId] = useState(null);
+      const [confirmClear, setConfirmClear] = useState(false);
+      const [clearing, setClearing] = useState(false);
+      const [form, setForm] = useState({ receiver: '', address: '', memo: '' });
+      const [errors, setErrors] = useState({});
+      const [ordering, setOrdering] = useState(false);
+      const [done, setDone] = useState(null);
+
+      useEffect(() => {
+        if (user) setForm((f) => ({ ...f, receiver: f.receiver || user.displayName }));
+      }, [user]);
+
+      const run = async (productId, request) => {
+        setBusyId(productId);
+        try {
+          const { data } = await request();
+          setCart(data);
+        } catch (err) {
+          showToast(err.message, 'error');
+        } finally {
+          setBusyId(null);
+        }
+      };
+
+      const changeQuantity = (productId, quantity) =>
+        run(productId, () => api(`/cart/${productId}`, { method: 'PATCH', body: { quantity } }));
+
+      const removeItem = (productId) =>
+        run(productId, () => api(`/cart/${productId}`, { method: 'DELETE' }));
+
+      const clearCart = async () => {
+        setClearing(true);
+        try {
+          const { data } = await api('/cart', { method: 'DELETE' });
+          setCart(data);
+          setConfirmClear(false);
+          showToast('장바구니를 비웠습니다.', 'info');
+        } catch (err) {
+          showToast(err.message, 'error');
+        } finally {
+          setClearing(false);
+        }
+      };
+
+      const submitOrder = async () => {
+        const nextErrors = {};
+        if (!form.receiver.trim()) nextErrors.receiver = '받는 분 이름을 입력해 주세요.';
+        if (form.address.trim().length < 5) nextErrors.address = '배송지 주소를 정확히 입력해 주세요.';
+        setErrors(nextErrors);
+        if (Object.keys(nextErrors).length > 0) return;
+
+        setOrdering(true);
+        try {
+          const { data } = await api('/orders', { method: 'POST', body: form });
+          setCart({ items: [], totalQuantity: 0, totalAmount: 0 });
+          setDone(data);
+        } catch (err) {
+          showToast(err.message, 'error');
+        } finally {
+          setOrdering(false);
+        }
+      };
+
+      if (!ready) return <PageShell><LoadingBlock /></PageShell>;
+
+      if (!user) {
+        return (
+          <PageShell title="장바구니">
+            <EmptyState
+              icon="🔒"
+              title="로그인 후 이용할 수 있어요"
+              description="장바구니는 회원별로 저장됩니다. 상품 구경은 로그인 없이도 계속하실 수 있어요."
+              action={
+                <div className="flex gap-2">
+                  <Link to="/login"><Button>로그인 / 회원가입</Button></Link>
+                  <Link to="/"><Button variant="secondary">상품 보러 가기</Button></Link>
+                </div>
+              }
+            />
+          </PageShell>
+        );
+      }
+
+      return (
+        <PageShell
+          title="장바구니"
+          description={
+            cart.items.length > 0
+              ? `${user.displayName} 님의 장바구니 · 상품 ${cart.items.length}종 ${cart.totalQuantity}개 · 합계 ${won(cart.totalAmount)}`
+              : `${user.displayName} 님의 장바구니입니다.`
+          }
+          actions={
+            cart.items.length > 0 && (
+              <Button variant="ghost" className="text-rose-600 hover:bg-rose-50" onClick={() => setConfirmClear(true)}>
+                장바구니 비우기
+              </Button>
+            )
+          }
+        >
+          {cart.items.length === 0 ? (
+            <EmptyState
+              icon="🛒"
+              title="장바구니가 비어 있어요"
+              description="마음에 드는 상품을 담아 보세요."
+              action={<Link to="/"><Button>상품 보러 가기</Button></Link>}
+            />
+          ) : (
+            <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+              {/* 담은 상품 */}
+              <div className="space-y-3">
+                {cart.items.map((item) => (
+                  <Card key={item.productId} className="flex gap-4 p-4">
+                    <Link to={`/products/${item.productId}`} className="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-slate-100">
+                      <ProductImage src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
+                    </Link>
+
+                    <div className="flex min-w-0 flex-1 flex-col justify-between">
+                      <div>
+                        <Link to={`/products/${item.productId}`} className="line-clamp-1 font-semibold hover:underline">
+                          {item.name}
+                        </Link>
+                        <p className="mt-0.5 text-sm text-slate-500">{won(item.price)} · 재고 {item.stock}개</p>
+                      </div>
+
+                      <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex items-center gap-1.5">
+                          <Button
+                            variant="secondary" size="sm" aria-label={`${item.name} 수량 줄이기`}
+                            disabled={busyId === item.productId || item.quantity <= 1}
+                            onClick={() => changeQuantity(item.productId, item.quantity - 1)}
+                          >−</Button>
+                          <span className="w-9 text-center text-sm font-semibold">{item.quantity}</span>
+                          <Button
+                            variant="secondary" size="sm" aria-label={`${item.name} 수량 늘리기`}
+                            disabled={busyId === item.productId || item.quantity >= Math.min(item.stock, 20)}
+                            onClick={() => changeQuantity(item.productId, item.quantity + 1)}
+                          >+</Button>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          <span className="font-bold">{won(item.subtotal)}</span>
+                          <Button
+                            variant="ghost" size="sm" className="text-rose-600 hover:bg-rose-50"
+                            disabled={busyId === item.productId}
+                            onClick={() => removeItem(item.productId)}
+                          >삭제</Button>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+
+              {/* 주문서 */}
+              <div className="space-y-4 lg:sticky lg:top-24 lg:self-start">
+                <Card className="p-5">
+                  <h2 className="text-base font-bold">배송 정보</h2>
+                  <div className="mt-4 space-y-3">
+                    <Input
+                      label="받는 분" value={form.receiver} error={errors.receiver}
+                      onChange={(e) => setForm({ ...form, receiver: e.target.value })}
+                      placeholder="홍길동"
+                    />
+                    <Input
+                      label="주소" value={form.address} error={errors.address}
+                      onChange={(e) => setForm({ ...form, address: e.target.value })}
+                      placeholder="서울시 강남구 테헤란로 1길 10, 101동 1001호"
+                    />
+                    <Textarea
+                      label="배송 메모 (선택)" rows="2" value={form.memo}
+                      onChange={(e) => setForm({ ...form, memo: e.target.value })}
+                      placeholder="부재 시 경비실에 맡겨 주세요"
+                    />
+                  </div>
+                </Card>
+
+                <Card className="p-5">
+                  <h2 className="text-base font-bold">결제 금액</h2>
+                  <dl className="mt-4 space-y-2 text-sm">
+                    <div className="flex justify-between text-slate-600">
+                      <dt>상품 금액 ({cart.totalQuantity}개)</dt><dd>{won(cart.totalAmount)}</dd>
+                    </div>
+                    <div className="flex justify-between text-slate-600">
+                      <dt>배송비</dt><dd className="text-emerald-600">무료</dd>
+                    </div>
+                    <div className="flex justify-between border-t border-slate-100 pt-3 text-base font-bold text-slate-900">
+                      <dt>총 결제 금액</dt><dd>{won(cart.totalAmount)}</dd>
+                    </div>
+                  </dl>
+                  <Button size="lg" className="mt-5 w-full" onClick={submitOrder} loading={ordering}>
+                    {won(cart.totalAmount)} 결제하기
+                  </Button>
+                  <p className="mt-2 text-center text-xs text-slate-400">학습용 예제입니다. 실제 결제는 일어나지 않습니다.</p>
+                </Card>
+              </div>
+            </div>
+          )}
+
+          <Modal isOpen={confirmClear} onClose={() => setConfirmClear(false)} title="장바구니를 비울까요?" size="sm">
+            <p className="text-sm text-slate-600">
+              담아 둔 {cart.items.length}종 {cart.totalQuantity}개가 모두 삭제됩니다. 상품 자체가 없어지지는 않아요.
+            </p>
+            <div className="mt-6 flex gap-2">
+              <Button variant="danger" className="flex-1" onClick={clearCart} loading={clearing}>비우기</Button>
+              <Button variant="secondary" className="flex-1" onClick={() => setConfirmClear(false)}>취소</Button>
+            </div>
+          </Modal>
+
+          <Modal isOpen={!!done} onClose={() => { setDone(null); navigate('/orders'); }} title="주문이 완료되었습니다 🎉">
+            {done && (
+              <div className="space-y-3 text-sm text-slate-600">
+                <p>주문번호 <strong className="text-slate-900">#{done.id}</strong></p>
+                <p>상품 {done.itemCount}종 · 결제 금액 <strong className="text-slate-900">{won(done.totalAmount)}</strong></p>
+                <Button className="mt-4 w-full" onClick={() => { setDone(null); navigate('/orders'); }}>
+                  주문내역 보기
+                </Button>
+              </div>
+            )}
+          </Modal>
+        </PageShell>
+      );
+    }
+
+    // ========================================
+    // 📄 Page: 주문내역 (로그인 필요)
+    // ========================================
+
+    function OrdersPage() {
+      const { user, ready } = useShop();
+      const [orders, setOrders] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState(null);
+
+      const load = useCallback(() => {
+        if (!user) { setLoading(false); return; }
+        setLoading(true);
+        setError(null);
+        api('/orders')
+          .then(({ data }) => setOrders(data))
+          .catch((err) => setError(err.message))
+          .finally(() => setLoading(false));
+      }, [user]);
+
+      useEffect(load, [load]);
+
+      if (!ready) return <PageShell><LoadingBlock /></PageShell>;
+
+      if (!user) {
+        return (
+          <PageShell title="주문내역">
+            <EmptyState
+              icon="🔒"
+              title="로그인 후 이용할 수 있어요"
+              description="주문 내역은 본인만 볼 수 있습니다."
+              action={<Link to="/login"><Button>로그인 / 회원가입</Button></Link>}
+            />
+          </PageShell>
+        );
+      }
+
+      return (
+        <PageShell title="주문내역" description={`${user.displayName} 님이 주문한 상품입니다.`}>
+          {loading ? (
+            <LoadingBlock />
+          ) : error ? (
+            <ErrorBlock message={error} onRetry={load} />
+          ) : orders.length === 0 ? (
+            <EmptyState
+              icon="📦"
+              title="아직 주문이 없어요"
+              description="장바구니에 담고 결제하면 여기에 쌓입니다."
+              action={<Link to="/"><Button>상품 보러 가기</Button></Link>}
+            />
+          ) : (
+            <div className="space-y-4">
+              {orders.map((order) => (
+                <Card key={order.id} className="overflow-hidden">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/60 px-5 py-3">
+                    <div className="text-sm">
+                      <span className="font-semibold">주문 #{order.id}</span>
+                      <span className="ml-2 text-slate-500">{formatDate(order.createdAt)}</span>
+                    </div>
+                    <Badge tone="green">{order.status}</Badge>
+                  </div>
+
+                  <div className="divide-y divide-slate-100">
+                    {order.items.map((item, index) => (
+                      <div key={`${order.id}-${item.productId}-${index}`} className="flex items-center gap-4 px-5 py-4">
+                        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-slate-100">
+                          <ProductImage src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          {item.productId
+                            ? <Link to={`/products/${item.productId}`} className="line-clamp-1 font-medium hover:underline">{item.name}</Link>
+                            : <span className="line-clamp-1 font-medium">{item.name}</span>}
+                          <p className="mt-0.5 text-sm text-slate-500">{won(item.price)} × {item.quantity}개</p>
+                        </div>
+                        <span className="font-semibold">{won(item.price * item.quantity)}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-5 py-4 text-sm">
+                    <div className="text-slate-500">
+                      <p>받는 분: <span className="text-slate-800">{order.receiver}</span></p>
+                      <p className="mt-0.5">배송지: <span className="text-slate-800">{order.address}</span></p>
+                      {order.memo && <p className="mt-0.5">메모: <span className="text-slate-800">{order.memo}</span></p>}
+                    </div>
+                    <div className="text-right">
+                      <p className="text-slate-500">결제 금액</p>
+                      <p className="text-lg font-bold">{won(order.totalAmount)}</p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </PageShell>
+      );
+    }
+
+    // ========================================
+    // 📄 Page: 로그인 / 회원가입
+    // ========================================
+
+    function LoginPage() {
+      const { user, login } = useShop();
+      const { navigate } = useRouter();
+
+      const [mode, setMode] = useState('login');
+      const [form, setForm] = useState({ username: '', password: '', displayName: '' });
+      const [error, setError] = useState('');
+      const [submitting, setSubmitting] = useState(false);
+
+      useEffect(() => { if (user) navigate('/'); }, [user, navigate]);
+
+      const submit = async (e) => {
+        e.preventDefault();
+        setError('');
+        setSubmitting(true);
+        try {
+          await login(
+            mode === 'login'
+              ? { username: form.username, password: form.password }
+              : form,
+            mode === 'login' ? 'login' : 'signup'
+          );
+          navigate('/');
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setSubmitting(false);
+        }
+      };
+
+      const tab = (value, label) => (
+        <button
+          type="button"
+          onClick={() => { setMode(value); setError(''); }}
+          aria-pressed={mode === value}
+          className={`flex-1 rounded-lg py-2 text-sm font-semibold transition
+            ${mode === value ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+        >{label}</button>
+      );
+
+      return (
+        <PageShell>
+          <div className="mx-auto max-w-md">
+            <Card className="p-7">
+              <h1 className="text-xl font-bold">
+                {mode === 'login' ? '로그인' : '회원가입'}
+              </h1>
+              <p className="mt-1.5 text-sm text-slate-500">
+                장바구니와 주문에만 로그인이 필요합니다.
+              </p>
+
+              <div className="mt-5 flex gap-1 rounded-xl bg-slate-100 p-1">
+                {tab('login', '로그인')}
+                {tab('signup', '회원가입')}
+              </div>
+
+              <form className="mt-6 space-y-4" onSubmit={submit}>
+                <Input
+                  label="아이디" name="username" autoComplete="username" value={form.username}
+                  onChange={(e) => setForm({ ...form, username: e.target.value })}
+                  placeholder="영문 아이디 (3자 이상)" required
+                />
+                {mode === 'signup' && (
+                  <Input
+                    label="표시 이름" name="displayName" value={form.displayName}
+                    onChange={(e) => setForm({ ...form, displayName: e.target.value })}
+                    placeholder="주문서에 보일 이름"
+                  />
+                )}
+                <Input
+                  label="비밀번호" name="password" type="password" value={form.password}
+                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  placeholder="6자 이상" required
+                />
+
+                {error && (
+                  <p className="rounded-xl bg-rose-50 px-3.5 py-2.5 text-sm text-rose-700" role="alert">{error}</p>
+                )}
+
+                <Button type="submit" size="lg" className="w-full" loading={submitting}>
+                  {mode === 'login' ? '로그인' : '가입하고 시작하기'}
+                </Button>
+              </form>
+
+              <p className="mt-5 text-center text-xs leading-relaxed text-slate-400">
+                비밀번호는 서버에서 해시로만 저장되며, 세션은 HttpOnly 쿠키로만 오갑니다.<br />
+                브라우저 저장소에는 아무것도 남지 않습니다.
+              </p>
+            </Card>
+
+            <div className="mt-4 text-center">
+              <Link to="/" className="text-sm font-medium text-slate-500 hover:text-slate-900">
+                로그인 없이 상품 둘러보기 →
+              </Link>
+            </div>
+          </div>
+        </PageShell>
+      );
+    }
+
+    function NotFoundPage() {
+      return (
+        <PageShell>
+          <EmptyState
+            icon="🧭"
+            title="페이지를 찾을 수 없어요"
+            description="주소를 다시 확인해 주세요."
+            action={<Link to="/"><Button>홈으로</Button></Link>}
+          />
+        </PageShell>
+      );
+    }
+
+    // ========================================
+    // 🚀 App
+    // ========================================
+
+    function App() {
+      return (
+        <Router>
+          <ShopProvider>
+            <div className="flex min-h-screen flex-col">
+              <Header />
+              <div className="flex-1">
+                <Routes>
+                  <Route path="/" element={<ProductsPage />} />
+                  <Route path="/products/:id" element={<ProductDetailPage />} />
+                  <Route path="/cart" element={<CartPage />} />
+                  <Route path="/orders" element={<OrdersPage />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="*" element={<NotFoundPage />} />
+                </Routes>
+              </div>
+              <Footer />
+            </div>
+          </ShopProvider>
+        </Router>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

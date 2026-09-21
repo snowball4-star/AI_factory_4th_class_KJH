@@ -1,0 +1,17 @@
+{
+  "name": "household-ledger",
+  "version": "1.0.0",
+  "description": "개인용 가계부 앱 (Express + Supabase PostgreSQL API + React 단일 파일 프런트)",
+  "main": "server.js",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "xlsx": "^0.18.5"
+  }
+}

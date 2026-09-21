@@ -1,7 +1,7 @@
 {
-  "name": "family-community-app",
+  "name": "auth-db-shop",
   "version": "1.0.0",
-  "description": "로그인 기반 가족 커뮤니티 앱 (Express + Supabase PostgreSQL API + React 단일 파일 프런트)",
+  "description": "로그인 없이 둘러보는 쇼핑몰 (Express + Supabase PostgreSQL API + React 단일 파일 프런트)",
   "main": "server.js",
   "private": true,
   "scripts": {

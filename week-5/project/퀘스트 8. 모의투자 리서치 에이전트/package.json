@@ -1,0 +1,11 @@
+{
+  "name": "quest-paper-trade-research",
+  "version": "1.0.0",
+  "private": true,
+  "description": "업비트 1시간봉 MA20/MA120 차트 + week-4 모의투자 앱 연동 리서치 에이전트",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "snapshot": "node scripts/fetch-candles.js"
+  }
+}

@@ -60,15 +60,38 @@ DB의 `CHECK` 제약과 서버 검증 양쪽에서 막는다.
 
 ## 배포 (Vercel)
 
-GitHub 저장소를 Vercel에 Import 하고, **Root Directory** 를
-`week-5/project/퀘스트 3. Auth 커뮤니티 앱` 으로 지정한 뒤 프로젝트 환경변수에
-`DATABASE_URL`(필수)과 `SEED_USERS`(선택)를 등록한다. `PORT` 는 Vercel에서 무시된다.
+**배포 주소: https://family-community-app.vercel.app**
+(Vercel 프로젝트 `family-community-app`, 팀 `ai-factory6`)
+
+재배포는 이 폴더에서 한 줄이면 된다.
+
+```bash
+npm run deploy      # = bash deploy.sh
+```
 
 **로컬 폴더에서 `vercel deploy` 를 직접 실행하지 않는다.** Vercel CLI는 `.vercelignore` 에
 `.env` 를 적어 두어도 `.env` 를 배포 번들에 포함시킨다(실측으로 확인했다 — `.env` 를 둔
-채 배포하면 플랫폼 환경변수를 등록하지 않아도 DB에 붙는다). 저장소에는 `.env` 가
-없으므로 GitHub Import 경로는 안전하다. 추가 안전장치로 `server.js` 는
-`process.env.VERCEL` 이 있으면 `.env` 를 아예 읽지 않는다.
+채 배포하면 플랫폼 환경변수를 등록하지 않아도 DB에 붙는다). 그래서 `deploy.sh` 는
+배포에 필요한 파일(`server.js`, `index.html`, `package.json`, `package-lock.json`,
+`vercel.json`)만 임시 폴더로 복사해 그곳에서 `vercel deploy --prod` 를 실행하고,
+`vercel link` 가 만드는 `.env.local` 을 지운 뒤 업로드 직전에 `.env*` 가 하나도 없는지
+다시 확인한다. 추가 안전장치로 `server.js` 는 `process.env.VERCEL` 이 있으면 `.env` 를
+아예 읽지 않는다.
+
+비밀정보는 Vercel 프로젝트 환경변수(Production·Preview·Development)에 등록해 두었다.
+값을 바꿀 때는 아래처럼 한다. `PORT` 는 Vercel에서 무시되므로 등록하지 않는다.
+
+```bash
+vercel env rm  DATABASE_URL production --project family-community-app
+vercel env add DATABASE_URL production --project family-community-app
+```
+
+GitHub Import 로 배포할 경우에는 **Root Directory** 를
+`week-5/project/퀘스트 3. Auth 커뮤니티 앱` 으로 지정하고 같은 환경변수를 등록하면 된다.
+
+배포본에서 확인한 것: 게시글 목록·카테고리 API가 Supabase 데이터를 그대로 돌려주고,
+로그인 시 `HttpOnly` `sid` 쿠키가 내려오며 `/api/auth/me` 가 그 쿠키만으로 통과한다.
+`/.env` 로 접근하면 비밀정보 대신 SPA의 `index.html` 이 나온다(캐치올 라우팅).
 
 ## DB 스키마
 
@@ -120,3 +143,4 @@ Supabase에 실제로 연결한 상태에서 확인했다.
 | `화면-3-게시글상세.png` | 게시글 상세 (수정됨 표시) |
 | `화면-4-글쓰기.png` | 글쓰기 폼 (카테고리 선택) |
 | `화면-5-삭제확인.png` | 삭제 확인 모달 |
+| `화면-6-배포본(vercel).png` | Vercel 배포본 (https://family-community-app.vercel.app) |

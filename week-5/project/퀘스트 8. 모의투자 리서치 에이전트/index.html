@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>모의투자 리서치 차트 · 업비트 1시간봉 MA4/MA20/MA120</title>
+<script src="https://cdn.tailwindcss.com/3.4.16"></script>
+<script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+  .tnum { font-variant-numeric: tabular-nums; }
+  #chart { height: min(62vh, 560px); }
+  @media (max-width: 640px) { #chart { height: 52vh; } }
+</style>
+</head>
+<body class="bg-slate-950 text-slate-200 antialiased">
+<div class="mx-auto max-w-6xl px-4 py-5 space-y-4">
+
+  <!-- 헤더 -->
+  <header class="flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <h1 class="text-lg font-bold text-slate-100">📈 모의투자 리서치 차트</h1>
+      <p class="text-xs text-slate-500 mt-0.5">업비트 실시간 시세 · <span id="unitLabel">1시간봉</span> 기준 <span id="maLabel">MA4 / MA20 / MA120</span></p>
+    </div>
+    <div class="text-right">
+      <div id="price" class="text-2xl font-bold tnum text-slate-100">—</div>
+      <div id="change" class="text-xs tnum text-slate-500">불러오는 중…</div>
+    </div>
+  </header>
+
+  <!-- 조작 -->
+  <section class="flex flex-wrap items-center gap-2 text-xs">
+    <select id="unit" class="bg-slate-900 border border-slate-800 rounded px-2 py-1.5">
+      <option value="15">15분봉</option>
+      <option value="60" selected>1시간봉</option>
+      <option value="240">4시간봉</option>
+      <option value="day">일봉</option>
+    </select>
+    <select id="count" class="bg-slate-900 border border-slate-800 rounded px-2 py-1.5">
+      <option value="120">120봉</option>
+      <option value="200" selected>200봉</option>
+      <option value="400">400봉</option>
+      <option value="600">600봉</option>
+    </select>
+    <label class="flex items-center gap-1.5 bg-slate-900 border border-slate-800 rounded px-2 py-1.5">
+      MA
+      <input id="ma" type="text" value="4,20,120" size="10" title="쉼표로 구분한 이동평균 기간 (봉 개수 기준)"
+             class="w-24 bg-transparent text-center outline-none tnum">
+    </label>
+    <label class="flex items-center gap-1.5 bg-slate-900 border border-slate-800 rounded px-2 py-1.5 cursor-pointer">
+      <input id="daily" type="checkbox" class="accent-emerald-500">
+      같은 기간 <span class="text-slate-500">일봉선 겹치기</span>
+    </label>
+    <label class="flex items-center gap-1.5 bg-slate-900 border border-slate-800 rounded px-2 py-1.5 cursor-pointer">
+      <input id="auto" type="checkbox" checked class="accent-sky-500"> 30초 자동갱신
+    </label>
+    <button id="reload" class="bg-slate-800 hover:bg-slate-700 rounded px-3 py-1.5">새로고침</button>
+    <span id="status" class="text-slate-500"></span>
+  </section>
+
+  <!-- 차트 -->
+  <section class="relative rounded-xl border border-slate-800 bg-slate-900/40 p-2">
+    <div id="legend" class="absolute z-10 left-4 top-4 text-[11px] leading-5 tnum bg-slate-950/80 backdrop-blur px-2.5 py-1.5 rounded-lg border border-slate-800 pointer-events-none"></div>
+    <div id="chart"></div>
+  </section>
+
+  <!-- 신호 요약 -->
+  <section id="cards" class="flex flex-wrap gap-2"></section>
+
+  <!-- 모의투자 앱(week-4) 연동 -->
+  <section id="wallet" class="rounded-xl border border-slate-800 bg-slate-900/40 p-3 text-xs text-slate-400"></section>
+
+  <p class="text-[11px] text-slate-600 leading-5">
+    이동평균은 종가 기준 단순이동평균(SMA)이며, <b class="text-slate-500">MA 기간은 선택한 봉 개수</b>로 셉니다 —
+    1시간봉의 MA120은 최근 120시간(5일), MA20은 최근 20시간, MA4는 최근 4시간입니다.
+    추세 교차는 가장 긴 두 선, 단기 교차는 가장 짧은 두 선으로 봅니다.
+    같은 숫자를 일봉 기준(4·20·120일선)으로 보고 싶으면 「같은 기간 일봉선 겹치기」를 켜세요.
+    마지막 봉은 아직 진행 중이라 값이 계속 바뀝니다. 투자 판단의 근거가 아니라 모의투자 연습용 화면입니다.
+  </p>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const UP = '#f43f5e', DOWN = '#3b82f6';        // 국내 관례: 상승 빨강 / 하락 파랑
+// 이동평균 색: 짧은 기간부터 순서대로 (4 하늘 · 20 노랑 · 120 보라)
+const MA_COLORS = ['#22d3ee', '#fbbf24', '#a78bfa', '#34d399', '#f472b6'];
+const colorOf = (i) => MA_COLORS[i % MA_COLORS.length];
+const fmtKRW = (n) => n == null ? '—' : Math.round(n).toLocaleString('ko-KR');
+const fmtPct = (n) => n == null ? '—' : (n >= 0 ? '+' : '') + n.toFixed(2) + '%';
+const tone = (n) => n > 0 ? 'text-rose-400' : n < 0 ? 'text-sky-400' : 'text-slate-300';
+
+// ── 차트 생성 ─────────────────────────────
+const chart = LightweightCharts.createChart($('chart'), {
+  layout: { background: { color: 'transparent' }, textColor: '#94a3b8', fontSize: 11 },
+  grid: { vertLines: { color: '#1e293b55' }, horzLines: { color: '#1e293b55' } },
+  rightPriceScale: { borderColor: '#1e293b', scaleMargins: { top: 0.08, bottom: 0.26 } },
+  timeScale: { borderColor: '#1e293b', timeVisible: true, secondsVisible: false, rightOffset: 4 },
+  crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+  localization: { priceFormatter: (p) => Math.round(p).toLocaleString('ko-KR') },
+});
+const candleSeries = chart.addCandlestickSeries({
+  upColor: UP, downColor: DOWN, borderUpColor: UP, borderDownColor: DOWN,
+  wickUpColor: UP, wickDownColor: DOWN, priceLineColor: '#64748b',
+});
+const volSeries = chart.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: 'vol' });
+chart.priceScale('vol').applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
+new ResizeObserver(() => chart.applyOptions({ width: $('chart').clientWidth })).observe($('chart'));
+chart.applyOptions({ width: $('chart').clientWidth });
+
+// 이동평균선은 기간 목록에 맞춰 만들었다 지운다 (MA 개수를 바꿀 수 있으므로).
+// intraday = 선택한 봉 기준 실선, daily = 같은 기간의 일봉선 점선.
+const maLines = { intraday: new Map(), daily: new Map() };
+function lineFor(kind, period, index) {
+  const map = maLines[kind];
+  if (!map.has(period)) {
+    map.set(period, chart.addLineSeries(kind === 'intraday'
+      ? { lineWidth: 2, priceLineVisible: false, lastValueVisible: false }
+      : { lineWidth: 1, lineStyle: 2, priceLineVisible: false, lastValueVisible: false }));
+  }
+  const s = map.get(period);
+  s.applyOptions({
+    color: kind === 'intraday' ? colorOf(index) : colorOf(index) + '99',
+    title: kind === 'intraday' ? `MA${period}` : '',
+  });
+  return s;
+}
+function dropUnused(kind, keep) {
+  for (const [period, s] of maLines[kind]) {
+    if (!keep.includes(period)) { chart.removeSeries(s); maLines[kind].delete(period); }
+  }
+}
+
+let state = { candles: [], periods: [4, 20, 120], signals: null, avgLine: null, firstLoad: true };
+
+// ── 범례(크로스헤어) ───────────────────────
+function renderLegend(c) {
+  if (!c) return $('legend').innerHTML = '<span class="text-slate-500">데이터 없음</span>';
+  const dir = c.close >= c.open ? 'text-rose-400' : 'text-sky-400';
+  const mas = state.periods.map((p, i) =>
+    `<span style="color:${colorOf(i)}">● MA${p}</span> ${fmtKRW(c.ma[p])}`).join('<span class="text-slate-700"> · </span>');
+  $('legend').innerHTML = `
+    <div class="text-slate-400">${c.kst.replace('T', ' ').slice(0, 16)}</div>
+    <div class="${dir}">시 ${fmtKRW(c.open)} · 고 ${fmtKRW(c.high)} · 저 ${fmtKRW(c.low)} · 종 ${fmtKRW(c.close)}</div>
+    <div>${mas}</div>`;
+}
+chart.subscribeCrosshairMove((p) => {
+  if (!p.time) return renderLegend(state.candles.at(-1));
+  renderLegend(state.candles.find((c) => c.tsKst === p.time) || state.candles.at(-1));
+});
+
+// ── 신호 카드 ─────────────────────────────
+function card(title, value, sub, cls = 'text-slate-100', size = 'text-base') {
+  return `<div class="flex-1 min-w-[152px] rounded-xl border border-slate-800 bg-slate-900/40 p-3">
+    <div class="text-[11px] text-slate-500">${title}</div>
+    <div class="${size} font-semibold tnum ${cls} mt-0.5">${value}</div>
+    <div class="text-[11px] text-slate-500 tnum mt-0.5">${sub}</div></div>`;
+}
+function renderCards(s) {
+  const crossText = (c) => `${c.label} · ${c.barsAgo}봉 전`;
+  const crossTone = (c) => c.type === 'golden' ? 'text-rose-400' : 'text-sky-400';
+
+  const cards = s.lines.map((m, i) => card(
+    `<span style="color:${colorOf(i)}">●</span> MA${m.period} (${m.span})`,
+    fmtKRW(m.value),
+    `이격 ${fmtPct(m.gapPct)} · 기울기 ${fmtPct(m.slopePct)}`,
+    tone(m.gapPct),
+  ));
+
+  cards.push(card('배열', s.alignment,
+    `MA${s.fast.period}·MA${s.slow.period} 간격 ${fmtPct(s.spreadPct)} · 현재가는 ${s.position}`,
+    s.alignment === '정배열' ? 'text-rose-400' : s.alignment === '역배열' ? 'text-sky-400' : 'text-slate-300'));
+
+  cards.push(card(`추세 교차 (MA${s.fast.period}×MA${s.slow.period})`,
+    s.cross ? crossText(s.cross) : '구간 내 없음',
+    s.cross ? `${s.cross.at.replace('T', ' ').slice(5, 16)} · ${fmtKRW(s.cross.price)}원`
+            : `${s.window.from.slice(5, 10)} ~ ${s.window.to.slice(5, 10)}`,
+    s.cross ? crossTone(s.cross) : 'text-slate-400', 'text-sm'));
+
+  if (s.lines.length >= 3) {
+    cards.push(card(`단기 교차 (MA${s.lines[0].period}×MA${s.lines[1].period})`,
+      s.shortCross ? crossText(s.shortCross) : '구간 내 없음',
+      s.shortCross ? `${s.shortCross.at.replace('T', ' ').slice(5, 16)} · ${fmtKRW(s.shortCross.price)}원` : '—',
+      s.shortCross ? crossTone(s.shortCross) : 'text-slate-400', 'text-sm'));
+  }
+  $('cards').innerHTML = cards.join('');
+}
+
+// ── 일봉 MA 겹치기 ─────────────────────────
+// 같은 기간의 일봉 이동평균(업비트 일봉은 09:00 KST 시작)을 시간봉 타임라인에 계단식으로 얹는다.
+async function loadDailyOverlay(market, periods, from, to) {
+  const days = Math.ceil((to - from) / 86400) + Math.max(...periods) + 10;
+  const r = await fetch(`/api/candles?market=${market}&unit=day&count=${Math.min(600, Math.max(140, days))}&ma=${periods.join(',')}`);
+  const body = await r.json();
+  if (!body.success) throw new Error(body.message);
+  periods.forEach((p, i) => {
+    const pts = body.data.candles
+      .filter((c) => c.ma[p] != null && c.tsKst >= from - 86400 && c.tsKst <= to)
+      .map((c) => ({ time: Math.max(c.tsKst, from), value: c.ma[p] }))
+      .filter((v, j, arr) => j === 0 || v.time > arr[j - 1].time);
+    lineFor('daily', p, i).setData(pts);
+  });
+}
+
+// 입력창의 "4,20,120" → [4, 20, 120]
+function readPeriods() {
+  const ps = [...new Set($('ma').value.split(',').map((v) => Math.round(Number(v.trim()))))]
+    .filter((v) => Number.isFinite(v) && v >= 2 && v <= 600)
+    .sort((a, b) => a - b);
+  return ps.length >= 2 ? ps : [4, 20, 120];
+}
+
+// ── 데이터 로드 ───────────────────────────
+async function load() {
+  const market = 'KRW-BTC';
+  const unit = $('unit').value;
+  const count = $('count').value;
+  const periods = readPeriods();
+  $('ma').value = periods.join(',');
+  $('status').textContent = '불러오는 중…';
+
+  try {
+    const res = await fetch(`/api/candles?market=${market}&unit=${unit}&count=${count}&ma=${periods.join(',')}`);
+    const body = await res.json();
+    if (!body.success) throw new Error(body.message);
+    const d = body.data;
+
+    state = { ...state, candles: d.candles, periods: d.periods, signals: d.signals };
+    $('unitLabel').textContent = d.unitLabel;
+    $('maLabel').innerHTML = d.periods
+      .map((p, i) => `<span style="color:${colorOf(i)}">MA${p}</span>`).join(' / ');
+
+    candleSeries.setData(d.candles.map((c) => ({ time: c.tsKst, open: c.open, high: c.high, low: c.low, close: c.close })));
+    volSeries.setData(d.candles.map((c) => ({
+      time: c.tsKst, value: c.volume, color: (c.close >= c.open ? UP : DOWN) + '44',
+    })));
+
+    dropUnused('intraday', d.periods);
+    d.periods.forEach((p, i) => {
+      lineFor('intraday', p, i).setData(
+        d.candles.filter((c) => c.ma[p] != null).map((c) => ({ time: c.tsKst, value: c.ma[p] })));
+    });
+
+    renderCards(d.signals);
+    renderLegend(d.candles.at(-1));
+    if (state.firstLoad) { chart.timeScale().fitContent(); state.firstLoad = false; }
+
+    const on = $('daily').checked && unit !== 'day';
+    dropUnused('daily', on ? d.periods : []);
+    if (on) await loadDailyOverlay(market, d.periods, d.candles[0].tsKst, d.candles.at(-1).tsKst);
+
+    $('status').innerHTML = `<span class="text-slate-500">갱신 ${new Date().toLocaleTimeString('ko-KR', { hour12: false })}</span>`;
+  } catch (err) {
+    $('status').innerHTML = `<span class="text-amber-400">불러오기 실패: ${err.message}</span>`;
+  }
+}
+
+// ── 현재가(틱) ────────────────────────────
+async function loadTicker() {
+  try {
+    const { data } = await (await fetch('/api/ticker?market=KRW-BTC')).json();
+    $('price').textContent = fmtKRW(data.price) + '원';
+    $('price').className = 'text-2xl font-bold tnum ' + tone(data.changeRate);
+    $('change').innerHTML = `<span class="${tone(data.changeRate)}">${fmtPct(data.changeRate)}</span>
+      <span class="text-slate-600">· 고 ${fmtKRW(data.high)} / 저 ${fmtKRW(data.low)}</span>`;
+  } catch { /* 일시적 실패는 이전 값을 그대로 둔다 */ }
+}
+
+// ── week-4 모의투자 앱 지갑 ────────────────
+async function loadWallet() {
+  try {
+    const { data } = await (await fetch('/api/portfolio')).json();
+    if (!data.connected) {
+      $('wallet').innerHTML = `모의투자 앱(week-4 퀘스트 1)이 연결되지 않았습니다 —
+        <code class="text-slate-500">${data.api}</code> 에서 <code class="text-slate-500">node server.js</code> 를 띄우면
+        보유 수량과 평균 매수가를 차트에 함께 표시합니다.`;
+      if (state.avgLine) { candleSeries.removePriceLine(state.avgLine); state.avgLine = null; }
+      return;
+    }
+    const w = data.wallet, p = data.price.price;
+    const evalAmt = w.qty * p;
+    const upnl = w.qty > 0 ? (p - w.avgPrice) * w.qty : 0;
+    const upnlPct = w.qty > 0 && w.avgPrice ? ((p / w.avgPrice) - 1) * 100 : 0;
+    $('wallet').innerHTML = `
+      <div class="flex flex-wrap gap-x-6 gap-y-1 tnum">
+        <span>💰 현금 <b class="text-slate-200">${fmtKRW(w.cash)}원</b></span>
+        <span>₿ 보유 <b class="text-slate-200">${w.qty.toFixed(8)}</b> (평가 ${fmtKRW(evalAmt)}원)</span>
+        <span>평단 <b class="text-slate-200">${fmtKRW(w.avgPrice)}원</b></span>
+        <span>평가손익 <b class="${tone(upnl)}">${fmtKRW(upnl)}원 (${fmtPct(upnlPct)})</b></span>
+        <span>실현손익 <b class="${tone(w.realized)}">${fmtKRW(w.realized)}원</b></span>
+      </div>`;
+    if (state.avgLine) { candleSeries.removePriceLine(state.avgLine); state.avgLine = null; }
+    if (w.qty > 0 && w.avgPrice > 0) {
+      state.avgLine = candleSeries.createPriceLine({
+        price: w.avgPrice, color: '#34d399', lineWidth: 1, lineStyle: 2,
+        axisLabelVisible: true, title: '평단',
+      });
+    }
+  } catch (err) {
+    $('wallet').textContent = `지갑 조회 실패: ${err.message}`;
+  }
+}
+
+// ── 이벤트 / 자동갱신 ──────────────────────
+let timer = null;
+function schedule() {
+  clearInterval(timer);
+  if ($('auto').checked) timer = setInterval(() => { load(); loadTicker(); loadWallet(); }, 30000);
+}
+['unit', 'count', 'ma', 'daily'].forEach((id) => $(id).addEventListener('change', load));
+$('reload').addEventListener('click', () => { load(); loadTicker(); loadWallet(); });
+$('auto').addEventListener('change', schedule);
+
+load(); loadTicker(); loadWallet(); schedule();
+setInterval(loadTicker, 5000);   // 현재가만 5초마다 (캔들은 30초)
+</script>
+</body>
+</html>
