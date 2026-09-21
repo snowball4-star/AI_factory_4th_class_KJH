@@ -51,6 +51,9 @@
       같은 기간 <span class="text-slate-500">일봉선 겹치기</span>
     </label>
     <label class="flex items-center gap-1.5 bg-slate-900 border border-slate-800 rounded px-2 py-1.5 cursor-pointer">
+      <input id="marks" type="checkbox" checked class="accent-rose-500"> 매수·매도 포인트
+    </label>
+    <label class="flex items-center gap-1.5 bg-slate-900 border border-slate-800 rounded px-2 py-1.5 cursor-pointer">
       <input id="auto" type="checkbox" checked class="accent-sky-500"> 30초 자동갱신
     </label>
     <button id="reload" class="bg-slate-800 hover:bg-slate-700 rounded px-3 py-1.5">새로고침</button>
@@ -65,6 +68,32 @@
 
   <!-- 신호 요약 -->
   <section id="cards" class="flex flex-wrap gap-2"></section>
+
+  <!-- BTC_trade_1wk 규칙 모의매매 -->
+  <section class="rounded-xl border border-slate-800 bg-slate-900/40 p-3 space-y-3">
+    <div class="flex flex-wrap items-baseline justify-between gap-2">
+      <h2 class="text-sm font-bold text-slate-100">🤖 규칙 모의매매 현황 <span class="text-xs font-normal text-slate-500">BTC_trade_1wk · 최근 7일 1시간봉</span></h2>
+      <span id="ruleWindow" class="text-[11px] text-slate-500 tnum"></span>
+    </div>
+    <div id="ruleCards" class="flex flex-wrap gap-2"><span class="text-xs text-slate-500">계산 중…</span></div>
+    <div id="ruleNow" class="text-xs text-slate-400"></div>
+    <details class="text-xs">
+      <summary class="cursor-pointer text-slate-400 hover:text-slate-200">체결 내역 <span id="ruleCount" class="text-slate-500"></span></summary>
+      <div class="overflow-x-auto mt-2">
+        <table class="w-full tnum">
+          <thead class="text-slate-500 text-left">
+            <tr><th class="py-1 pr-3 font-normal">시각</th><th class="pr-3 font-normal">규칙</th><th class="pr-3 font-normal text-right">체결가</th><th class="pr-3 font-normal text-right">수량 (BTC)</th><th class="pr-3 font-normal text-right">금액</th><th class="font-normal text-right">실현손익</th></tr>
+          </thead>
+          <tbody id="ruleTrades" class="text-slate-300"></tbody>
+        </table>
+      </div>
+    </details>
+    <p class="text-[11px] text-slate-600 leading-5">
+      시작 현금 10,000,000원 · <b class="text-slate-500">매수</b> MA20&gt;MA120 이고 MA4&lt;종가&lt;MA20 → 현금의 3% ·
+      <b class="text-slate-500">매도①</b> MA4×MA20 데드크로스 후 종가&gt;MA4 → 보유의 50% ·
+      <b class="text-slate-500">매도②</b> MA20×MA120 데드크로스 후 종가&gt;MA20 → 전량. 완성된 봉의 종가로 체결, 수수료 편도 0.05%.
+    </p>
+  </section>
 
   <!-- 모의투자 앱(week-4) 연동 -->
   <section id="wallet" class="rounded-xl border border-slate-800 bg-slate-900/40 p-3 text-xs text-slate-400"></section>
@@ -228,6 +257,7 @@ async function load() {
     $('maLabel').innerHTML = d.periods
       .map((p, i) => `<span style="color:${colorOf(i)}">MA${p}</span>`).join(' / ');
 
+    candleSeries.setMarkers([]);   // 봉 단위가 바뀌면 이전 매매 포인트의 시각이 새 데이터에 없을 수 있다
     candleSeries.setData(d.candles.map((c) => ({ time: c.tsKst, open: c.open, high: c.high, low: c.low, close: c.close })));
     volSeries.setData(d.candles.map((c) => ({
       time: c.tsKst, value: c.volume, color: (c.close >= c.open ? UP : DOWN) + '44',
@@ -299,17 +329,78 @@ async function loadWallet() {
   }
 }
 
+// ── BTC_trade_1wk 규칙 모의매매 ─────────────
+// 매매 포인트는 1시간봉 봉 시각에 찍히므로, 다른 봉 단위를 보고 있을 때는 차트에서 뺀다.
+let ruleData = null;
+function renderMarkers() {
+  const on = ruleData && $('marks').checked && $('unit').value === '60';
+  if (!on) return candleSeries.setMarkers([]);
+  const shown = new Set(state.candles.map((c) => c.tsKst));
+  candleSeries.setMarkers(ruleData.trades
+    .filter((t) => !t.skipped && shown.has(t.tsKst))
+    .map((t) => t.side === 'buy'
+      ? { time: t.tsKst, position: 'belowBar', shape: 'arrowUp', color: '#f43f5e', text: '매수' }
+      : { time: t.tsKst, position: 'aboveBar', shape: 'arrowDown', color: t.rule === '매도②' ? '#818cf8' : '#3b82f6', text: t.rule }));
+}
+
+async function loadRuleTrade() {
+  try {
+    const body = await (await fetch('/api/rule-trade?days=7')).json();
+    if (!body.success) throw new Error(body.message);
+    const r = ruleData = body.data, a = r.account, n = r.now;
+    const hm = (s) => s.replace('T', ' ').slice(5, 16);
+
+    $('ruleWindow').textContent = `${hm(r.window.from)} ~ ${hm(r.window.to)} KST · ${r.window.bars}봉`;
+    $('ruleCards').innerHTML = [
+      card('평가자산 (현금 + 보유 평가)', `${fmtKRW(a.equity)}원`, `시작 ${fmtKRW(r.params.startCash)}원`),
+      card('수익률', fmtPct(a.returnPct), `같은 기간 단순보유 ${fmtPct(r.holdReturnPct)}`, tone(a.returnPct), 'text-lg'),
+      card('현금', `${fmtKRW(a.cash)}원`, `투자 비중 ${((a.evalAmt / a.equity) * 100).toFixed(1)}%`),
+      card('보유 BTC', a.qty.toFixed(8),
+        a.avgPrice ? `평단 ${fmtKRW(a.avgPrice)}원 · 평가 ${fmtKRW(a.evalAmt)}원` : '보유 없음'),
+      card('평가손익', a.qty > 0 ? `${fmtKRW(a.unrealized)}원` : '—',
+        a.unrealizedPct != null ? fmtPct(a.unrealizedPct) : '—', tone(a.unrealized)),
+      card('실현손익', `${fmtKRW(a.realized)}원`, `수수료 ${fmtKRW(a.fees)}원`, tone(a.realized)),
+      card('체결', `매수 ${r.counts.buy} · 매도 ${r.counts.sell1 + r.counts.sell2}`,
+        `매도① ${r.counts.sell1} · 매도② ${r.counts.sell2}`, 'text-slate-100', 'text-sm'),
+    ].join('');
+
+    const sig = n.signal;
+    const sigCls = !sig ? 'text-slate-300' : sig.rule === '매수' ? 'text-rose-400' : 'text-sky-400';
+    $('ruleNow').innerHTML = `지금 규칙 판정 (${hm(n.at)} 완성 봉 · 종가 ${fmtKRW(n.close)}원):
+      <b class="${sigCls}">${sig ? `${sig.rule} — ${sig.why}` : '대기'}</b>
+      <span class="text-slate-500"> · ${n.checks.map(([k, v]) => `${k} ${v ? '✓' : '✗'}`).join(' · ')}</span>`;
+
+    const done = r.trades.filter((t) => !t.skipped);
+    $('ruleCount').textContent = `(${done.length}건)`;
+    $('ruleTrades').innerHTML = done.slice().reverse().map((t) => `
+      <tr class="border-t border-slate-800">
+        <td class="py-1 pr-3 text-slate-400">${hm(t.at)}</td>
+        <td class="pr-3 ${t.side === 'buy' ? 'text-rose-400' : 'text-sky-400'}">${t.rule}</td>
+        <td class="pr-3 text-right">${fmtKRW(t.price)}</td>
+        <td class="pr-3 text-right">${t.qty.toFixed(8)}</td>
+        <td class="pr-3 text-right">${fmtKRW(t.krw)}</td>
+        <td class="text-right ${t.pnl != null ? tone(t.pnl) : 'text-slate-600'}">${t.pnl != null ? fmtKRW(t.pnl) : '—'}</td>
+      </tr>`).join('') || '<tr><td colspan="6" class="py-2 text-slate-500">기간 중 체결 없음</td></tr>';
+
+    renderMarkers();
+  } catch (err) {
+    $('ruleCards').innerHTML = `<span class="text-xs text-amber-400">규칙 모의매매 계산 실패: ${err.message}</span>`;
+  }
+}
+
 // ── 이벤트 / 자동갱신 ──────────────────────
 let timer = null;
+const refreshAll = () => { load().then(loadRuleTrade); loadTicker(); loadWallet(); };
 function schedule() {
   clearInterval(timer);
-  if ($('auto').checked) timer = setInterval(() => { load(); loadTicker(); loadWallet(); }, 30000);
+  if ($('auto').checked) timer = setInterval(refreshAll, 30000);
 }
-['unit', 'count', 'ma', 'daily'].forEach((id) => $(id).addEventListener('change', load));
-$('reload').addEventListener('click', () => { load(); loadTicker(); loadWallet(); });
+['unit', 'count', 'ma', 'daily'].forEach((id) => $(id).addEventListener('change', () => load().then(renderMarkers)));
+$('marks').addEventListener('change', renderMarkers);
+$('reload').addEventListener('click', refreshAll);
 $('auto').addEventListener('change', schedule);
 
-load(); loadTicker(); loadWallet(); schedule();
+refreshAll(); schedule();
 setInterval(loadTicker, 5000);   // 현재가만 5초마다 (캔들은 30초)
 </script>
 </body>

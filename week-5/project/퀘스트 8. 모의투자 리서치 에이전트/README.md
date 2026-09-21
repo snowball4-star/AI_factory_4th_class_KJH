@@ -5,6 +5,10 @@ week-4 「퀘스트 1. 나만의 모의투자 앱」 계좌를 그대로 쓰면�
 
 ![차트 미리보기](웹페이지-미리보기.png)
 
+차트 아래 「규칙 모의매매 현황」에 BTC_trade_1wk 규칙의 투자 현황·수익률이, 차트 위에 매수·매도 포인트가 표시된다.
+
+![규칙 모의매매 미리보기](웹페이지-미리보기_규칙매매.png)
+
 ## 빠르게 실행
 
 ```bash
@@ -30,6 +34,10 @@ week-4 모의투자 앱(`http://localhost:3000`)을 같이 띄워 두면 보유 
 | `SKILL.md` | 에이전트 스킬 본문 (설치본은 `.claude/skills/paper-trade/SKILL.md`) |
 | `lib/upbit.js` | 업비트 캔들·시세 수집, 단순이동평균, 배열·이격·크로스 판정 |
 | `scripts/fetch-candles.js` | 스냅샷 CLI — `data/` 에 JSON 저장 + 한글 요약 출력 |
+| `BTC_trade_1wk.md` | 매수 1개·매도 2개 고정 매매 규칙 (원본 `BTC_trade_1wk.docx`) |
+| `lib/rule-trade.js` | 규칙 모의매매 계산 (시작 현금 10,000,000원, 매수 현금의 3%) — CLI와 차트 서버가 공유 |
+| `scripts/trade-1wk.js` | 위 규칙을 최근 1주일 1시간봉에 적용하는 모의매매 CLI → `journal/BTC_trade_1wk_*.md` |
+| `btc_trade_1wk/SKILL.md` | 규칙 모의매매 스킬 (설치본은 `.claude/skills/btc_trade_1wk/SKILL.md`) |
 | `server.js` | 차트 서버 (기본 3100) — 업비트 호출과 지갑 조회를 서버가 대신 한다 |
 | `index.html` | 캔들 + MA4/MA20/MA120 + 거래량 차트 (TradingView Lightweight Charts) |
 | `data/` | 수집 스냅샷. `latest.json` 은 항상 최신 |

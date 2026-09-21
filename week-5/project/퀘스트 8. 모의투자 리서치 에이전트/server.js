@@ -13,6 +13,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { buildSeries, analyze, fetchTicker } = require('./lib/upbit');
+const { runRuleTrade } = require('./lib/rule-trade');
 
 const PORT = Number(process.env.PORT) || 3100;
 // 모의투자 앱(week-4 퀘스트 1)의 주소. 다른 포트로 띄웠으면 환경변수로 바꾼다.
@@ -69,6 +70,17 @@ const routes = {
 
   '/api/portfolio': async (_url, res) => {
     sendJSON(res, 200, { success: true, data: await getPortfolio() });
+  },
+
+  // BTC_trade_1wk 규칙 모의매매 (시작 현금 1,000만 원, 매수 현금의 3%). 봉이 바뀔 때만 결과가 달라지므로 30초 캐시.
+  '/api/rule-trade': async (url, res) => {
+    const days = Math.max(1, Math.min(30, Number(url.searchParams.get('days')) || 7));
+    const key = `rule|${days}`;
+    const hit = cache.get(key);
+    if (hit && Date.now() - hit.at < 30_000) return sendJSON(res, 200, { success: true, data: hit.data });
+    const data = await runRuleTrade({ days });
+    cache.set(key, { at: Date.now(), data });
+    sendJSON(res, 200, { success: true, data });
   },
 };
 
